@@ -1,0 +1,37 @@
+import { useState } from 'react';
+import type { ScreenProps, Settings } from '../types';
+import { color, font, radius, sar } from '../tokens';
+import { Button, Eyebrow, Header, Panel } from '../components/atoms';
+
+const LEVEL_META: Record<Settings['level'], { nameAr: string; budgetSar: number; noteAr: string }> = {
+  easy: { nameAr: 'سهل', budgetSar: 2000000, noteAr: 'كراج أحلام' },
+  medium: { nameAr: 'متوسط', budgetSar: 800000, noteAr: 'لازم تختار' },
+  hard: { nameAr: 'صعب', budgetSar: 300000, noteAr: 'كل ريال محسوب' },
+  hell: { nameAr: 'جهنم', budgetSar: 120000, noteAr: 'الله يعينكم' },
+};
+const LEVELS: Settings['level'][] = ['easy', 'medium', 'hard', 'hell'];
+const GARAGE_SIZES: Settings['garageSize'][] = [3, 4, 5, 6];
+const BID_WINDOWS: Settings['bidWindowSec'][] = [10, 15, 20, 30];
+
+export default function LobbyScreen({ state, actions, myId }: ScreenProps) {
+  const { code, settings, players } = state;
+  const isHost = state.hostId === myId;
+  const [copied, setCopied] = useState(false);
+  function copyCode() { navigator.clipboard.writeText(code).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+  function set(patch: Partial<Settings>) { if (isHost) actions.updateSettings(patch); }
+  const canStart = players.length >= 2;
+  const totalSlots = players.length * settings.garageSize;
+
+  return <div style={{ maxWidth: 620, margin: '0 auto', padding: '24px 16px 48px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <Header code={code} isHost={isHost} />
+    <Panel surface="lot" style={{ padding: '20px 20px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}><Eyebrow>كود الغرفة</Eyebrow><div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}><span style={{ fontFamily: font.num, fontWeight: 600, fontSize: 'clamp(42px, 11vw, 60px)', letterSpacing: '0.28em', fontVariantNumeric: 'tabular-nums', color: color.brass, lineHeight: 1, direction: 'ltr' }}>{code}</span><button onClick={copyCode} style={{ fontFamily: font.body, fontSize: 13, fontWeight: 600, minWidth: 96, minHeight: 36, padding: '0 14px', borderRadius: radius.control, border: `1px solid ${color.line}`, background: copied ? color.green : color.panel2, color: copied ? '#fff' : color.mute, cursor: 'pointer' }}>{copied ? 'تم النسخ' : 'انسخ الكود'}</button></div></Panel>
+    <Panel surface="inset" style={{ padding: '16px 20px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Eyebrow>اللاعبون</Eyebrow><span style={{ fontFamily: font.num, fontSize: 13, color: color.mute }}>{players.length}<span style={{ color: color.line }}>/</span>8</span></div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{players.map((p) => { const isMe = p.id === myId; const disconnected = !p.connected; return <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: radius.pill, border: `1px solid ${isMe ? color.brass : color.line}`, background: color.panel2, opacity: disconnected ? 0.45 : 1 }}>{p.isHost && <span style={{ color: color.brass, fontSize: 13 }}>⚑</span>}<span style={{ fontFamily: font.body, fontSize: 14, fontWeight: isMe ? 600 : 400, color: disconnected ? color.mute : color.text }}>{p.name}</span>{disconnected && <span style={{ fontFamily: font.body, fontSize: 11, color: color.mute, border: `1px solid ${color.line}`, borderRadius: radius.pill, padding: '1px 6px' }}>منقطع</span>}</div>; })}</div></Panel>
+    <Panel surface="bare" style={{ padding: '4px 0 0', display: 'flex', flexDirection: 'column', gap: 20 }}><Eyebrow style={{ marginBottom: -4 }}>الإعدادات{!isHost ? ' — المدير يتحكم فيها' : ''}</Eyebrow>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><span style={{ fontFamily: font.body, fontSize: 14, color: color.mute }}>حجم الكراج</span><div style={{ display: 'flex' }}>{GARAGE_SIZES.map((sz) => { const on = settings.garageSize === sz; return <button key={sz} disabled={!isHost} onClick={() => set({ garageSize: sz })} style={{ flex: 1, minHeight: 44, fontFamily: font.num, fontSize: 15, fontWeight: 600, cursor: isHost ? 'pointer' : 'not-allowed', background: on ? color.brass : 'transparent', color: on ? color.ink : color.mute, border: `1px solid ${on ? color.brass : color.line}`, borderRadius: radius.control }}>{sz}</button>; })}</div></div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><span style={{ fontFamily: font.body, fontSize: 14, color: color.mute }}>مستوى الميزانية</span><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>{LEVELS.map((lvl) => { const meta = LEVEL_META[lvl]; const on = settings.level === lvl; return <button key={lvl} disabled={!isHost} onClick={() => set({ level: lvl, budgetSar: meta.budgetSar })} style={{ padding: '12px 14px', borderRadius: radius.panel, border: `1px solid ${on ? color.brass : color.line}`, background: on ? 'rgba(200,149,43,.12)' : color.panel2, cursor: isHost ? 'pointer' : 'not-allowed', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: on ? color.brass : color.text }}>{meta.nameAr}</span><span style={{ fontFamily: font.num, fontSize: 13, color: on ? color.brassSoft : color.mute }}>{sar(meta.budgetSar)}</span><span style={{ fontFamily: font.body, fontSize: 12, color: color.mute }}>{meta.noteAr}</span></button>; })}</div></div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><span style={{ fontFamily: font.body, fontSize: 14, color: color.mute }}>نافذة المزايدة</span><div style={{ display: 'flex' }}>{BID_WINDOWS.map((w) => { const on = settings.bidWindowSec === w; return <button key={w} disabled={!isHost} onClick={() => set({ bidWindowSec: w })} style={{ flex: 1, minHeight: 44, fontFamily: font.body, fontSize: 14, fontWeight: 600, cursor: isHost ? 'pointer' : 'not-allowed', background: on ? color.brass : 'transparent', color: on ? color.ink : color.mute, border: `1px solid ${on ? color.brass : color.line}`, borderRadius: radius.control }}>{w}ث</button>; })}</div>{settings.antiSnipeSec > 0 && <span style={{ fontFamily: font.body, fontSize: 12, color: color.mute }}>كل مزايدة تضيف {settings.antiSnipeSec} ثواني</span>}</div>
+      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: isHost ? 'pointer' : 'not-allowed', opacity: isHost ? 1 : 0.55 }}><input type="checkbox" disabled={!isHost} checked={settings.hideMarketPrice} onChange={(e) => set({ hideMarketPrice: e.target.checked })} style={{ width: 18, height: 18, marginTop: 2, accentColor: color.brass }} /><span style={{ fontFamily: font.body, fontSize: 14, color: color.text, lineHeight: 1.5 }}>أخفِ سعر السوق أثناء المزاد (يخليها تحدي معرفة)</span></label>
+    </Panel>
+    {isHost ? <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><Button variant="primary" disabled={!canStart} onClick={canStart ? actions.startAuction : undefined} style={{ width: '100%', fontSize: 16 }}>{canStart ? `ابدأ المزاد — ${totalSlots} موقف` : 'ناقص لاعب واحد على الأقل'}</Button>{canStart && <span style={{ fontFamily: font.body, fontSize: 12, color: color.mute, textAlign: 'center' }}>{players.length} لاعبين × {settings.garageSize} مواقف</span>}</div> : <div style={{ fontFamily: font.body, fontSize: 14, color: color.mute, textAlign: 'center', padding: '16px' }}>بانتظار المدير يبدأ المزاد…</div>}
+  </div>;
+}
