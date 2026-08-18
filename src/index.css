@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import 'tailwindcss';
+
+:root {
+  --ink: #0D1117;
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body: Tahoma, Arial, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--ink);
+  background-image: radial-gradient(1100px 340px at 50% -160px, rgba(200, 149, 43, 0.14), transparent 70%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #E8E6E1;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #E0B75A;
+  outline-offset: 2px;
+}
+
+@keyframes stamp {
+  0% { transform: scale(0.86) rotate(-2deg); opacity: 0.4; }
+  60% { transform: scale(1.04) rotate(0.6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes slam {
+  0% { transform: scale(1.8) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(0.94) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes flip {
+  from { transform: perspective(1200px) rotateX(-90deg); opacity: 0; }
+  to { transform: perspective(1200px) rotateX(0deg); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
