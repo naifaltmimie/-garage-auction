@@ -116,6 +116,12 @@ async function main() {
   while (Date.now() < fillDeadline) {
     const { data: s } = await rpc(host, 'get_state', { p_code: code });
     if (!s || s.phase !== 'auction') break;
+
+    // Keep every intended voter fresh during auction. The disconnect begins
+    // only after start_voting, which is the scenario this section validates.
+    await rpc(alice, 'get_state', { p_code: code });
+    await rpc(bob, 'get_state', { p_code: code });
+
     if (s.lot && !s.lot.result) {
       const needy = s.players.find((p) => p.garage.length < s.settings.garageSize);
       const dev = players.find((d) => d.id === needy?.id);
@@ -134,10 +140,15 @@ async function main() {
   const { data: themeState } = await rpc(host, 'get_state', { p_code: code });
   check('reached the theme phase', themeState?.phase === 'theme', themeState?.phase);
 
+  // One last heartbeat from everyone immediately before freezing the roster.
+  await rpc(alice, 'get_state', { p_code: code });
+  await rpc(bob, 'get_state', { p_code: code });
   await rpc(host, 'start_voting', { p_code: code });
+
   await rpc(host, 'submit_votes', { p_code: code, scores: { [alice.id]: 8, [bob.id]: 5 } });
   await rpc(alice, 'submit_votes', { p_code: code, scores: { [host.id]: 7, [bob.id]: 6 } });
 
+  // Bob stops heartbeating from this point forward.
   const { error: earlyErr } = await rpc(host, 'reveal_next', { p_code: code });
   check('reveal is blocked while the missing player is still fresh', Boolean(earlyErr), 'reveal succeeded too early');
 
