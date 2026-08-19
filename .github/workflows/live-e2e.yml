@@ -1,0 +1,38 @@
+name: Live Multiplayer E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/live-e2e.yml'
+      - 'tests/e2e-realtime.mjs'
+      - 'src/RealtimeDriver.tsx'
+      - 'src/lib/supabase.ts'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      VITE_SUPABASE_URL: https://hlxwxcpybincqqfxwjzk.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_t7DF09oU324KT0a7qjloYA_hCheDDtK
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Run live Supabase E2E
+        run: npm run test:e2e
