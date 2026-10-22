@@ -24,6 +24,9 @@ for mid, lst in ads.items():
         # drop exact duplicates, keep order
         seen = set()
         imgs = [u for u in imgs if not (u in seen or seen.add(u))][:MAX_IMGS]
+        # Haraj photos are stored as their CDN path only; the app rebuilds the full-size
+        # (mimg6cdn) and 700px webp (postcdn) URLs — half the bytes in the bundle.
+        imgs = [('h:' + u.split('haraj.com.sa/', 1)[1]) if 'mimg6cdn.haraj.com.sa/' in u else u for u in imgs]
         if len(imgs) < 2:
             continue
         o = {'imgs': imgs}

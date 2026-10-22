@@ -2,10 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Body } from '../../engine/types';
 import { Silhouette } from './Silhouette';
 
-// Ad photos load straight from the listing CDN (no referrer). Hosts that refuse hotlinking go through
-// our tiny image proxy instead.
+// Ad photos load straight from the listing CDN (no referrer). Haraj photos are kept as "h:<path>":
+// the gallery shows the site's own 700px webp, the full-screen viewer the original.
 const PROXY_HOSTS: string[] = [];
-export function photoSrc(u: string): string {
+export function photoSrc(u: string, full = false): string {
+  if (u.startsWith('h:')) {
+    const path = u.slice(2);
+    return full ? `https://mimg6cdn.haraj.com.sa/${path}` : `https://postcdn.haraj.com.sa/${path}-700.webp`;
+  }
   try {
     const h = new URL(u).host;
     if (PROXY_HOSTS.some((x) => h.endsWith(x))) return `/api/img?u=${encodeURIComponent(u)}`;
@@ -13,6 +17,16 @@ export function photoSrc(u: string): string {
     /* relative */
   }
   return u;
+}
+
+/** If the light version fails, try the original once before giving up on the photo. */
+function onImgError(e: React.SyntheticEvent<HTMLImageElement>, u: string, drop: () => void) {
+  const img = e.currentTarget;
+  const full = photoSrc(u, true);
+  if (img.dataset.retried !== '1' && img.src !== full) {
+    img.dataset.retried = '1';
+    img.src = full;
+  } else drop();
 }
 
 /** Swipeable ad gallery: photo count, dots, tap to open full screen. Falls back to a studio silhouette. */
@@ -69,7 +83,7 @@ export function Gallery({
                 decoding="async"
                 referrerPolicy="no-referrer"
                 draggable={false}
-                onError={() => setBad((s) => new Set(s).add(u))}
+                onError={(e) => onImgError(e, u, () => setBad((s) => new Set(s).add(u)))}
               />
             </div>
           ))}
@@ -130,7 +144,7 @@ function Lightbox({ photos, start, onClose }: { photos: string[]; start: number;
       >
         {photos.map((u) => (
           <div className="lb-slide" key={u}>
-            <img src={photoSrc(u)} alt="" referrerPolicy="no-referrer" />
+            <img src={photoSrc(u, true)} alt="" referrerPolicy="no-referrer" />
           </div>
         ))}
       </div>
