@@ -1,0 +1,8 @@
+{
+  "name": "garage-auction-photo-qa",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1"
+  }
+}
