@@ -1,4 +1,4 @@
-import { arDigits } from '../../lib/util';
+import { carsN } from '../../lib/util';
 import { GarageCard } from '../components/Garage';
 import type { RoomView } from '../useRoom';
 
@@ -14,7 +14,7 @@ export function Showcase({ room }: { room: RoomView }) {
           <div className="t-label" style={{ color: 'var(--gold)' }}>نزلت المطرقة على آخر سيارة</div>
           <h1 className="t-display" style={{ fontSize: 'clamp(40px, 11vw, 62px)', margin: '4px 0' }}>عرض الكراجات</h1>
           <p className="mute" style={{ margin: 0 }}>
-            انباعت {arDigits(sold)} سيارة. شوفوا كل كراج زين، بعدها التقييم السري: كل واحد يقيّم كراجات الباقين ومحد يدري وش عطى.
+            انباعت {carsN(sold)}. شوفوا كل كراج زين، بعدها التقييم السري: كل واحد يقيّم كراجات الباقين ومحد يدري وش عطى.
           </p>
         </div>
         <div className="garages">

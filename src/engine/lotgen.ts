@@ -52,10 +52,10 @@ const GERMAN = new Set(['Mercedes-Benz', 'Mercedes', 'BMW', 'Audi', 'Porsche', '
 const EXOTIC_MAKES = new Set(['Ferrari', 'Lamborghini', 'Rolls-Royce', 'Bentley', 'McLaren', 'Aston Martin', 'Maserati']);
 
 export const SPEC_LABEL: Record<CarPub['specKind'], string> = {
-  saudi: 'سعودي — وكالة',
+  saudi: 'سعودي وكالة',
   gcc: 'خليجي',
   us: 'وارد أمريكي',
-  us_salvage: 'وارد أمريكي — سلفج',
+  us_salvage: 'وارد أمريكي سلفج',
   ca: 'وارد كندي',
   eu: 'وارد أوروبي',
   jp: 'وارد ياباني',

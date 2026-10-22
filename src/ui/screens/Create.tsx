@@ -98,8 +98,8 @@ export function Create() {
           <span>كم سيارة يشيل الكراج</span>
           <div className="seg">
             {[3, 4, 5, 6].map((n) => (
-              <button type="button" key={n} aria-pressed={s.garage === n} onClick={() => set('garage', n)}>
-                {arDigits(n)} سيارات
+              <button type="button" key={n} aria-pressed={s.garage === n} onClick={() => set('garage', n)} aria-label={`${n} سيارات`}>
+                {n}
               </button>
             ))}
           </div>
@@ -161,7 +161,7 @@ export function Create() {
           <div className="seg">
             {[0.3, 0.5, 0.7].map((w) => (
               <button type="button" key={w} aria-pressed={s.ratingWeight === w} onClick={() => set('ratingWeight', w)}>
-                {arDigits(Math.round(w * 100))}%
+                <span className="ltr">{Math.round(w * 100)}%</span>
               </button>
             ))}
           </div>

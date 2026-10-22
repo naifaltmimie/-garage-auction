@@ -33,7 +33,7 @@ export function Results({ room }: { room: RoomView }) {
           <div className="t-label" style={{ color: 'var(--gold)' }}>{core.settings.roomName}</div>
           <h1 className="t-display" style={{ fontSize: 'clamp(42px, 12vw, 70px)', margin: '4px 0' }}>نتيجة المزاد</h1>
           <p className="mute" style={{ margin: 0 }}>
-            النقاط: {arDigits(Math.round(core.settings.ratingWeight * 100))}% من تقييم الشباب، و{arDigits(Math.round((1 - core.settings.ratingWeight) * 100))}% من الشطارة بالشراء
+            النقاط: <span className="ltr">{Math.round(core.settings.ratingWeight * 100)}%</span> من تقييم الشباب، و<span className="ltr">{Math.round((1 - core.settings.ratingWeight) * 100)}%</span> من الشطارة بالشراء
           </p>
         </div>
         <div className="podium">

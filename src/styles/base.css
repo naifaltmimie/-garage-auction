@@ -86,7 +86,7 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 button,
@@ -438,7 +438,7 @@ img {
 
 .seg {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   padding: 4px;
   border-radius: var(--r);
@@ -446,9 +446,10 @@ img {
 }
 
 .seg > button {
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 6px;
   border-radius: 10px;
   font-weight: 700;
   font-size: 14.5px;

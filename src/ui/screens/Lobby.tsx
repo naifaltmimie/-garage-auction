@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { sound } from '../../audio/sound';
 import { BUDGETS, lotsFor } from '../../engine/rules';
 import type { Mix, Speed } from '../../engine/types';
-import { money } from '../../lib/util';
+import { carsN, money } from '../../lib/util';
 import { Icon, QR } from '../components/Bits';
 import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
@@ -119,11 +119,11 @@ export function Lobby({ room }: { room: RoomView }) {
                 </div>
                 <div>
                   <dt>الكراج</dt>
-                  <dd>{s.garage} سيارات</dd>
+                  <dd>{carsN(s.garage)}</dd>
                 </div>
                 <div>
                   <dt>السيارات بالمزاد</dt>
-                  <dd>{lotsFor(s, active.length)} سيارة</dd>
+                  <dd>{carsN(lotsFor(s, active.length))}</dd>
                 </div>
                 <div>
                   <dt>السرعة والسوق</dt>
@@ -137,7 +137,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 </div>
                 <div>
                   <dt>السعي</dt>
-                  <dd>{s.fee > 0 ? `${s.fee}% + ضريبة` : 'بدون'}</dd>
+                  <dd>{s.fee > 0 ? <><span className="ltr">{s.fee}%</span> وضريبتها</> : 'بدون'}</dd>
                 </div>
                 <div>
                   <dt>أنواع اللوتات</dt>
@@ -146,7 +146,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 <div>
                   <dt>النتيجة</dt>
                   <dd>
-                    {Math.round(s.ratingWeight * 100)}% تقييم و{Math.round((1 - s.ratingWeight) * 100)}% شطارة
+                    <span className="ltr">{Math.round(s.ratingWeight * 100)}%</span> تقييم، <span className="ltr">{Math.round((1 - s.ratingWeight) * 100)}%</span> شطارة
                   </dd>
                 </div>
               </dl>
@@ -179,7 +179,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 room.host!.start();
               }}
             >
-              {active.length < 2 ? 'ابدأ (تجربة لحالك)' : `ابدأ المزاد بـ${active.length} مزايدين`}
+              {active.length < 2 ? 'ابدأ تجربة لحالك' : 'ابدأ المزاد'}
             </button>
             <small className="mute" style={{ textAlign: 'center' }}>خل جوالك مفتوح على الصفحة، المزاد يمشي من عندك</small>
           </div>

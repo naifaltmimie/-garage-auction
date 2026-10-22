@@ -2025,13 +2025,19 @@
   max-width: 560px;
   max-height: 92dvh;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 0 14px calc(16px + var(--safe-b));
   border-radius: 24px 24px 0 0;
   background: var(--bg);
   box-shadow: var(--sh-3);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   animation: up .35s var(--ease) both;
+}
+
+.reveal > * {
+  flex-shrink: 0;
 }
 
 .reveal.thinking {
@@ -2042,6 +2048,7 @@
 
 .rv-hero {
   position: relative;
+  flex-shrink: 0;
   margin: 0 -14px;
   aspect-ratio: 16 / 9;
   overflow: hidden;
