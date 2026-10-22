@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "installCommand": "npm install --no-audit --no-fund",
+  "buildCommand": "node qa/classify.mjs && mkdir -p dist && cp qa/index.html dist/index.html",
+  "outputDirectory": "dist"
+}
