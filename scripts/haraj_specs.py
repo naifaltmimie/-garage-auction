@@ -406,7 +406,8 @@ FUEL_SPECS = {
     ('Nissan', 'Urvan', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=None, years=(2013, 2030))],
     ('Toyota', 'Hiace', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=None, years=(2005, 2018)), dict(engine='2.8L ديزل تيربو', hp=None, years=(2019, 2030))],
     # a petrol ad filed under a diesel model-year (the petrol automatic «ربع» and double-cab شاص)
-    ('Toyota', 'Land Cruiser 76 Hardtop', 'petrol'): [dict(engine='4.0L V6', hp=None, years=(2007, 2030))],
-    ('Toyota', 'Land Cruiser 79 Double Cab', 'petrol'): [dict(engine='4.0L V6', hp=None, years=(2012, 2030))],
+    # ALJ's 2024 LC70 price list: 4.0 V6 petrol 228 hp (5MT or 6AT), 2.8 diesel 201 hp
+    ('Toyota', 'Land Cruiser 76 Hardtop', 'petrol'): [dict(engine='4.0L V6', hp=228, years=(2007, 2030))],
+    ('Toyota', 'Land Cruiser 79 Double Cab', 'petrol'): [dict(engine='4.0L V6', hp=228, years=(2012, 2030))],
     ('Toyota', 'Hilux', 'petrol'): [dict(engine='2.7L 4 سلندر', hp=None, years=(2005, 2030))],
 }
