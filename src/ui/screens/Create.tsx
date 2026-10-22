@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { sound } from '../../audio/sound';
-import { BUDGETS, DEFAULT_SETTINGS } from '../../engine/rules';
+import { BUDGETS, DEFAULT_SETTINGS, GARAGE_SIZES } from '../../engine/rules';
 import type { Mix, Settings, Speed } from '../../engine/types';
 import { arDigits, money, roomCode, store } from '../../lib/util';
 import { go } from '../App';
@@ -97,7 +97,7 @@ export function Create() {
         <div className="field">
           <span>كم سيارة يشيل الكراج</span>
           <div className="seg">
-            {[3, 4, 5, 6].map((n) => (
+            {GARAGE_SIZES.map((n) => (
               <button type="button" key={n} aria-pressed={s.garage === n} onClick={() => set('garage', n)} aria-label={`${n} سيارات`}>
                 {n}
               </button>

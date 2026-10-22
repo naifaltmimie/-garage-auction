@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { sound } from '../../audio/sound';
-import { BUDGETS, lotsFor } from '../../engine/rules';
+import { BUDGETS, GARAGE_SIZES, lotsFor } from '../../engine/rules';
 import type { Mix, Speed } from '../../engine/types';
 import { carsN, money } from '../../lib/util';
 import { Icon, QR } from '../components/Bits';
@@ -214,9 +214,9 @@ function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void
             ))}
           </div>
           <div className="seg">
-            {[3, 4, 5, 6].map((n) => (
-              <button key={n} aria-pressed={s.garage === n} onClick={() => set({ garage: n })}>
-                {n} سيارات
+            {GARAGE_SIZES.map((n) => (
+              <button key={n} aria-pressed={s.garage === n} onClick={() => set({ garage: n })} aria-label={`كراج ${n} سيارات`}>
+                {n}
               </button>
             ))}
           </div>

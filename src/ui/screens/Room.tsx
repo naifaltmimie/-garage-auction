@@ -128,28 +128,45 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
   const inGame = !['lobby', 'results', 'showcase', 'voting'].includes(core.phase);
   const off = !room.net.connected || room.net.hostGone;
   const live = core.phase === 'bidding' || core.phase === 'sealed';
+  const progress = core.lotsTotal > 0 ? Math.min(1, Math.max(0, core.lotNo / core.lotsTotal)) : 0;
   return (
     <header className={`topbar ${inGame ? 'ingame' : ''}`}>
-      <button className="brand" onClick={() => go('/')} aria-label="الرئيسية">
-        <GavelMark />
-        <span className="brand-name">
-          مزاد <b>الكراج</b>
+      {inGame ? (
+        <span className="brand" aria-hidden="true">
+          <span className="brand-seal">
+            <GavelMark />
+          </span>
         </span>
-      </button>
+      ) : (
+        <button className="brand" onClick={() => go('/')} aria-label="الرئيسية">
+          <span className="brand-seal">
+            <GavelMark />
+          </span>
+          <span className="brand-name">
+            مزاد <b>الكراج</b>
+          </span>
+        </button>
+      )}
       {inGame && core.lotNo > 0 && (
-        <div className="tb-lot">
-          {live ? <span className="live"><i />مباشر</span> : <span className="tb-lot-l">لوت</span>}
-          <b className="ltr">{String(core.lotNo).padStart(2, '0')}</b>
-          <span className="ltr">/{core.lotsTotal}</span>
+        <div className={`tb-lot ${live ? 'is-live' : ''}`}>
+          <small>{live ? <span className="live"><i />مباشر</span> : 'اللوت'}</small>
+          <span className="tb-lot-n">
+            <b className="ltr">{String(core.lotNo).padStart(2, '0')}</b>
+            <span className="ltr">/{core.lotsTotal}</span>
+          </span>
         </div>
       )}
       <div className="grow" />
-      {off && <span className="netdot off" title="غير متصل" />}
+      {off && <span className="tb-off" role="status"><i />مقطوع</span>}
       {me && !me.spectator && core.phase !== 'lobby' && (
-        <div className="wallet">
-          <small>
-            رصيدك <span className="wg">كراج {me.garage.length}/{core.settings.garage}</span>
-          </small>
+        <div className="wallet" aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}>
+          <div className="w-top">
+            <small>رصيدك</small>
+            <span className="wg">
+              <Icon name="car" size={13} />
+              <span className="ltr">{me.garage.length}/{core.settings.garage}</span>
+            </span>
+          </div>
           <b className="ltr">{money(me.cash)}</b>
         </div>
       )}
@@ -167,6 +184,7 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
       <button className="iconbtn tb-btn" aria-label="الكراجات والترتيب" onClick={onPlayers}>
         <Icon name="users" />
       </button>
+      {inGame && <i className="tb-progress" style={{ ['--p' as string]: progress }} aria-hidden="true" />}
     </header>
   );
 }

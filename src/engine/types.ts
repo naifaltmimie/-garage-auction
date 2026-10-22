@@ -272,6 +272,9 @@ export interface Callout {
 export interface Core {
   v: 2;
   rev: number;
+  /** Revisions of the lot and history snapshots this core goes with: a player that is behind asks again. */
+  revLot: number;
+  revHist: number;
   hostNow: number;
   phase: Phase;
   settings: Settings;

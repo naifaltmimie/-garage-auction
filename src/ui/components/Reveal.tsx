@@ -215,8 +215,7 @@ export function UnsoldReveal({ core, sale }: { core: Core; sale: Sale }) {
         <div className="rv-sec">
           <p className="rv-line">{line}</p>
           <p className="mute small" style={{ margin: 0 }}>
-            القيمة كانت حول <b className="ltr">{money(sale.base)}</b>
-            {sale.outcome !== 'nobody' && '، وممكن ترجع آخر المزاد بدون حد'}
+            القيمة كانت حول <b className="ltr">{money(sale.base)}</b>، ورجعت لصاحبها
           </p>
         </div>
       </div>

@@ -10,7 +10,7 @@ import {
 } from './rules';
 import type {
   Award, BidState, Callout, CalloutKey, CarModel, Core, FinalResults, Hist, LogEntry, LotFull, LotPub,
-  Phase, PlayerPub, ResultRow, Sale, Settings, Timer,
+  Phase, PlayerPub, ResultRow, Sale, Settings, Timer, Verdict,
 } from './types';
 
 export interface HostPlayer extends PlayerPub {
@@ -94,9 +94,16 @@ export function plateFor(name: string, rng: Rng): [string, string] {
   return [ar, en];
 }
 
+// The auctioneer never says the same line twice in a row: each kind of call remembers its last few lines.
+const recentLines = new Map<CalloutKey, string[]>();
 function pickLine(rng: Rng, key: CalloutKey, vars: Record<string, string>): string {
   const pool = AUCTIONEER[key] ?? [''];
-  return fill(rng.pick(pool), vars);
+  const recent = recentLines.get(key) ?? [];
+  const fresh = pool.filter((x) => !recent.includes(x));
+  const line = rng.pick(fresh.length ? fresh : pool);
+  const keep = Math.max(0, Math.min(pool.length - 1, Math.ceil(pool.length / 2), 5));
+  recentLines.set(key, [line, ...recent].slice(0, keep));
+  return fill(line, vars);
 }
 
 export class HostEngine {
@@ -145,6 +152,13 @@ export class HostEngine {
   }
   get lot(): LotFull | null {
     return this.st.idx >= 0 ? this.st.deck[this.st.idx] ?? null : null;
+  }
+  /** A verdict line nobody heard earlier tonight (until the pool runs out). */
+  private freshRoast(v: Verdict): string {
+    const pool = ROASTS[v];
+    const used = new Set(this.st.sales.map((x) => x.roast));
+    const fresh = pool.filter((x) => !used.has(x));
+    return this.rng.pick(fresh.length ? fresh : pool);
   }
   private say(key: CalloutKey, now: number, vars: Record<string, string> = {}) {
     this.st.cid += 1;
@@ -404,7 +418,7 @@ export class HostEngine {
     const sale: Sale = {
       lotId: lot.id, no: lot.no, kind: lot.kind, title: lot.title, car: lot.carFull, buyer: winner, hammer,
       fee: f.fee, vat: f.vat, transfer: f.transfer, paid: f.total, base: lot.base, value, surprise: lot.surprise,
-      profit, verdict, roast: this.rng.pick(ROASTS[verdict]), sealedBids: extra.sealedBids,
+      profit, verdict, roast: this.freshRoast(verdict), sealedBids: extra.sealedBids,
       bids: st.bid?.count ?? extra.sealedBids?.length ?? 1, outcome: 'sold', approved: extra.approved, comps: lot.comps,
     };
     st.sales = [...st.sales, sale];
@@ -427,15 +441,7 @@ export class HostEngine {
       verdict: 'fair', roast: '', bids: high?.count ?? 0, highBid: high?.amount, highBy: high?.by ?? null, outcome,
       comps: lot.comps,
     }];
-    // the TGA rule for unsold impounded cars: back on the block later, cheaper and without a reserve
-    if (lot.kind === 'open' && lot.relist === 0 && st.relists < 2 && outcome !== 'nobody') {
-      st.relists += 1;
-      const opening = roundToStep(Math.min(lot.opening, lot.base * 0.5) * 0.9);
-      st.deck = [...st.deck, {
-        ...lot, id: `${lot.id}-R`, no: st.deck.length + 1, relist: 1, reserve: false, reservePrice: null, opening,
-        estimate: lot.estimate,
-      }];
-    }
+    // an unsold car leaves the hall for good: every lot in a night is a different car, shown once
     st.phase = 'unsold';
     this.setTimer('unsold', now, this.speed.unsold);
     if (outcome === 'declined') this.say('decline', now);
@@ -730,6 +736,8 @@ export class HostEngine {
     return {
       v: 2,
       rev: st.revCore,
+      revLot: st.revLot,
+      revHist: st.revHist,
       hostNow: now,
       phase: st.phase,
       settings: st.settings,

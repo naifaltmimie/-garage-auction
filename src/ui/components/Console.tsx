@@ -3,6 +3,7 @@ import { feesOf, increment, minNextBid } from '../../engine/rules';
 import type { Core, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
+import { Icon } from './Bits';
 import { Paddle } from './Plate';
 
 export function maxBidFor(cash: number, lot: LotPub | null): number {
@@ -246,21 +247,27 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
               <span className="bm-reason">{iAmTop ? 'السوم عندك، انتظر' : reason}</span>
             ) : (
               <>
-                <span>{showOutbid ? 'زاود عليه' : 'زاود'}</span>
-                <b className="t-money">{money(min)}</b>
+                <span className="bm-label">
+                  <Icon name="gavel" size={22} />
+                  {showOutbid ? 'زاود عليه' : top ? 'زاود' : 'افتح السوم'}
+                </span>
+                <span className="bm-amt">
+                  <b>{money(min)}</b>
+                  <small>ريال</small>
+                </span>
               </>
             )}
           </button>
           <div className="bid-chips">
             {chips.map((c) => (
-              <button key={c.n} disabled={!bidding || !!reason || c.amount > maxBid} onClick={() => bid(c.amount)}>
-                <b className="ltr">{money(c.amount)}</b>
-                <small>+{c.n} خطوات</small>
+              <button key={c.n} disabled={!bidding || !!reason || c.amount > maxBid} onClick={() => bid(c.amount)} aria-label={`سُم ${money(c.amount)}`}>
+                <b className="ltr">+{money(c.amount - (top?.amount ?? core.opening))}</b>
+                <small className="ltr">{money(c.amount)}</small>
               </button>
             ))}
-            <button disabled={!bidding || !!reason} onClick={() => setCustom(true)}>
-              <b>مبلغ</b>
-              <small>سوم حر</small>
+            <button className="chip-free" disabled={!bidding || !!reason} onClick={() => setCustom(true)}>
+              <b>سوم حر</b>
+              <small>اكتب مبلغك</small>
             </button>
           </div>
           <div className="bp-foot">

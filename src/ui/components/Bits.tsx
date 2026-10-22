@@ -60,7 +60,7 @@ export function Gavel({ className }: { className?: string }) {
   );
 }
 
-export function Icon({ name, size = 20 }: { name: 'sound' | 'mute' | 'list' | 'users' | 'share' | 'copy' | 'back' | 'close' | 'pause'; size?: number }) {
+export function Icon({ name, size = 20 }: { name: 'sound' | 'mute' | 'list' | 'users' | 'share' | 'copy' | 'back' | 'close' | 'pause' | 'car' | 'gavel' | 'plus'; size?: number }) {
   const p: Record<string, string> = {
     sound: 'M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z',
     mute: 'M4 9v6h4l5 4V5L8 9H4zm15.6 3 2.2-2.2-1.4-1.4-2.2 2.2-2.2-2.2-1.4 1.4 2.2 2.2-2.2 2.2 1.4 1.4 2.2-2.2 2.2 2.2 1.4-1.4z',
@@ -71,6 +71,9 @@ export function Icon({ name, size = 20 }: { name: 'sound' | 'mute' | 'list' | 'u
     back: 'M10 6l-1.4 1.4L12.2 11H4v2h8.2l-3.6 3.6L10 18l6-6z',
     close: 'M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z',
     pause: 'M6 5h4v14H6zm8 0h4v14h-4z',
+    car: 'M5 11.2 6.6 6.6A2.3 2.3 0 0 1 8.8 5h6.4a2.3 2.3 0 0 1 2.2 1.6l1.6 4.6c.7.4 1 1 1 1.8V17a1 1 0 0 1-1 1h-1.3a1 1 0 0 1-1-1v-1H7.3v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4c0-.8.3-1.4 1-1.8zm2.4-.4h9.2l-1.2-3.5a1 1 0 0 0-.9-.6H9.5a1 1 0 0 0-.9.6zM7.3 12.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm9.4 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z',
+    gavel: 'M14.1 2.3 21.7 9.9l-2.1 2.1-1.1-1.1-4.3 4.3 1.1 1.1-2.1 2.1-7.6-7.6 2.1-2.1 1.1 1.1 4.3-4.3-1.1-1.1zM8.3 14.1l1.9 1.9-5.6 5.6-1.9-1.9zM12.5 19.6h9v2.2h-9z',
+    plus: 'M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z',
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">

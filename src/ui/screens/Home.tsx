@@ -38,7 +38,9 @@ export function Home() {
     <div className="home">
       <header className="apphead">
         <span className="brand">
-          <GavelMark />
+          <span className="brand-seal">
+            <GavelMark />
+          </span>
           <span className="brand-name">
             مزاد <b>الكراج</b>
           </span>

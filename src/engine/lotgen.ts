@@ -292,6 +292,8 @@ function adLines(text: string): string[] {
     .map((x) => x.replace(/\s+/g, ' ').trim())
     .filter((x) => x.length >= 8 && x.length <= 110)
     .filter((x) => !/ريال|الف|ألف|سعر|السوم|سوم|للتواصل|تواصل|واتس|جوال|اتصال|رقم|حراج|الموقع|المكان|خاص|@|http/.test(x))
+    // the photos can be a neighbouring model-year: never quote a year that could contradict the lot
+    .filter((x) => !/(^|[^\d])(19|20)\d{2}([^\d]|$)|موديل|ممشى|ممشاها|ماشي|كيلو|\sكم(\s|$)/.test(x))
     .slice(0, 3);
 }
 
@@ -307,7 +309,7 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   kmv = Math.max(age === 0 ? 300 : 4000, Math.min(m.km * 2.4, kmv));
   kmv = Math.round(kmv / 100) * 100;
   // a real ad for this model: its photos decide the colour, and its city/km when stated
-  const ads = PHOTOS[m.id]?.filter((a) => a.imgs.length >= 2) ?? [];
+  const ads = PHOTOS[m.id]?.filter((a) => a.imgs.length >= 3) ?? [];
   const ad = ads.length ? rng.pick(ads) : null;
   if (ad?.km && ad.km > 500 && ad.km < Math.max(m.km, 20_000) * 3 && ad.km > m.km * 0.15) kmv = Math.round(ad.km / 100) * 100;
   const ratio = m.km > 0 ? kmv / m.km : 1;
@@ -742,24 +744,33 @@ export function buildDeck(seed: number, settings: Settings, catalogue: CarModel[
   if (settings.covered) for (let i = 0; i < Math.max(1, Math.round(total * 0.1)); i++) kinds[slots[k++]] = 'covered';
   if (settings.sealed) for (let i = 0; i < Math.max(1, Math.round(total * 0.09)); i++) kinds[slots[k++]] = 'sealed';
 
-  const used = new Map<string, number>();
+  // One car per model family a night, and only cars with a real ad behind them (photos, seller text).
+  // The rules relax step by step only if the catalogue runs dry for a budget band.
+  const usedFam = new Set<string>();
+  const usedId = new Set<string>();
   const tierCount = new Map<Tier, number>();
+  const famKey = (m: CarModel) => `${m.makeEn}|${m.modelEn}`;
+  const hasPics = (m: CarModel) => !!PHOTOS[m.id]?.some((a) => a.imgs.length >= 3);
+  const passes: ((m: CarModel) => boolean)[] = [
+    (m) => hasPics(m) && !usedFam.has(famKey(m)),
+    (m) => !usedFam.has(famKey(m)),
+    (m) => !usedId.has(m.id),
+  ];
   const pickFrom = (bucket: Bucket): CarModel | null => {
     const idx = order.indexOf(bucket);
-    for (const off of [0, 1, -1, 2, -2, 3, -3, 4, -4]) {
-      const bk = order[idx + off];
-      if (!bk) continue;
-      const pool = byBucket[bk].filter((m) => (used.get(`${m.makeEn}|${m.modelEn}`) ?? 0) < 1);
-      const pool2 = pool.length ? pool : byBucket[bk].filter((m) => !used.has(m.id));
-      if (!pool2.length) continue;
-      const weights = pool2.map((m) => {
-        const tc = tierCount.get(m.tier) ?? 0;
-        const pop = m.pop === 'high' ? 1.4 : m.pop === 'medium' ? 1 : 0.7;
-        // cars we have real ad photos for come up far more often
-        const pics = PHOTOS[m.id]?.some((a) => a.imgs.length >= 2) ? 7 : 1;
-        return [m, (pop * pics) / (1 + tc * 0.9)] as const;
-      });
-      return rng.weighted(weights);
+    for (const ok of passes) {
+      for (const off of [0, 1, -1, 2, -2, 3, -3, 4, -4]) {
+        const bk = order[idx + off];
+        if (!bk) continue;
+        const pool = byBucket[bk].filter(ok);
+        if (!pool.length) continue;
+        const weights = pool.map((m) => {
+          const tc = tierCount.get(m.tier) ?? 0;
+          const pop = m.pop === 'high' ? 1.4 : m.pop === 'medium' ? 1 : 0.7;
+          return [m, pop / (1 + tc * 0.9)] as const;
+        });
+        return rng.weighted(weights);
+      }
     }
     return null;
   };
@@ -773,8 +784,8 @@ export function buildDeck(seed: number, settings: Settings, catalogue: CarModel[
     if (kind === 'covered') bucket = rng.weighted([['cheap', 0.34], ['low', 0.26], ['mid', 0.2], ['high', 0.14], ['dream', 0.06]] as const);
     const m = pickFrom(bucket);
     if (!m) break;
-    used.set(`${m.makeEn}|${m.modelEn}`, (used.get(`${m.makeEn}|${m.modelEn}`) ?? 0) + 1);
-    used.set(m.id, 1);
+    usedFam.add(famKey(m));
+    usedId.add(m.id);
     tierCount.set(m.tier, (tierCount.get(m.tier) ?? 0) + 1);
     deck.push(makeLot(rng, m, kind, i + 1, settings));
   }

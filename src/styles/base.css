@@ -1,14 +1,6 @@
 /* مزاد الكراج — design system
    Official-platform feel: stone paper, Saudi green, gold for what's special.
-   Type: Thmanyah Sans (UI) + Thmanyah Serif Display (names, titles, stamps). */
-
-@font-face { font-family: 'Thmanyah Sans'; src: url('/fonts/thmanyah-sans-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'Thmanyah Sans'; src: url('/fonts/thmanyah-sans-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
-@font-face { font-family: 'Thmanyah Sans'; src: url('/fonts/thmanyah-sans-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
-@font-face { font-family: 'Thmanyah Sans'; src: url('/fonts/thmanyah-sans-Black.woff2') format('woff2'); font-weight: 900; font-display: swap; }
-@font-face { font-family: 'Thmanyah Serif Display'; src: url('/fonts/thmanyah-serif-display-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
-@font-face { font-family: 'Thmanyah Serif Display'; src: url('/fonts/thmanyah-serif-display-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
-@font-face { font-family: 'Thmanyah Serif Display'; src: url('/fonts/thmanyah-serif-display-Black.woff2') format('woff2'); font-weight: 900; font-display: swap; }
+   Type: IBM Plex Sans Arabic everywhere (the Saudi government digital standard), bundled from @fontsource. */
 
 :root {
   color-scheme: light;
@@ -48,8 +40,9 @@
   --plate: #fbfbf8;
   --plate-ink: #111;
 
-  --f-ui: 'Thmanyah Sans', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
-  --f-display: 'Thmanyah Serif Display', 'Thmanyah Sans', Georgia, serif;
+  --f-ui: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --f-display: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --f-num: 'IBM Plex Sans Arabic', system-ui, sans-serif;
 
   --r-sm: 10px;
   --r: 14px;
@@ -61,6 +54,7 @@
   --ease: cubic-bezier(.2, .8, .2, 1);
   --ease-pop: cubic-bezier(.2, 1.5, .4, 1);
   --top-h: 58px;
+  --top-total: calc(var(--top-h) + env(safe-area-inset-top, 0px));
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
 
@@ -192,9 +186,8 @@ img {
 
 .t-display {
   font-family: var(--f-display);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -.005em;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .t-title {
@@ -207,11 +200,11 @@ img {
   font-size: 12.5px;
   font-weight: 700;
   color: var(--mute);
-  letter-spacing: .01em;
 }
 
 .t-money {
-  font-weight: 900;
+  font-family: var(--f-num);
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   direction: ltr;
   unicode-bidi: isolate;
@@ -220,9 +213,9 @@ img {
 
 .section-title {
   font-family: var(--f-display);
-  font-weight: 900;
-  font-size: 30px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.3;
   margin: 0;
 }
 
@@ -275,24 +268,34 @@ img {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  padding: 0 18px;
-  border-radius: var(--r);
+  min-height: 50px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 1px solid transparent;
   font-weight: 700;
   font-size: 16px;
   line-height: 1.2;
   white-space: nowrap;
-  transition: transform .12s var(--ease), box-shadow .2s var(--ease), background-color .2s, opacity .2s;
+  transition: transform .12s var(--ease), box-shadow .18s var(--ease), background-color .2s, filter .2s, opacity .2s;
   user-select: none;
+  -webkit-user-select: none;
+  isolation: isolate;
+}
+
+.btn svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 
 .btn:active:not(:disabled) {
-  transform: scale(.975);
+  transform: translateY(1px) scale(.985);
 }
 
 .btn:disabled {
-  opacity: .42;
+  opacity: .45;
   cursor: not-allowed;
+  filter: saturate(.6);
 }
 
 .btn-block {
@@ -300,43 +303,78 @@ img {
   width: 100%;
 }
 
+/* Saudi green, lit from above */
 .btn-primary {
   color: #fff;
-  background: var(--green);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .18) inset, 0 1px 2px rgba(4, 33, 26, .2);
+  background: linear-gradient(180deg, #16a067 0%, #0e8253 48%, #0a6b44 100%);
+  border-color: #07573a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    inset 0 -2px 0 rgba(0, 0, 0, .12),
+    0 1px 1px rgba(4, 33, 26, .22),
+    0 8px 18px -8px rgba(12, 122, 78, .7);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .18);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--green-700);
+  filter: brightness(1.04);
 }
 
+.btn-primary:active:not(:disabled) {
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .22), 0 1px 1px rgba(4, 33, 26, .15);
+}
+
+/* brushed gold: the big moments (open the hall, start the auction) */
 .btn-gold {
-  color: #241900;
-  background: var(--gold-hi);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .35) inset, 0 1px 2px rgba(60, 40, 0, .25);
+  color: #2a1d02;
+  background: linear-gradient(180deg, #f7e7b0 0%, #e8c879 30%, #d4a94c 62%, #b98c31 100%);
+  border-color: #9a7322;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .7),
+    inset 0 -2px 0 rgba(110, 72, 8, .2),
+    0 1px 1px rgba(60, 40, 0, .25),
+    0 10px 22px -10px rgba(154, 115, 34, .85);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.btn-gold:active:not(:disabled) {
+  box-shadow: inset 0 2px 6px rgba(90, 60, 5, .3), 0 1px 1px rgba(60, 40, 0, .2);
 }
 
 .btn-dark {
   color: #fff;
-  background: var(--green-900);
+  background: linear-gradient(180deg, var(--green-800), var(--green-950));
+  border-color: #021a13;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 18px -10px rgba(4, 33, 26, .8);
 }
 
 .btn-ghost {
   color: var(--ink);
-  background: var(--card);
-  border: 1px solid var(--line-2);
+  background: linear-gradient(180deg, #fff, #f7f8f5);
+  border-color: var(--line-2);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(14, 28, 21, .06);
+}
+
+.btn-ghost:active:not(:disabled) {
+  background: var(--bg-2);
 }
 
 .btn-quiet {
   min-height: 40px;
-  padding: 0 10px;
-  color: var(--green);
+  padding: 0 12px;
+  color: var(--green-700);
   font-weight: 700;
+  border-radius: 10px;
+}
+
+.btn-quiet:active:not(:disabled) {
+  background: var(--green-50);
 }
 
 .btn-danger {
   color: var(--red);
   background: var(--red-50);
+  border-color: #f3c9c5;
 }
 
 .iconbtn {
@@ -627,7 +665,7 @@ img {
 
 .toasts {
   position: fixed;
-  top: calc(var(--top-h) + 10px);
+  top: calc(var(--top-total) + 10px);
   inset-inline: 0;
   z-index: 90;
   display: grid;

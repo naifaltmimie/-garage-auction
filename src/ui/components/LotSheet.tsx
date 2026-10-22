@@ -40,8 +40,27 @@ export function bodyAr(b: CarPub['body']): string {
   return { sedan: 'سيدان', suv: 'جيب', pickup: 'ونيت', coupe: 'كوبيه', hatch: 'هاتشباك', van: 'فان', convertible: 'مكشوفة', wagon: 'ستيشن' }[b] ?? 'سيارة';
 }
 
+export function specParts(car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'trans' | 'fuel'>): string[] {
+  return [car.engine, car.hp ? `${car.hp} حصان` : null, DRIVE_AR[car.drive], transAr(car.trans), car.fuel === 'petrol' ? null : FUEL_AR[car.fuel]].filter(Boolean) as string[];
+}
+
 export function specLine(car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'trans' | 'fuel'>): string {
-  return [car.engine, car.hp ? `${car.hp} حصان` : null, DRIVE_AR[car.drive], transAr(car.trans), FUEL_AR[car.fuel]].filter(Boolean).join('، ');
+  return specParts(car).join('، ');
+}
+
+/** Spec bits mix Latin ("6.2L V8") and Arabic: each one is isolated so the line reads right to left. */
+function SpecLine({ car }: { car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'trans' | 'fuel'> }) {
+  const parts = specParts(car);
+  return (
+    <span className="spec-line">
+      {parts.map((x, i) => (
+        <span key={i}>
+          <bdi dir="rtl">{x}</bdi>
+          {i < parts.length - 1 ? '، ' : ''}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 /** Make / model / trim / year block. */
@@ -50,7 +69,7 @@ export function CarTitle({ car, compact }: { car: Pick<CarPub, 'makeAr' | 'makeE
     <div className={`car-title ${compact ? 'compact' : ''}`}>
       <div className="car-make">
         <span>{car.makeAr}</span>
-        <span className="en">{car.makeEn}</span>
+        {car.makeAr !== car.makeEn && <span className="en">{car.makeEn}</span>}
         {car.nick && <span className="nick">«{car.nick}»</span>}
       </div>
       <h2 className="car-name">
@@ -58,7 +77,7 @@ export function CarTitle({ car, compact }: { car: Pick<CarPub, 'makeAr' | 'makeE
       </h2>
       <div className="car-year">
         <b className="ltr">{car.year}</b>
-        {!compact && <span>{specLine(car)}</span>}
+        {!compact && <SpecLine car={car} />}
       </div>
     </div>
   );

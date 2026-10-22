@@ -126,6 +126,85 @@ def tidy_trim(t, model_en, model_ar):
     return t
 
 
+# Names Saudis write in English letters on Haraj ("لكزس LX570", "مرسيدس G63", "BMW M4") stay English;
+# names said as words ("كامري", "باترول", "رنج روفر") stay Arabic.
+LETTER_NAMES = {'اكس', 'إكس', 'جي', 'اي', 'إي', 'ال', 'سي', 'اس', 'إس', 'ار', 'آر', 'تي', 'في', 'دي', 'كيو', 'ام', 'إم',
+                'اف', 'إف', 'اتش', 'إتش', 'ايتش', 'زد', 'بي', 'كي', 'يو', 'واي', 'ان', 'ايه', 'او', 'بلس', 'برو', 'كلاس',
+                'ماكس', 'يوني'}
+MODEL_DISPLAY = {'FJ Cruiser': 'FJ', 'C63 S AMG Coupe': 'C63 S كوبيه', 'A8 L': 'A8L', 'SF90 Spider': 'SF90 Spider',
+                 'F8 Tributo': 'F8 Tributo', 'Continental GT': 'كونتيننتال GT', 'S500 (W140)': 'S500',
+                 'Aventador S': 'افنتادور S'}
+MAKE_DISPLAY = {'BMW': 'BMW', 'GMC': 'GMC', 'MG': 'MG', 'BYD': 'BYD', 'RAM': 'RAM', 'GWM': 'GWM', 'FAW': 'FAW',
+                'Chevrolet': 'شفروليه', 'Genesis': 'جينيسس', 'Nissan (Datsun)': 'نيسان'}
+# trim words: codes and badge names in English, body/cab descriptions the way the market says them
+TRIM_WORDS = [
+    (r'فوج اس اي', 'Vogue SE'), (r'هلكات ريد اي', 'Hellcat Redeye'), (r'وايد بدي', 'Widebody'), (r'سكات باك', 'Scat Pack'),
+    (r'لاست كول', 'Last Call'), (r'كمفورت', 'Comfort'), (r'كومبتشن', 'Competition'), (r'سجنتشر', 'Signature'),
+    (r'لاريت', 'Lariat'), (r'ليمتد', 'Limited'), (r'بلاتينيوم', 'Platinum'), (r'دينالي', 'Denali'),
+    (r'(?<=GF )سبورت', 'Sport'), (r'\bcrew ?cab\b', 'غمارتين'), (r'\bSuperCrew\b', 'غمارتين'), (r'\bCrewMax\b', 'غمارتين'),
+    (r'\bdouble ?cab\b', 'غمارتين'), (r'\bsingle ?cab\b', 'غمارة'), (r'\bpetrol manual\b', 'بنزين عادي'),
+    (r'\bmanual\b', 'عادي'), (r'\bpetrol\b', 'بنزين'), (r'\bstation wagon\b', 'ستيشن'), (r'\b(\d+)-seat(?:er)?\b', r'\1 راكب'),
+    (r'\b4-door\b', ''),
+]
+
+
+def tidy_words(t):
+    for pat, rep in TRIM_WORDS:
+        t = re.sub(pat, rep, t, flags=re.I)
+    return re.sub(r'\s+', ' ', t).strip()
+
+
+def display_model(make_en, model_en, model_ar):
+    if model_en in MODEL_DISPLAY:
+        return MODEL_DISPLAY[model_en]
+    toks = (model_ar or '').split()
+    latin = lambda t: re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z\-\.]*', t)  # noqa: E731
+    if toks and all(t in LETTER_NAMES or latin(t) for t in toks):
+        name = re.sub(r'\s*\([^)]*\)', '', model_en or '').strip()
+        if name.lower().startswith(make_en.lower() + ' '):
+            name = name[len(make_en) + 1:]
+        return name or model_ar
+    return model_ar
+
+
+def tidy_engine(eng, fuel):
+    """One house style: '2.5L 4 سلندر', '5.7L V8', '2.0L تيربو 4 سلندر', '2.8L ديزل تيربو'."""
+    e = eng or ''
+    low = e.lower()
+    disp = re.search(r'(\d\.\d)\s*l', low) or re.search(r'(\d\.\d)', low)
+    disp = f'{disp.group(1)}L' if disp else ''
+    cyl = ''
+    m = re.search(r'\b([vw])\s?(6|8|10|12|16)\b', low)
+    if m:
+        cyl = f'{m.group(1).upper()}{m.group(2)}'
+    else:
+        m = re.search(r'\b(?:i|l|inline[- ]?)(3|4|5|6)\b', low) or re.search(r'(\d{1,2})\s*(?:سلندر|cyl|-cyl|سلندرات)', low) \
+            or re.search(r'(?:straight|flat|h)[- ]?(4|6)\b', low)
+        if m:
+            cyl = f'{m.group(1)} سلندر'
+    turbo = ''
+    if re.search(r'twin[- ]?turbo|توين تيربو|bi-?turbo|تيربو مزدوج', low):
+        turbo = 'توين تيربو'
+    elif re.search(r'turbo|تيربو|ecoboost|tfsi|\btsi\b|\bt-gdi\b|tgdi|\bt\b', low):
+        turbo = 'تيربو'
+    sc = 'سوبرتشارج' if re.search(r'supercharg|سوبر ?تشارج', low) else ''
+    diesel = 'ديزل' if (fuel == 'diesel' or re.search(r'diesel|ديزل', low)) else ''
+    hybrid = 'هايبرد' if (fuel == 'hybrid' or re.search(r'hybrid|هايبرد|هجين', low)) else ''
+    if fuel == 'ev' or re.search(r'\bev\b|electric|كهرب', low):
+        return 'كهربائي'
+    if not disp and not cyl:
+        return e.strip()
+    parts = [disp]
+    if diesel:
+        parts += [diesel, turbo or ''] if turbo else [diesel]
+        parts += [cyl] if cyl and not cyl.endswith('سلندر') else []
+    else:
+        parts += [turbo or sc, cyl]
+    if hybrid:
+        parts.append(hybrid)
+    return ' '.join(x for x in parts if x).strip()
+
+
 def comps_of(e):
     """Up to four real listings this entry was priced from: [price, km|null, city|null, source]."""
     out = []
@@ -212,6 +291,9 @@ def convert(e, seen):
     pop = str(e.get('popularity') or 'medium').lower()
     pop = pop if pop in POP else 'medium'
 
+    model_ar = display_model(make_en, model_en, model_ar)
+    trim = tidy_words(trim)
+    make_ar = MAKE_DISPLAY.get(make_en, make_ar)
     out = {
         'id': eid, 'makeAr': make_ar, 'makeEn': make_en, 'modelAr': model_ar, 'modelEn': model_en,
     }
@@ -223,7 +305,7 @@ def convert(e, seen):
     if trim_ar:
         out['trimAr'] = trim_ar
     out.update({
-        'body': body, 'engine': str(e.get('engine') or '').strip(),
+        'body': body, 'engine': tidy_engine(str(e.get('engine') or ''), fuel),
     })
     hp = as_int(e.get('hp'))
     if hp:

@@ -65,10 +65,13 @@ export const DEFAULT_SETTINGS: Settings = {
   ratingWeight: 0.5,
 };
 
+/** How many cars a garage holds; the host picks one of these. */
+export const GARAGE_SIZES = [3, 4, 5, 6, 8, 10] as const;
+
 export function lotsFor(s: Settings, players: number): number {
   if (s.lots > 0) return s.lots;
   const n = Math.max(2, players);
-  return Math.max(10, Math.min(36, Math.round(n * s.garage * 1.3)));
+  return Math.max(10, Math.min(40, Math.round(n * s.garage * 1.3)));
 }
 
 export const VAT = 0.15;

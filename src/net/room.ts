@@ -96,7 +96,11 @@ export class HostRoom {
     this.bus.start();
     this.bus.sub([this.t.actAll]);
     this.tickId = setInterval(() => this.apply(this.engine.tick(Date.now())), 100);
-    this.beatId = setInterval(() => this.publish({ core: true }, true), 2500);
+    let beats = 0;
+    this.beatId = setInterval(() => {
+      beats += 1;
+      this.publish({ core: true, lot: beats % 4 === 0 }, true);
+    }, 2500);
     this.save();
   }
 
@@ -246,6 +250,8 @@ export class PlayerRoom {
   private pingId: ReturnType<typeof setInterval> | null = null;
   private helloId: ReturnType<typeof setInterval> | null = null;
   private welcomed = false;
+  private behindSince = 0;
+  private lastResync = 0;
   private hostGone = false;
   private lastHeard = 0;
   private busStatus: BusStatus = { connected: false, via: [], active: null };
@@ -325,6 +331,15 @@ export class PlayerRoom {
       this.h.onSnap(this.snap);
       this.emitStatus();
       if (!c.players.some((p) => p.id === this.me.pid)) this.welcomed = false;
+      // a lost lot/history message must never leave a phone on a spinner: ask the host to resend
+      const behind = (c.revLot ?? -1) > this.revs.lot || (c.revHist ?? -1) > this.revs.hist;
+      const now = Date.now();
+      if (!behind) this.behindSince = 0;
+      else if (!this.behindSince) this.behindSince = now;
+      else if (now - this.behindSince > 1500 && now - this.lastResync > 4000) {
+        this.lastResync = now;
+        this.hello();
+      }
     } else if (topic === t.lot) {
       const l = await unseal<{ rev: number; lot: LotPub | null }>(this.keys.key, payload);
       if (!l || l.rev <= this.revs.lot) return;
