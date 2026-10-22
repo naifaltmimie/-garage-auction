@@ -170,6 +170,14 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
 
         {stage >= 2 && <Comps comps={sale.comps} />}
 
+        {stage >= 2 && sale.car.adUrl && (
+          // the car on the block is a real one: after the hammer, anyone can open its Haraj ad
+          <a className="rv-adlink" href={sale.car.adUrl} target="_blank" rel="noopener noreferrer">
+            <span>السيارة هذي من إعلان حقيقي في حراج</span>
+            <b>افتح الإعلان الأصلي</b>
+          </a>
+        )}
+
         <button className="btn btn-ghost btn-block" onClick={() => setHidden(true)}>
           رجوع للتقرير
         </button>

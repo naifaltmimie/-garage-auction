@@ -273,7 +273,7 @@
   background: var(--green-950);
 }
 
-.cover img,
+.cover .cover-img,
 .cover-blank {
   position: absolute;
   inset: 0;
@@ -403,7 +403,7 @@
   box-shadow: var(--sh-1);
 }
 
-.strip img {
+.strip .strip-img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -550,6 +550,85 @@
 
 .budget[aria-pressed='true'] .t-money {
   color: var(--green-700);
+}
+
+/* the night's market: one card per real slice of the Saudi market */
+.markets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.market {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-height: 86px;
+  padding: 11px 12px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: start;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+
+.market b {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* «متنوع» leads across the full width; the twelve themed markets pair up below it */
+.markets:not(.markets-compact) .market:first-child {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.market small {
+  color: var(--mute);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.market-count {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--paper-2, rgba(0, 0, 0, .05));
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.market[aria-checked='true'] {
+  border-color: var(--green);
+  background: var(--green-50);
+  box-shadow: 0 0 0 1px var(--green) inset;
+}
+
+.markets-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.markets-compact .market {
+  min-height: 0;
+  padding: 9px 8px;
+  text-align: center;
+}
+
+.markets-compact .market b {
+  font-size: 13.5px;
+}
+
+.markets-compact .market:first-child {
+  grid-column: 1 / -1;
+}
+
+.market[aria-checked='true'] .market-count {
+  background: var(--green);
+  color: #fff;
 }
 
 /* ================================================================ lobby */
@@ -880,10 +959,41 @@
   box-shadow: inset 0 0 0 1px rgba(154, 115, 34, .35);
 }
 
-.kplate.rare .kp-tag {
+.kplate.rare .kp-tag,
+.kplate.legend .kp-tag {
   background: linear-gradient(180deg, #1f1f1f, #000);
   color: var(--gold-hi);
   box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .5);
+}
+
+/* one letter and one digit: the plates Absher sells for millions */
+.kplate.legend .kp-face {
+  border-color: #3b2a06;
+  box-shadow:
+    inset 0 0 0 1.5px #fff,
+    inset 0 0 0 2.2px rgba(0, 0, 0, .6),
+    0 0 0 2px var(--gold-hi),
+    0 0 0 4px #111,
+    0 4px 16px rgba(166, 124, 38, .6);
+}
+
+.kplate.legend .kp-tag {
+  font-size: 12px;
+  padding: 3px 11px;
+  letter-spacing: 0;
+}
+
+.plate-chip small {
+  font-size: .86em;
+  font-weight: 600;
+  opacity: .85;
+}
+
+.plate-chip.legend,
+.plate-chip.rare {
+  background: #111;
+  color: var(--gold-hi);
+  border-color: #111;
 }
 
 /* ================================================================ auction */
@@ -909,10 +1019,12 @@
   max-height: 58dvh;
   width: 100%;
   overflow: hidden;
-  background: #0b1611;
+  background: #26302b;
 }
 
 .g-track {
+  position: relative;
+  z-index: 1;
   display: flex;
   width: 100%;
   height: 100%;
@@ -927,6 +1039,7 @@
   display: none;
 }
 
+/* while a photo is on its way the frame is a soft moving skeleton, never a black box */
 .g-slide {
   position: relative;
   flex: 0 0 100%;
@@ -934,9 +1047,21 @@
   height: 100%;
   overflow: hidden;
   scroll-snap-align: center;
+  background: linear-gradient(100deg, #dfe4dd 30%, #eef1ec 50%, #dfe4dd 70%) 0 0 / 300% 100%;
+  animation: g-shimmer 1.4s linear infinite;
 }
 
-.g-slide img {
+.g-slide:has(.g-img.ok) {
+  background: transparent;
+  animation: none;
+}
+
+@keyframes g-shimmer {
+  to { background-position: -150% 0; }
+}
+
+.g-slide img,
+.gallery > .g-fill {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -945,14 +1070,29 @@
   -webkit-user-drag: none;
 }
 
-.g-fill {
+/* one soft fill of the current photo behind the frame (portrait phone shots leave side bars) */
+.gallery > .g-fill {
+  z-index: 0;
   object-fit: cover;
-  filter: blur(18px) brightness(.62) saturate(1.1);
-  transform: scale(1.18);
+  filter: blur(16px) brightness(.62) saturate(1.1);
+  transform: scale(1.15);
+  opacity: 0;
+  transition: opacity .35s;
 }
 
 .g-img {
   object-fit: contain;
+  opacity: 0;
+  transition: opacity .25s;
+}
+
+.g-img.ok,
+.gallery > .g-fill.ok {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-slide { animation: none; }
 }
 
 .g-studio {
@@ -1013,11 +1153,10 @@
   gap: 4px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(6, 20, 14, .72);
+  background: rgba(6, 20, 14, .82);
   color: #fff;
   font-size: 12.5px;
   font-weight: 700;
-  backdrop-filter: blur(6px);
 }
 
 .g-lot b {
@@ -1351,7 +1490,6 @@
   gap: 4px;
   padding: 0 10px;
   background: rgba(255, 255, 255, .96);
-  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
   overflow-x: auto;
   scrollbar-width: none;
@@ -1691,6 +1829,43 @@
 
 .quote p:last-child {
   margin-bottom: 0;
+}
+
+/* the real ad's own headline, above the seller's words */
+.ad-head {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 10px;
+}
+
+.ad-head small {
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pane .ad-head h4 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* the model's usual spec where the ad didn't say */
+.table > div.typical dd {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.table dd sup {
+  margin-inline-start: 2px;
+  color: var(--gold, #a67c26);
+  font-weight: 700;
+}
+
+.spec-note {
+  margin: 8px 2px 0;
 }
 
 /* ================================================================ bid panel */
@@ -2047,6 +2222,27 @@
   font-weight: 700;
 }
 
+/* tapped: the bid is on its way to the host — the button keeps its colour so the tap feels instant */
+.btn-primary.bid-main.sending:disabled {
+  background: linear-gradient(180deg, #13935e 0%, #0d7a4f 50%, #08603e 100%);
+  color: #fff;
+  border-color: transparent;
+  justify-content: space-between;
+}
+
+.bm-spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  animation: bm-spin .7s linear infinite;
+}
+
+@keyframes bm-spin {
+  to { transform: rotate(360deg); }
+}
+
 .bid-chips {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2189,8 +2385,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(4, 22, 15, .55);
-  backdrop-filter: blur(3px);
+  background: rgba(4, 22, 15, .64);
   animation: fade .25s both;
 }
 
@@ -2574,6 +2769,57 @@
   place-items: center;
   text-align: center;
   padding: 20px 0;
+}
+
+/* the night's market, announced like a sale catalogue's cover */
+.market-banner {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 12px 22px 13px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f3b2a, #0a2a1e);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .45), 0 6px 18px rgba(6, 30, 20, .25);
+}
+
+.market-banner small {
+  color: var(--gold-hi);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.market-banner b {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.market-banner span {
+  color: rgba(255, 255, 255, .72);
+  font-size: 13px;
+}
+
+/* after the hammer: the real ad this car came from */
+.rv-adlink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.rv-adlink b {
+  color: var(--green-700);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .intro-call {

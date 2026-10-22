@@ -6,7 +6,8 @@ import { SELLER, fill } from './lines';
 import { SELLER_LINES } from './realism_lines';
 import { historyFor, micronsFor, rollSurprise, scanFor } from './realism';
 import { TRANSFER_FEE, increment, roundToStep } from './rules';
-import { PHOTOS } from '../data/photos';
+import { marketOf } from './markets';
+import { PHOTOS, type AdSet } from '../data/photos';
 import type {
   Body, CarModel, CarPub, Cond, FeeRule, LotFull, LotKind, Mech, PanelId, PanelStatus, PlatePub, SaleMode, Seller, Settings,
   Surprise, Tier,
@@ -209,6 +210,9 @@ function niceRound(v: number): number {
 export interface Built {
   /** the real ad's own words, when the car comes from one */
   adText?: string;
+  ad?: AdSet | null;
+  /** lines already used tonight (no two lots share a seller or inspector line) */
+  used?: Set<string>;
   car: CarPub;
   truth: CarPub;
   value: number;
@@ -229,41 +233,113 @@ function plateOf(letters: (readonly [string, string])[], num: string, special?: 
   return { ar: letters.map((l) => l[0]).join(' '), en: letters.map((l) => l[1]).join(' '), num, special };
 }
 
-export function makePlate(rng: Rng, m: CarModel): PlatePub {
-  const pick3 = () => [rng.pick(PLATE_LETTERS), rng.pick(PLATE_LETTERS), rng.pick(PLATE_LETTERS)];
-  const same3 = () => {
-    const l = rng.pick(PLATE_LETTERS);
-    return [l, l, l];
+/** Does this number/letter set look special to a Saudi eye? (normal plates must never look special) */
+function looksSpecial(num: string, letters: readonly (readonly [string, string])[]): boolean {
+  if (num.length <= 2) return true;
+  if (/^(\d)\1+$/.test(num)) return true; // 777, 7777
+  if (/^[1-9]0{2,}$/.test(num)) return true; // 100, 1000
+  if (/^(\d)(\d)\1\2$/.test(num) || /^(\d)(\d)\2\1$/.test(num)) return true; // 1212, 1221
+  if (num === '1234' || num === '4321' || num === '123' || num === '321') return true;
+  return letters.length < 3 || letters.every((l) => l === letters[0]);
+}
+
+/**
+ * A Saudi private plate. Most are ordinary (three letters, four digits) and carry no tag at all. The special
+ * ones follow what really trades: one letter and one digit (Absher sold «ع 1» for 21 million and «ط 1» for
+ * 4.15 million), two letters and two digits («م م 22» 1.47 million), three letters and one digit (~100 ألف),
+ * three letters and two digits (15–40 ألف), four identical digits, and the cheaper «حلوة» patterns.
+ * `cap` keeps a plate within what the room can pay (half a player's budget).
+ */
+export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
+  const L = () => rng.pick(PLATE_LETTERS);
+  const three = () => {
+    for (;;) {
+      const x = [L(), L(), L()];
+      if (!(x[0] === x[1] && x[1] === x[2])) return x;
+    }
+  };
+  const same = (n: number) => {
+    const l = L();
+    return Array.from({ length: n }, () => l);
   };
   const d = () => String(rng.int(1, 9));
-  const posh = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport';
-  const roll = rng.next();
-  const k = posh ? 2.6 : 1;
   const round = (v: number, step: number) => Math.round(v / step) * step;
-  if (roll < 0.008 * k) {
-    const num = rng.chance(0.5) ? d() : d().repeat(2);
-    const letters = rng.chance(0.6) ? same3() : [rng.pick(PLATE_LETTERS)];
-    return plateOf(letters, num, { tier: 'rare', label: 'لوحة نادرة', value: round(rng.range(180_000, 900_000), 10_000) });
+  const posh = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport';
+  const w = (normal: number, rich: number) => (posh ? rich : normal);
+  const tiers: [string, number][] = [
+    ['legend', cap >= 900_000 ? w(0.0015, 0.006) : 0],
+    ['rare', cap >= 250_000 ? w(0.0035, 0.012) : 0],
+    ['top', cap >= 60_000 ? w(0.01, 0.025) : 0],
+    ['special', cap >= 12_000 ? w(0.03, 0.05) : 0],
+    ['nice', cap >= 3_000 ? w(0.06, 0.07) : 0],
+  ];
+  let roll = rng.next();
+  let tier = 'normal';
+  for (const [t, p] of tiers) {
+    if (roll < p) {
+      tier = t;
+      break;
+    }
+    roll -= p;
   }
-  if (roll < 0.033 * k) {
+
+  if (tier === 'legend') {
     const x = d();
-    const num = rng.chance(0.5) ? x.repeat(3) : x.repeat(4);
-    const letters = rng.chance(0.45) ? same3() : pick3();
-    return plateOf(letters, num, { tier: 'top', label: 'لوحة مميزة جداً', value: round(rng.range(35_000, 160_000), 1_000) });
+    const v = x === '1' ? rng.range(2_500_000, 4_500_000) : rng.range(900_000, 2_800_000);
+    return plateOf([L()], x, { tier: 'legend', label: 'لوحة أسطورية', note: 'حرف ورقم', value: round(Math.min(v, cap), 50_000) });
   }
-  if (roll < 0.075 * k) {
-    const num = rng.pick(['1000', '2000', '3000', '5000', '2030', '1234', '9000', '7000', '1400', '1447']);
-    return plateOf(pick3(), num, { tier: 'special', label: 'لوحة مميزة', value: round(rng.range(9_000, 45_000), 500) });
+  if (tier === 'rare') {
+    if (rng.chance(0.7)) {
+      const x = d();
+      const v = x === '1' || x === '9' ? rng.range(600_000, 1_500_000) : rng.range(250_000, 1_000_000);
+      return plateOf(same(2), x + x, { tier: 'rare', label: 'لوحة نادرة', note: 'حرفين ورقمين', value: round(Math.min(v, cap), 10_000) });
+    }
+    return plateOf(same(3), d(), { tier: 'rare', label: 'لوحة نادرة', note: 'ثلاث حروف متشابهة ورقم', value: round(Math.min(rng.range(300_000, 1_200_000), cap), 10_000) });
   }
-  if (roll < 0.12 * k) {
-    const a = d();
-    const b = d();
-    const num = rng.chance(0.5) ? `${a}${b}${a}${b}` : String(rng.int(1000, 9999));
-    const letters = num.length === 4 && num[0] === num[2] ? pick3() : same3();
-    return plateOf(letters, num, { tier: 'nice', label: 'لوحة حلوة', value: round(rng.range(3_000, 14_000), 500) });
+  if (tier === 'top') {
+    if (rng.chance(0.7)) {
+      const x = d();
+      const v = rng.range(60_000, 160_000) * (x === '1' ? 1.5 : 1);
+      return plateOf(three(), x, { tier: 'top', label: 'لوحة مميزة جداً', note: 'رقم واحد', value: round(Math.min(v, cap), 5_000) });
+    }
+    const x = d();
+    return plateOf(same(3), x + x, { tier: 'top', label: 'لوحة مميزة جداً', note: 'حروف متشابهة ورقمين', value: round(Math.min(rng.range(120_000, 300_000), cap), 5_000) });
   }
-  const num = rng.chance(0.85) ? String(rng.int(1000, 9999)) : String(rng.int(100, 999));
-  return plateOf(pick3(), num);
+  if (tier === 'special') {
+    const kind = rng.weighted([['two', 45], ['four', 35], ['same3', 20]] as const);
+    if (kind === 'two') {
+      const twin = rng.chance(0.35);
+      const num = twin ? d().repeat(2) : String(rng.int(10, 99));
+      const v = twin ? rng.range(25_000, 70_000) : rng.range(12_000, 40_000);
+      return plateOf(three(), num, { tier: 'special', label: 'لوحة مميزة', note: twin ? 'رقمين متشابهة' : 'رقمين', value: round(v, 500) });
+    }
+    if (kind === 'four') {
+      return plateOf(three(), d().repeat(4), { tier: 'special', label: 'لوحة مميزة', note: 'أربعة أرقام متشابهة', value: round(rng.range(20_000, 60_000), 500) });
+    }
+    return plateOf(same(3), d().repeat(3), { tier: 'special', label: 'لوحة مميزة', note: 'حروف وأرقام متشابهة', value: round(rng.range(30_000, 90_000), 500) });
+  }
+  if (tier === 'nice') {
+    const kind = rng.weighted([['three', 30], ['thousand', 20], ['letters', 25], ['pattern', 15], ['hundred', 10]] as const);
+    if (kind === 'three') return plateOf(three(), d().repeat(3), { tier: 'nice', label: 'لوحة حلوة', note: 'ثلاث أرقام متشابهة', value: round(rng.range(6_000, 18_000), 500) });
+    if (kind === 'thousand') return plateOf(three(), `${d()}000`, { tier: 'nice', label: 'لوحة حلوة', note: 'رقم ألفي', value: round(rng.range(5_000, 15_000), 500) });
+    if (kind === 'hundred') return plateOf(three(), `${d()}00`, { tier: 'nice', label: 'لوحة حلوة', note: 'رقم مئوي', value: round(rng.range(4_000, 10_000), 500) });
+    if (kind === 'pattern') {
+      const a = d();
+      let b = d();
+      while (b === a) b = d();
+      const num = rng.pick([`${a}${b}${a}${b}`, `${a}${b}${b}${a}`, '1234']);
+      return plateOf(three(), num, { tier: 'nice', label: 'لوحة حلوة', note: num === '1234' ? 'أرقام متسلسلة' : 'أرقام متكررة', value: round(rng.range(3_000, 9_000), 500) });
+    }
+    let num = String(rng.int(1000, 9999));
+    while (looksSpecial(num, [['ا', 'A'], ['ب', 'B'], ['ح', 'J']])) num = String(rng.int(1000, 9999));
+    return plateOf(same(3), num, { tier: 'nice', label: 'لوحة حلوة', note: 'ثلاث حروف متشابهة', value: round(rng.range(4_000, 12_000), 500) });
+  }
+  // an ordinary plate: nothing about it may look special
+  for (;;) {
+    const letters = three();
+    const num = rng.chance(0.9) ? String(rng.int(1000, 9999)) : String(rng.int(101, 999));
+    if (!looksSpecial(num, letters)) return plateOf(letters, num);
+  }
 }
 
 const AD_COLORS: [RegExp, string][] = [
@@ -271,6 +347,51 @@ const AD_COLORS: [RegExp, string][] = [
   [/اسود|أسود/, 'أسود'], [/شمباني|ذهبي/, 'شمباني'], [/بيج/, 'بيج'], [/عنابي|ماروني|خمري/, 'عنابي'], [/كحلي/, 'كحلي'],
   [/احمر|أحمر/, 'أحمر'], [/ازرق|أزرق/, 'أزرق'], [/زيتي|اخضر|أخضر/, 'أخضر زيتي'], [/بني/, 'بني'], [/برتقالي/, 'برتقالي'], [/اصفر|أصفر/, 'أصفر'],
 ];
+
+/** Where the car was made for, when the ad says. */
+function specFromAd(t: string): CarPub['specKind'] | null {
+  if (/سلفج|salvage/i.test(t)) return 'us_salvage';
+  if (/وارد\s*(امريكي|أمريكي|أمريكا|امريكا)|امريكي|أمريكي|مواصفات امريكيه/.test(t)) return 'us';
+  if (/كندي|وارد كندا/.test(t)) return 'ca';
+  if (/ياباني|وارد اليابان/.test(t)) return 'jp';
+  if (/اوروبي|أوروبي|المانيا|ألمانيا/.test(t)) return 'eu';
+  if (/خليجي|خليجيه|خليجية/.test(t)) return 'gcc';
+  if (/سعودي|وكاله|وكالة|عبداللطيف جميل|الجميح|الوعلان|المجدوعي|الناغي|الجزيرة/.test(t)) return 'saudi';
+  return null;
+}
+
+function sellerFromAd(t: string): Seller | null {
+  if (/معرض|معارض|للسيارات|المتميز للسيارات/.test(t)) return 'showroom';
+  if (/تأجير|تاجير|ايجار/.test(t)) return 'rental';
+  if (/مالك اول|مالك أول|استخدام شخصي|سيارتي|موتري/.test(t)) return 'owner';
+  return null;
+}
+
+function interiorFromAd(t: string): string | null {
+  const m = /(داخلي[ةه]?|المقاعد|الفرش)[^.،\n]{0,24}?(بيج|أسود|اسود|بني|رمادي|أحمر|احمر|كريمي|عنابي)/.exec(t);
+  if (!m) return null;
+  return { اسود: 'أسود', احمر: 'أحمر' }[m[2] as 'اسود' | 'احمر'] ?? m[2];
+}
+
+/**
+ * The trim shown on a real ad's car is the one the ad names — never the catalogue entry's (a "GXR V8"
+ * label on a car whose ad doesn't say so would be made up). Pickup trims carry the cab only when known.
+ */
+function trimFor(m: CarModel, ad: AdSet | null, cab: 'single' | 'double' | undefined): string {
+  let t = (ad ? ad.trim : m.trim) || '';
+  if (m.body === 'pickup') {
+    t = t.replace(/غمارتين|غماره|غمارة|single\s*cab|double\s*cab|crew\s*cab/gi, ' ').replace(/\s+/g, ' ').trim();
+    if (cab) t = `${cab === 'single' ? 'غمارة' : 'غمارتين'} ${t}`.trim();
+  }
+  return t;
+}
+
+function transFor(m: CarModel, ad: AdSet | null): string {
+  if (!ad?.trans) return m.trans;
+  const manual = /MT/i.test(m.trans);
+  if (ad.trans === 'MT') return manual ? m.trans : 'MT';
+  return manual ? 'AT' : m.trans;
+}
 
 /** What a real ad says about the body: seller words win over dice. */
 function adCondition(text: string): CondClass | null {
@@ -282,6 +403,28 @@ function adCondition(text: string): CondClass | null {
   if (/رش|رشه|رشة|سمكر|معجون|رنج/.test(t) && no(/بدون رش|ما فيها رش|مافيها رش|ولا رشه|ولا رشة|بدون ولا رش|خالي من الرش/)) return 'painted';
   if (/وكاله|وكالة|بدون رش|ما فيها رش|مافيها رش|قمة النظافه|قمة النظافة|نظيف|نظيفه|نظيفة|مالك اول|مالك أول|بوية وكالة|صبغ وكالة/.test(t)) return 'clean';
   return null;
+}
+
+/**
+ * The ad's own headline, minus the asking price (the auction finds the price; the seller's ask would
+ * hand it away): «بسعر 90 الف»، «اقل سعر 232 300 بضريبة»، «287 ألف شامل…»، «ب 8».
+ */
+export function adTitleClean(t: string): string {
+  const TAIL = '(?:\\s*(?:بالضريبة|بضريبة|شامل الضريبة|شامل جميع المصاريف|شامل المصاريف|شامل))?';
+  const mileage = /(ممشى|ممشا|ممشاه|ممشاها|ماشي|ماشيه|عداد|العداد|الممشى)\s*$/;
+  return (
+    t
+      // «بسعر 90 الف»، «السعر 55.800»، «اقل سعر 232 300 بضريبة»، «ب 8»
+      .replace(new RegExp(`(^|[\\s\\-–(])(?:بسعر|سعر|السعر|اقل سعر|أقل سعر|سوم|السوم|بـ|ب)\\s*[:：]?\\s*[\\d٠-٩][\\d٠-٩\\s,.،]*(?:\\s*(?:ألف|الف|ريال|k|K))?${TAIL}`, 'g'), '$1')
+      // a bare «287 ألف شامل…» — but «ممشى 98 الف» is the mileage, and stays
+      .replace(new RegExp(`(^|\\s)[\\d٠-٩][\\d٠-٩,.،]*\\s*(?:ألف|الف|ريال)${TAIL}`, 'g'), (all: string, pre: string, off: number, str: string) =>
+        mileage.test(str.slice(0, off + pre.length)) ? all : pre,
+      )
+      .replace(/\s*[-–|،,]\s*(?=[-–|،,]|$)/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/^[\s\-–|،,]+|[\s\-–|،,]+$/g, '')
+      .trim()
+  );
 }
 
 /** The seller's real sentences, minus phone numbers, prices and contact lines. */
@@ -297,10 +440,14 @@ function adLines(text: string): string[] {
     .slice(0, 3);
 }
 
-export function buildCar(rng: Rng, m: CarModel): Built {
+export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: Set<string> = new Set(), plateCap = Infinity): Built {
   const age = ageOf(m);
   const tags: string[] = [];
-  const doors: 2 | 4 = m.doors ?? (m.body === 'coupe' || m.body === 'convertible' ? 2 : m.body === 'pickup' && m.cab === 'single' ? 2 : 4);
+  // the cab is what the ad says; a car with no ad keeps the catalogue's. A pickup whose ad doesn't say
+  // gets the two-door body map (never invent rear doors a single cab doesn't have) and no door count.
+  const cab = m.body === 'pickup' ? (ad ? ad.cab : m.cab) : undefined;
+  const doors: 2 | 4 =
+    m.body === 'coupe' || m.body === 'convertible' ? 2 : m.body === 'pickup' ? (cab === 'double' ? 4 : 2) : (m.doors ?? 4);
 
   // mileage: log-normal around the model's typical figure
   let kmv: number;
@@ -308,18 +455,24 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   else kmv = m.km * Math.exp(rng.normal(0, 0.32));
   kmv = Math.max(age === 0 ? 300 : 4000, Math.min(m.km * 2.4, kmv));
   kmv = Math.round(kmv / 100) * 100;
-  // a real ad for this model: its photos decide the colour, and its city/km when stated
-  const ads = PHOTOS[m.id]?.filter((a) => a.imgs.length >= 3) ?? [];
-  const ad = ads.length ? rng.pick(ads) : null;
-  if (ad?.km && ad.km > 500 && ad.km < Math.max(m.km, 20_000) * 3 && ad.km > m.km * 0.15) kmv = Math.round(ad.km / 100) * 100;
+  // the ad's own mileage when it states one
+  if (ad?.isNew) kmv = ad.km != null && ad.km < 20_000 ? Math.round(ad.km / 100) * 100 : rng.int(0, 30) * 100;
+  else if (ad?.km && ad.km >= 1000 && ad.km < 1_500_000) kmv = Math.round(ad.km / 100) * 100;
   const ratio = m.km > 0 ? kmv / m.km : 1;
   const kmTag = ratio < 0.55 && age > 1 ? 'low' : ratio > 1.5 ? 'high' : undefined;
 
-  const specKind = pickSpec(rng, m);
-  const adSays = ad ? `${ad.title ?? ''} ${ad.text ?? ''}` : '';
+  const adSays = ad ? [ad.title, ad.text, ...(ad.lines ?? []), ...(ad.feats ?? [])].filter(Boolean).join(' ') : '';
+  let specKind = (adSays && specFromAd(adSays)) || pickSpec(rng, m);
+  if (ad && specKind === 'us_salvage' && !ad.damaged) specKind = 'us';
   const fromAd = adSays ? adCondition(adSays) : null;
-  // a "clean" ad is usually right, sometimes a little generous
-  const cls: CondClass = fromAd ? (fromAd === 'clean' && rng.chance(0.2) ? 'touched' : fromAd) : pickCondition(rng, m, specKind);
+  // a real ad's photos show the body: visible damage only when the ad says so
+  let cls: CondClass;
+  if (!ad) cls = pickCondition(rng, m, specKind);
+  else if (fromAd === 'wreck') cls = 'wreck';
+  else if (ad.damaged) cls = fromAd === 'hit' ? 'hit' : 'major';
+  else if (fromAd === 'major' || fromAd === 'hit' || fromAd === 'painted') cls = fromAd;
+  else if (ad.isNew || fromAd === 'clean') cls = rng.chance(0.85) ? 'clean' : 'touched';
+  else cls = rng.weighted([['clean', 55], ['touched', 45]] as const);
   const body = buildPanels(rng, cls, doors);
 
   // mechanical health grows worse with age and mileage
@@ -349,10 +502,15 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   if ((m.tier === 'daily' || m.tier === 'family') && age >= 1 && age <= 6 && rng.chance(0.16)) seller = 'rental';
   if ((cls === 'major' || cls === 'wreck' || specKind === 'us_salvage') && rng.chance(0.4)) seller = 'insurance';
   if (m.tier === 'exotic' && seller === 'gov') seller = 'showroom';
+  if (ad) {
+    // a Haraj ad is an owner or a showroom (a wrecked one may come through insurance)
+    seller = sellerFromAd(adSays) ?? (ad.isNew ? 'showroom' : rng.weighted([['owner', 68], ['showroom', 32]] as const));
+    if ((cls === 'major' || cls === 'wreck') && rng.chance(0.3)) seller = 'insurance';
+  }
   let mode: SaleMode = rng.chance(0.78) ? 'inspected' : 'asis';
   if (seller === 'gov' || seller === 'insurance') mode = rng.chance(0.75) ? 'asis' : 'inspected';
   if (runs === 'dead') mode = 'asis';
-  if (seller === 'rental' && kmv < m.km * 1.15) kmv = Math.round((m.km * rng.range(1.15, 1.6)) / 100) * 100;
+  if (!ad && seller === 'rental' && kmv < m.km * 1.15) kmv = Math.round((m.km * rng.range(1.15, 1.6)) / 100) * 100;
 
   const colorPool = m.colors.filter((c) => COLORS[c]);
   let color =
@@ -360,12 +518,13 @@ export function buildCar(rng: Rng, m: CarModel): Built {
       ? rng.pick(colorPool)
       : rng.weighted(Object.entries(COLORS).map(([k, v]) => [k, v.w] as const));
   if (ad) {
-    const said = `${ad.color ?? ''} ${ad.title ?? ''}`;
-    const hit = AD_COLORS.find(([re]) => re.test(said));
-    color = hit ? hit[1] : 'حسب الصور';
+    // the colour the ad states, or the one its photos show
+    const said = ad.color ?? '';
+    const hit = COLORS[said] ? said : AD_COLORS.find(([re]) => re.test(`${said} ${ad.title ?? ''}`))?.[1];
+    color = hit ?? 'حسب الصور';
   }
   const colorHex = COLORS[color]?.hex ?? '#C9CCC8';
-  const interior = m.tier === 'sport' && rng.chance(0.3) ? 'أحمر' : rng.pick(INTERIORS.slice(0, 4));
+  const interior = ad ? (interiorFromAd(adSays) ?? 'حسب الصور') : m.tier === 'sport' && rng.chance(0.3) ? 'أحمر' : rng.pick(INTERIORS.slice(0, 4));
   const city = ad?.city && ad.city.length <= 14 ? ad.city : rng.weighted(CITIES);
 
   const owners = age <= 1 ? 1 : age <= 4 ? rng.int(1, 2) : age <= 10 ? rng.int(1, 3) : rng.int(2, 5);
@@ -383,8 +542,8 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   const fines = rng.chance(0.12) ? rng.int(3, 60) * 100 : 0;
 
   const tires = Math.min(NOW_YEAR, Math.max(m.year, NOW_YEAR - rng.int(0, 4)));
-  const extras = rng.sample(FEATURES[m.tier] ?? FEATURES.daily, rng.int(2, 4));
-  const modsPicked = rng.chance(0.55) ? rng.sample(MODS, rng.int(1, 2)) : [];
+  const extras = ad ? (ad.feats ?? []).slice(0, 6) : rng.sample(FEATURES[m.tier] ?? FEATURES.daily, rng.int(2, 4));
+  const modsPicked = !ad && rng.chance(0.55) ? rng.sample(MODS, rng.int(1, 2)) : [];
   for (const [label] of modsPicked) extras.push(label);
   const warranty = age <= 3 && service === 'dealer' && specKind === 'saudi' && rng.chance(0.75) ? `ضمان وكالة ساري حتى ${m.year + 5}` : undefined;
   const keys: 1 | 2 = specKind === 'us_salvage' || age > 12 || rng.chance(0.12) ? 1 : 2;
@@ -404,9 +563,11 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   }
 
   // ---- valuation (true value, before any surprise) ----
-  let v = m.value;
-  if (ratio < 1) v *= 1 + Math.min(0.1, (1 - ratio) * 0.14);
-  else v *= 1 - Math.min(0.32, (ratio - 1) * 0.16);
+  let v = ad?.value ?? m.value;
+  if (!ad?.value) {
+    if (ratio < 1) v *= 1 + Math.min(0.1, (1 - ratio) * 0.14);
+    else v *= 1 - Math.min(0.32, (ratio - 1) * 0.16);
+  }
   let panelHit = 0;
   for (const s of Object.values(body.panels)) {
     panelHit += s === 'spot' ? 0.006 : s === 'paint' ? 0.016 : s === 'dent' ? 0.01 : s === 'replaced' ? 0.032 : s === 'damaged' ? 0.06 : 0;
@@ -441,7 +602,7 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   const floor = m.body === 'suv' || m.body === 'pickup' ? 4000 : 2500;
   v = Math.max(floor, v);
   v = niceRound(v);
-  const plate = makePlate(rng, m);
+  const plate = makePlate(rng, m, plateCap);
   if (plate.special) v += plate.special.value;
 
   // tags drive the seller's ad text
@@ -483,7 +644,12 @@ export function buildCar(rng: Rng, m: CarModel): Built {
   if (body.chassis === 'repaired') notes.push('أثر لحام على القائمة الأمامية');
   if (cls === 'clean' && service === 'dealer' && rng.chance(0.6)) notes.push('السيارة بحالة وكالة');
   // the model's own known weak spots, as a Saudi inspector would flag them
-  if (m.issues.length && rng.chance(cls === 'clean' ? 0.3 : 0.6)) notes.push(rng.pick(m.issues));
+  const freshIssues = m.issues.filter((x) => !used.has(x));
+  if (freshIssues.length && rng.chance(cls === 'clean' ? 0.3 : 0.6)) {
+    const x = rng.pick(freshIssues);
+    used.add(x);
+    notes.push(x);
+  }
   const regType = m.body === 'pickup' || m.body === 'van' ? 'نقل خاص' : 'خصوصي';
 
   const car: CarPub = {
@@ -493,15 +659,15 @@ export function buildCar(rng: Rng, m: CarModel): Built {
     modelAr: m.modelAr,
     modelEn: m.modelEn,
     nick: m.nick,
-    trim: m.trim,
-    trimAr: m.trimAr,
+    trim: trimFor(m, ad, cab),
+    trimAr: ad ? undefined : m.trimAr,
     year: m.year,
     body: m.body,
-    engine: m.engine,
-    hp: m.hp,
-    fuel: m.fuel,
-    drive: m.drive,
-    trans: m.trans,
+    engine: ad?.engine ?? m.engine,
+    hp: ad?.engine && !ad.hp ? undefined : (ad?.hp ?? m.hp),
+    fuel: ad?.fuel ?? m.fuel,
+    drive: ad?.drive ?? m.drive,
+    trans: transFor(m, ad),
     tier: m.tier,
     doors,
     km: kmv,
@@ -534,15 +700,27 @@ export function buildCar(rng: Rng, m: CarModel): Built {
     regType,
     plate,
     photos: ad ? ad.imgs.slice(0, 10) : undefined,
-    adTitle: ad?.title,
-    adUrl: ad?.url,
+    adTitle: ad?.title ? adTitleClean(ad.title) : undefined,
+    adUrl: ad && /^\d{8,}$/.test(ad.key) ? `https://haraj.com.sa/${ad.key}` : undefined,
+    said: ad
+      ? [
+          ...(ad.km && ad.km >= 1000 ? ['km'] : ad.isNew ? ['km'] : []),
+          ...(COLORS[color] ? ['color'] : []),
+          ...(ad.engine ? ['engine', 'hp'] : []),
+          ...(ad.trans ? ['trans'] : []),
+          ...(ad.fuel ? ['fuel'] : []),
+          ...(ad.drive ? ['drive'] : []),
+          ...(interior !== 'حسب الصور' ? ['interior'] : []),
+          ...(m.body !== 'pickup' || cab ? ['doors'] : []),
+        ]
+      : undefined,
   };
   const truth: CarPub = { ...car, panels: body.panels, mech, microns: truthMicrons, inspector: notes };
   truth.scan = scanFor(rng, truth);
   truth.history = historyFor(rng, truth, NOW_YEAR);
   car.scan = mode === 'asis' ? { status: 'none', codes: [] } : truth.scan;
   car.history = truth.history;
-  return { car, truth, value: v, tags, mode, seller, adText: ad?.text ?? undefined };
+  return { car, truth, value: v, tags, mode, seller, adText: ad?.text ?? undefined, ad, used };
 }
 
 // ---------------------------------------------------------------------------
@@ -628,11 +806,8 @@ export function feeRuleFor(seller: Seller, settings: Settings): FeeRule {
 // Deck building
 
 type Bucket = 'cheap' | 'low' | 'mid' | 'high' | 'dream';
-const MIX: Record<Settings['mix'], Record<Bucket, number>> = {
-  balanced: { cheap: 0.17, low: 0.25, mid: 0.3, high: 0.2, dream: 0.08 },
-  luxury: { cheap: 0.07, low: 0.13, mid: 0.27, high: 0.33, dream: 0.2 },
-  street: { cheap: 0.32, low: 0.33, mid: 0.23, high: 0.1, dream: 0.02 },
-};
+// how the lots spread over price bands (relative to one garage slot of the budget)
+const SPREAD: Record<Bucket, number> = { cheap: 0.16, low: 0.25, mid: 0.3, high: 0.2, dream: 0.09 };
 
 function bucketOf(value: number, perSlot: number, budget: number): Bucket | null {
   if (value > budget * 0.92) return null;
@@ -653,16 +828,16 @@ const FILLER = new Set(['urgency', 'sentimental', 'negotiation', 'haraj', 'inter
 
 /** Pick 2–3 ad lines that match what this car really is — or what its seller wants you to believe. */
 function sellerNotes(rng: Rng, m: CarModel, b: Built, cover: string | null): string[] {
-  // a real ad speaks for itself; a hidden problem may still get its cover line
-  if (b.adText) {
-    const real = adLines(b.adText);
-    if (real.length) {
-      if (cover) {
-        const hit = SELLER_LINES.filter((l) => l.g.includes(cover) && ['shady', 'proud', 'funny'].includes(l.g[0]));
-        if (hit.length) real.push(rng.pick(hit).t);
-      }
-      return real.slice(0, 4);
-    }
+  const used = b.used ?? new Set<string>();
+  const ad = b.ad;
+  // a real ad speaks for itself: only its own words and feature list — never a stock line, never
+  // something the seller didn't write
+  if (ad) {
+    const real: string[] = [];
+    if (ad.lines?.length) real.push(...ad.lines);
+    else if (ad.text) real.push(...adLines(ad.text));
+    if (ad.feats?.length) real.push(`فيها: ${ad.feats.slice(0, 7).join('، ')}`);
+    return [...new Set(real)].filter((x) => !used.has(x)).slice(0, 5);
   }
   const c = b.car;
   const t = b.truth;
@@ -695,7 +870,7 @@ function sellerNotes(rng: Rng, m: CarModel, b: Built, cover: string | null): str
     if (real.length === 0) return 1;
     return real.every((x) => facts[x]) ? 2 : 0;
   };
-  const scored = SELLER_LINES.map((l) => [l.t, fits(l.g)] as const).filter(([, sc]) => sc > 0);
+  const scored = SELLER_LINES.map((l) => [l.t, fits(l.g)] as const).filter(([t, sc]) => sc > 0 && !used.has(t));
   const out: string[] = [];
   const top = scored.filter(([, sc]) => sc === 3);
   if (top.length) out.push(rng.pick(top)[0]);
@@ -713,7 +888,9 @@ function sellerNotes(rng: Rng, m: CarModel, b: Built, cover: string | null): str
     if (filler.length) out.push(rng.pick(filler));
   }
   if (!out.length) out.push(rng.pick(SELLER.urgent));
-  return [...new Set(out)].slice(0, 3);
+  const final = [...new Set(out)].slice(0, 3);
+  for (const x of final) used.add(x);
+  return final;
 }
 
 function estimateFor(rng: Rng, v: number, mode: SaleMode): [number, number] {
@@ -725,49 +902,112 @@ function estimateFor(rng: Rng, v: number, mode: SaleMode): [number, number] {
   return [Math.max(step, Math.floor(lo / step) * step), Math.ceil(hi / step) * step];
 }
 
-export function buildDeck(seed: number, settings: Settings, catalogue: CarModel[], players: number, total: number): LotFull[] {
+/**
+ * The night's lots. Every lot is a different real ad from the chosen market, with its own photos.
+ * `seen` holds the ads the phones in the room were shown on earlier nights (rank 0 = most recent):
+ * those never come back while the market still has fresh ones, and when it runs dry the ones seen
+ * longest ago return first. A model shows up once a night when the market is wide; a narrow market
+ * (giants, supercars) may show two different ads of one model, never back to back.
+ */
+export function buildDeck(
+  seed: number, settings: Settings, catalogue: CarModel[], players: number, total: number,
+  seen: Map<string, number> | Set<string> = new Map(),
+): LotFull[] {
   const rng = new Rng(seed);
   const budget = settings.budget;
   const perSlot = budget / Math.max(1, settings.garage);
-  const byBucket: Record<Bucket, CarModel[]> = { cheap: [], low: [], mid: [], high: [], dream: [] };
-  for (const m of catalogue) {
-    const b = bucketOf(m.value, perSlot, budget);
-    if (b) byBucket[b].push(m);
-  }
+  const market = marketOf(settings.mix);
   const order: Bucket[] = ['cheap', 'low', 'mid', 'high', 'dream'];
-  const mix = MIX[settings.mix];
+  const rank = (key: string): number | undefined => (seen instanceof Map ? seen.get(key) : seen.has(key) ? 0 : undefined);
+
+  // every candidate is one real ad with photos; a model without an ad never comes up
+  type Cand = { m: CarModel; ad: AdSet; key: string; fam: string; b: Bucket; seenRank: number | undefined; extra?: boolean };
+  const byKey = new Map<string, Cand>();
+  for (const m of catalogue) {
+    if (!market.test(m)) continue;
+    const fam = `${m.makeEn}|${m.modelEn}`;
+    for (const ad of PHOTOS[m.id] ?? []) {
+      if (ad.imgs.length < 3 || byKey.has(ad.key)) continue;
+      const b = bucketOf(ad.value ?? m.value, perSlot, budget);
+      if (b) byKey.set(ad.key, { m, ad, key: ad.key, fam, b, seenRank: rank(ad.key) });
+    }
+  }
+  const cands = [...byKey.values()];
+
+  // how many lots the market can fill without an ad anyone here has seen
+  const famSize = (list: Cand[]) => {
+    const n = new Map<string, number>();
+    for (const c of list) n.set(c.fam, (n.get(c.fam) ?? 0) + 1);
+    return [...n.values()];
+  };
+  const room = (list: Cand[], cap: number) => famSize(list).reduce((n, k) => n + Math.min(cap, k), 0);
+  const fresh = cands.filter((c) => c.seenRank === undefined);
+  let famCap = 1;
+  while (famCap < 3 && room(fresh, famCap) < total) famCap++;
+  let pool = fresh;
+  let count = Math.min(total, room(fresh, famCap));
+  const floor = Math.min(total, 12);
+  if (count < floor && market.id !== 'balanced') {
+    // this group has used the themed market up: fill the night with fresh ads of the same kind
+    // (same tier and body) from the rest of the market before anything they've seen comes back
+    const kinds = new Set(cands.map((c) => `${c.m.tier}|${c.m.body}`));
+    const extra: Cand[] = [];
+    for (const m of catalogue) {
+      if (market.test(m) || !kinds.has(`${m.tier}|${m.body}`)) continue;
+      const fam = `${m.makeEn}|${m.modelEn}`;
+      for (const ad of PHOTOS[m.id] ?? []) {
+        if (ad.imgs.length < 3 || byKey.has(ad.key) || rank(ad.key) !== undefined) continue;
+        const b = bucketOf(ad.value ?? m.value, perSlot, budget);
+        if (b) extra.push({ m, ad, key: ad.key, fam, b, seenRank: undefined, extra: true });
+      }
+    }
+    pool = [...fresh, ...rng.shuffle(extra)];
+    count = Math.min(total, room(pool, famCap));
+  }
+  if (count < Math.min(total, 8)) {
+    // nearly everything here has been seen: bring back the ads seen longest ago
+    const stale = cands.filter((c) => c.seenRank !== undefined).sort((a, b) => (b.seenRank ?? 0) - (a.seenRank ?? 0));
+    pool = [...pool, ...stale.slice(0, Math.max((Math.min(total, 8) - count) * 3, 12))];
+    count = Math.min(total, room(pool, famCap));
+  }
+  if (count <= 0) return [];
 
   // decide the kind of each lot
-  const kinds: LotKind[] = Array.from({ length: total }, () => 'open' as LotKind);
-  const slots = rng.shuffle(Array.from({ length: Math.max(0, total - 2) }, (_, i) => i + 1));
+  const kinds: LotKind[] = Array.from({ length: count }, () => 'open' as LotKind);
+  const slots = rng.shuffle(Array.from({ length: Math.max(0, count - 2) }, (_, i) => i + 1));
   let k = 0;
-  if (settings.covered) for (let i = 0; i < Math.max(1, Math.round(total * 0.1)); i++) kinds[slots[k++]] = 'covered';
-  if (settings.sealed) for (let i = 0; i < Math.max(1, Math.round(total * 0.09)); i++) kinds[slots[k++]] = 'sealed';
+  if (settings.covered) for (let i = 0; i < Math.max(1, Math.round(count * 0.1)) && k < slots.length; i++) kinds[slots[k++]] = 'covered';
+  if (settings.sealed) for (let i = 0; i < Math.max(1, Math.round(count * 0.09)) && k < slots.length; i++) kinds[slots[k++]] = 'sealed';
 
-  // One car per model family a night, and only cars with a real ad behind them (photos, seller text).
-  // The rules relax step by step only if the catalogue runs dry for a budget band.
-  const usedFam = new Set<string>();
-  const usedId = new Set<string>();
+  const famCount = new Map<string, number>();
+  const usedKey = new Set<string>();
+  const recent: string[] = [];
   const tierCount = new Map<Tier, number>();
-  const famKey = (m: CarModel) => `${m.makeEn}|${m.modelEn}`;
-  const hasPics = (m: CarModel) => !!PHOTOS[m.id]?.some((a) => a.imgs.length >= 3);
-  const passes: ((m: CarModel) => boolean)[] = [
-    (m) => hasPics(m) && !usedFam.has(famKey(m)),
-    (m) => !usedFam.has(famKey(m)),
-    (m) => !usedId.has(m.id),
+  // strictest first: a model not shown tonight; then another ad of one shown, but not within three lots
+  const passes: ((c: Cand) => boolean)[] = [
+    (c) => !famCount.has(c.fam),
+    (c) => (famCount.get(c.fam) ?? 0) < famCap && !recent.includes(c.fam),
+    (c) => (famCount.get(c.fam) ?? 0) < famCap,
   ];
-  const pickFrom = (bucket: Bucket): CarModel | null => {
+  const pick = (bucket: Bucket): Cand | null => {
     const idx = order.indexOf(bucket);
     for (const ok of passes) {
       for (const off of [0, 1, -1, 2, -2, 3, -3, 4, -4]) {
         const bk = order[idx + off];
         if (!bk) continue;
-        const pool = byBucket[bk].filter(ok);
-        if (!pool.length) continue;
-        const weights = pool.map((m) => {
-          const tc = tierCount.get(m.tier) ?? 0;
-          const pop = m.pop === 'high' ? 1.4 : m.pop === 'medium' ? 1 : 0.7;
-          return [m, pop / (1 + tc * 0.9)] as const;
+        const live = pool.filter((c) => c.b === bk && !usedKey.has(c.key) && ok(c));
+        if (!live.length) continue;
+        // one weight per model, so a model with five ads isn't five times as likely
+        const perFam = new Map<string, number>();
+        for (const c of live) perFam.set(c.fam, (perFam.get(c.fam) ?? 0) + 1);
+        const weights = live.map((c) => {
+          const tc = tierCount.get(c.m.tier) ?? 0;
+          const pop = c.m.pop === 'high' ? 1.4 : c.m.pop === 'medium' ? 1 : 0.75;
+          // a fresh ad always beats one this room saw before
+          const stale = c.seenRank === undefined ? 1 : 0.05;
+          // the chosen market's own cars first; look-alikes from the wider market fill in
+          const own = c.extra ? 0.3 : 1;
+          return [c, (pop * stale * own) / (1 + tc * 0.6) / perFam.get(c.fam)!] as const;
         });
         return rng.weighted(weights);
       }
@@ -776,29 +1016,48 @@ export function buildDeck(seed: number, settings: Settings, catalogue: CarModel[
   };
 
   const deck: LotFull[] = [];
-  for (let i = 0; i < total; i++) {
+  const used = new Set<string>();
+  for (let i = 0; i < count; i++) {
     const kind = kinds[i];
-    let bucket: Bucket = rng.weighted(order.map((b) => [b, mix[b]] as const));
+    let bucket: Bucket = rng.weighted(order.map((b) => [b, SPREAD[b]] as const));
     if (i === 0) bucket = rng.pick(['low', 'mid'] as Bucket[]);
-    if (i === total - 1) bucket = rng.pick(['high', 'dream'] as Bucket[]);
+    if (i === count - 1) bucket = rng.pick(['high', 'dream'] as Bucket[]);
     if (kind === 'covered') bucket = rng.weighted([['cheap', 0.34], ['low', 0.26], ['mid', 0.2], ['high', 0.14], ['dream', 0.06]] as const);
-    const m = pickFrom(bucket);
-    if (!m) break;
-    usedFam.add(famKey(m));
-    usedId.add(m.id);
-    tierCount.set(m.tier, (tierCount.get(m.tier) ?? 0) + 1);
-    deck.push(makeLot(rng, m, kind, i + 1, settings));
+    const c = pick(bucket);
+    if (!c) break;
+    famCount.set(c.fam, (famCount.get(c.fam) ?? 0) + 1);
+    usedKey.add(c.key);
+    recent.push(c.fam);
+    if (recent.length > 3) recent.shift();
+    tierCount.set(c.m.tier, (tierCount.get(c.m.tier) ?? 0) + 1);
+    deck.push(makeLot(rng, c.m, kind, i + 1, settings, c.ad, used));
   }
   return deck;
 }
 
-export function makeLot(rng: Rng, m: CarModel, kind: LotKind, no: number, settings: Settings): LotFull {
-  const b = buildCar(rng, m);
+/** How many different real ads the market has for this budget (the most lots a night can hold). */
+export function marketDepth(settings: Settings, catalogue: CarModel[]): number {
+  const market = marketOf(settings.mix);
+  const perSlot = settings.budget / Math.max(1, settings.garage);
+  const keys = new Set<string>();
+  for (const m of catalogue) {
+    if (!market.test(m)) continue;
+    for (const a of PHOTOS[m.id] ?? []) if (a.imgs.length >= 3 && bucketOf(a.value ?? m.value, perSlot, settings.budget)) keys.add(a.key);
+  }
+  return keys.size;
+}
+
+export function makeLot(
+  rng: Rng, m: CarModel, kind: LotKind, no: number, settings: Settings, ad: AdSet | null = null, used: Set<string> = new Set(),
+): LotFull {
+  // a plate never costs more than half a player's money: the lot must stay biddable
+  const b = buildCar(rng, m, ad, used, settings.budget * 0.5);
   const age = Math.max(0, NOW_YEAR - m.year);
   const rolled = rollSurprise(rng, { m, car: b.car, value: b.value, mode: b.mode, seller: b.seller, age }, kind === 'covered');
   const surprise = rolled.surprise;
   if (surprise) applySurprise(b.truth, surprise);
-  if (rolled.tell) {
+  if (rolled.tell && !used.has(rolled.tell)) {
+    used.add(rolled.tell);
     b.car.inspector = [...b.car.inspector, rolled.tell];
     b.truth.inspector = [...b.truth.inspector, rolled.tell];
   }
@@ -840,7 +1099,8 @@ export function makeLot(rng: Rng, m: CarModel, kind: LotKind, no: number, settin
     seller: b.seller,
     car: kind === 'covered' ? null : b.car,
     cover,
-    title: titleOf(m),
+    title: titleOf({ ...m, trim: b.car.trim }),
+    adKey: ad?.key ?? m.id,
     notes: kind === 'covered' ? ['الغطا ما ينشال إلا بعد البيع'] : notes,
     estimate,
     opening,

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { sound } from '../../audio/sound';
+import { CATALOGUE } from '../../data/catalogue';
+import { marketDepth } from '../../engine/lotgen';
 import { BUDGETS, GARAGE_SIZES, lotsFor } from '../../engine/rules';
+import { MARKETS } from '../../engine/markets';
 import type { Mix, Speed } from '../../engine/types';
 import { carsN, money } from '../../lib/util';
 import { Icon, QR } from '../components/Bits';
@@ -8,7 +11,7 @@ import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 
 const SPEED_AR: Record<Speed, string> = { fast: 'سريع', normal: 'عادي', calm: 'هادي' };
-const MIX_AR: Record<Mix, string> = { balanced: 'متوازن', luxury: 'فخامة', street: 'حراج شعبي' };
+const MIX_AR = Object.fromEntries(MARKETS.map((x) => [x.id, x.label])) as Record<Mix, string>;
 
 export function Lobby({ room }: { room: RoomView }) {
   const core = room.snap.core!;
@@ -123,7 +126,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 </div>
                 <div>
                   <dt>السيارات بالمزاد</dt>
-                  <dd>{carsN(lotsFor(s, active.length))}</dd>
+                  <dd>{carsN(Math.max(1, Math.min(lotsFor(s, active.length), marketDepth(s, CATALOGUE))))}</dd>
                 </div>
                 <div>
                   <dt>السرعة والسوق</dt>
@@ -205,6 +208,13 @@ function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void
       <div className="drawer" role="dialog" aria-label="شروط المزاد">
         <h3>شروط المزاد</h3>
         <div className="stack">
+          <div className="markets markets-compact" role="radiogroup" aria-label="سوق الليلة">
+            {MARKETS.map((m) => (
+              <button type="button" key={m.id} role="radio" className="market" aria-checked={s.mix === m.id} onClick={() => set({ mix: m.id, budget: m.budget })}>
+                <b>{m.label}</b>
+              </button>
+            ))}
+          </div>
           <div className="budgets">
             {BUDGETS.map((b) => (
               <button type="button" key={b.key} className="budget" aria-pressed={s.budget === b.amount} onClick={() => set({ budget: b.amount })}>
@@ -224,13 +234,6 @@ function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void
             {(['fast', 'normal', 'calm'] as Speed[]).map((k) => (
               <button key={k} aria-pressed={s.speed === k} onClick={() => set({ speed: k })}>
                 {SPEED_AR[k]}
-              </button>
-            ))}
-          </div>
-          <div className="seg">
-            {(['balanced', 'luxury', 'street'] as Mix[]).map((k) => (
-              <button key={k} aria-pressed={s.mix === k} onClick={() => set({ mix: k })}>
-                {MIX_AR[k]}
               </button>
             ))}
           </div>

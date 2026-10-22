@@ -103,9 +103,16 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
     return [2, 5, 10].map((n) => ({ n, amount: mk(n) }));
   }, [top, core.opening, step]);
 
+  // the tap shows at once; the button waits for the host's word (a new top bid, or a refusal toast)
+  const [sent, setSent] = useState<{ amount: number; at: number; lot: string } | null>(null);
+  useEffect(() => {
+    if (sent && top && top.amount >= sent.amount) setSent(null);
+  }, [top, sent]);
+  const sending = !!sent && sent.lot === lot?.id && now - offset - sent.at < 2500 && !(top && top.amount >= sent.amount);
   const bid = (amount: number) => {
-    if (!lot) return;
+    if (!lot || sending) return;
     vibrate(18);
+    setSent({ amount, at: Date.now(), lot: lot.id });
     act({ t: 'bid', lot: lot.id, amount });
   };
 
@@ -146,7 +153,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
       <div className="bp-status" aria-live="off">
         {showSecs && <Ring pct={showSecs ? pct : 0} secs={Math.max(0, secs)} hot={hot} paused={core.paused} />}
         <div className="bp-state">
-          <b>{core.paused ? 'المزاد واقف' : phaseText(core, ms, lot)}</b>
+          <b>{core.paused ? (core.away ? 'المضيف طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف') : phaseText(core, ms, lot)}</b>
           {core.callout && (
             <span key={core.callout.id} className={`bp-call ${going ? 'going' : ''}`} aria-live="polite">
               {core.callout.text}
@@ -238,12 +245,23 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
         <div className="bid-actions">
           {showOutbid && <div className="bp-line out">زاودوا عليك، المطلوب الحين {money(min)}</div>}
           <button
-            className={`btn btn-block bid-main ${iAmTop ? 'btn-top' : 'btn-primary'}`}
-            disabled={!bidding || !!reason}
+            className={`btn btn-block bid-main ${iAmTop ? 'btn-top' : 'btn-primary'} ${sending ? 'sending' : ''}`}
+            disabled={!bidding || !!reason || sending}
             onClick={() => bid(min)}
             aria-label={`زاود ${money(min)}`}
           >
-            {reason ? (
+            {sending && sent ? (
+              <>
+                <span className="bm-label">
+                  <span className="bm-spin" aria-hidden="true" />
+                  سومك في الطريق
+                </span>
+                <span className="bm-amt">
+                  <b>{money(sent.amount)}</b>
+                  <small>ريال</small>
+                </span>
+              </>
+            ) : reason ? (
               <span className="bm-reason">{iAmTop ? 'السوم عندك، انتظر' : reason}</span>
             ) : (
               <>
@@ -260,7 +278,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
           </button>
           <div className="bid-chips">
             {chips.map((c) => (
-              <button key={c.n} disabled={!bidding || !!reason || c.amount > maxBid} onClick={() => bid(c.amount)} aria-label={`سُم ${money(c.amount)}`}>
+              <button key={c.n} disabled={!bidding || !!reason || sending || c.amount > maxBid} onClick={() => bid(c.amount)} aria-label={`سُم ${money(c.amount)}`}>
                 <b className="ltr">+{money(c.amount - (top?.amount ?? core.opening))}</b>
                 <small className="ltr">{money(c.amount)}</small>
               </button>

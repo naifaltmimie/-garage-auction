@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
+import { CATALOGUE } from '../../data/catalogue';
+import { marketDepth } from '../../engine/lotgen';
+import { MARKETS } from '../../engine/markets';
 import { BUDGETS, DEFAULT_SETTINGS, GARAGE_SIZES } from '../../engine/rules';
-import type { Mix, Settings, Speed } from '../../engine/types';
+import type { Settings, Speed } from '../../engine/types';
 import { arDigits, money, roomCode, store } from '../../lib/util';
 import { go } from '../App';
 import { toNum } from '../components/Console';
@@ -26,6 +29,11 @@ export function Create() {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((x) => ({ ...x, [k]: v }));
   const preset = BUDGETS.find((b) => b.amount === s.budget);
   const ok = name.trim().length >= 2 && s.budget >= 50_000;
+  // how many real ads each market has at its own budget
+  const depth = useMemo(
+    () => Object.fromEntries(MARKETS.map((m) => [m.id, marketDepth({ ...DEFAULT_SETTINGS, mix: m.id, budget: m.budget }, CATALOGUE)])),
+    [],
+  );
 
   const submit = () => {
     if (!ok) return;
@@ -63,6 +71,32 @@ export function Create() {
           <span>اسم الصالة</span>
           <input className="input" value={s.roomName} maxLength={28} onChange={(e) => set('roomName', e.target.value)} placeholder={name ? `مزاد ${name}` : 'مزاد الليلة'} />
         </label>
+
+        </section>
+
+        <section className="card form-card">
+        <div className="field">
+          <span>سوق الليلة</span>
+          <div className="markets" role="radiogroup" aria-label="سوق الليلة">
+            {MARKETS.map((m) => (
+              <button
+                type="button"
+                key={m.id}
+                role="radio"
+                className="market"
+                aria-checked={s.mix === m.id}
+                onClick={() => {
+                  setS((x) => ({ ...x, mix: m.id, budget: m.budget }));
+                  setCustom('');
+                }}
+              >
+                <b>{m.label}</b>
+                <small>{m.note}</small>
+                <span className="market-count">{arDigits(depth[m.id] ?? 0)} سيارة</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="field">
           <span>ميزانية كل لاعب</span>
@@ -129,17 +163,6 @@ export function Create() {
           <div className="seg">
             {([['fast', 'سريع'], ['normal', 'عادي'], ['calm', 'هادي']] as [Speed, string][]).map(([k, l]) => (
               <button type="button" key={k} aria-pressed={s.speed === k} onClick={() => set('speed', k)}>
-                {l}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="field">
-          <span>نوع السوق</span>
-          <div className="seg">
-            {([['balanced', 'متوازن'], ['luxury', 'فخامة'], ['street', 'حراج شعبي']] as [Mix, string][]).map(([k, l]) => (
-              <button type="button" key={k} aria-pressed={s.mix === k} onClick={() => set('mix', k)}>
                 {l}
               </button>
             ))}

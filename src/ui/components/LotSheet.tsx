@@ -92,7 +92,19 @@ function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?:
   const g = revealed ? null : lot.grade;
   const dmg = damageLine(car);
   const items: { k: string; v: React.ReactNode; tone?: string }[] = [
-    { k: 'الممشى', v: <>{km(car.km)}{car.kmTag && <small className={car.kmTag === 'low' ? 'gain' : 'loss'}> {car.kmTag === 'low' ? 'قليل' : 'عالي'}</small>}</> },
+    {
+      k: 'الممشى',
+      v: (
+        <>
+          {km(car.km)}
+          {car.said && !car.said.includes('km') ? (
+            <small className="mute"> تقريباً</small>
+          ) : (
+            car.kmTag && <small className={car.kmTag === 'low' ? 'gain' : 'loss'}> {car.kmTag === 'low' ? 'قليل' : 'عالي'}</small>
+          )}
+        </>
+      ),
+    },
     { k: 'المواصفات', v: car.spec, tone: car.specKind === 'us_salvage' ? 'bad' : undefined },
     {
       k: 'تقييم الفحص',
@@ -153,7 +165,12 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
             ) : (
               <span className="chip chip-gold">بدون حد</span>
             ))}
-          {car?.plate.special && !covered && <span className="chip chip-gold">{car.plate.special.label}</span>}
+          {car?.plate.special && !covered && (
+            <span className={`chip chip-gold plate-chip ${car.plate.special.tier}`}>
+              {car.plate.special.label}
+              {car.plate.special.note && <small> · {car.plate.special.note}</small>}
+            </span>
+          )}
         </div>
 
         {covered || !car ? (
@@ -324,6 +341,12 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
 
           {tab === 'ad' && (
             <div className="pane">
+              {car.adTitle && (
+                <div className="ad-head">
+                  <small>عنوان الإعلان</small>
+                  <h4 dir="auto">{car.adTitle}</h4>
+                </div>
+              )}
               {lot.notes.length ? (
                 <blockquote className="quote">
                   {lot.notes.map((n) => (
@@ -339,28 +362,40 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
 
           {tab === 'specs' && (
             <div className="pane">
-              <dl className="table">
-                {(
-                  [
-                    ['المحرك', car.engine],
-                    ['القوة', car.hp ? `${car.hp} حصان` : '—'],
-                    ['الدفع', DRIVE_AR[car.drive]],
-                    ['القير', transAr(car.trans)],
-                    ['الوقود', FUEL_AR[car.fuel]],
-                    ['الأبواب', `${car.doors}`],
-                    ['الداخلية', car.interior],
-                    ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد'],
-                    ['الكفرات', `صنع ${car.tires}`],
-                    ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة'],
-                    ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين ')]] : []),
-                  ] as [string, string][]
-                ).map(([k, v]) => (
-                  <div key={k}>
-                    <dt>{k}</dt>
-                    <dd>{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              {(() => {
+                // a real ad's car: the details its ad states are plain; the model's usual spec is marked
+                const said = car.said;
+                const typical = (key: string) => !!said && !said.includes(key);
+                const rows: [string, string, boolean][] = [
+                  ['المحرك', car.engine || '—', typical('engine') && !!car.engine],
+                  ['القوة', car.hp ? `${car.hp} حصان` : '—', typical('hp') && !!car.hp],
+                  ['الدفع', DRIVE_AR[car.drive], typical('drive')],
+                  ['القير', transAr(car.trans), typical('trans')],
+                  ['الوقود', FUEL_AR[car.fuel], typical('fuel')],
+                  ['الأبواب', said && !said.includes('doors') ? 'حسب الصور' : `${car.doors}`, false],
+                  ['الداخلية', car.interior, false],
+                  ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد', false],
+                  ['الكفرات', `صنع ${car.tires}`, false],
+                  ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة', false],
+                  ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين '), false] as [string, string, boolean]] : []),
+                ];
+                return (
+                  <>
+                    <dl className="table">
+                      {rows.map(([k, v, t]) => (
+                        <div key={k} className={t ? 'typical' : ''}>
+                          <dt>{k}</dt>
+                          <dd>
+                            {v}
+                            {t && <sup aria-label="المعتاد للموديل">*</sup>}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {rows.some((r) => r[2]) && <p className="mute small spec-note">* المعتاد لهالموديل، الإعلان ما ذكره</p>}
+                  </>
+                );
+              })()}
               {car.extras.length > 0 && (
                 <div className="hints" style={{ marginTop: 12 }}>
                   {car.extras.map((e) => (

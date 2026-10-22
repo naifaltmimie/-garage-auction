@@ -4,13 +4,15 @@ import { CATALOGUE } from '../../data/catalogue';
 import { PHOTOS } from '../../data/photos';
 import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util';
 import { go } from '../App';
-import { photoSrc } from '../components/Gallery';
+import { Photo } from '../components/Gallery';
 import { GavelMark } from './Room';
 
 /** A few real cars from tonight's market, for the front page. */
 function useShowroom(n = 8) {
   return useMemo(() => {
-    const withPhotos = CATALOGUE.filter((m) => PHOTOS[m.id]?.some((a) => a.imgs.length));
+    // the front page shows only ads whose first photo was checked to be the outside of the car
+    const coverOf = (id: string) => PHOTOS[id]?.find((a) => a.ext && a.imgs.length);
+    const withPhotos = CATALOGUE.filter((m) => coverOf(m.id));
     const pool = [...withPhotos].sort(() => Math.random() - 0.5);
     // a spread of tiers so the strip looks like a real hall
     const out: typeof pool = [];
@@ -22,7 +24,7 @@ function useShowroom(n = 8) {
       out.push(m);
     }
     for (const m of pool) if (out.length < n && !out.includes(m)) out.push(m);
-    return out.map((m) => ({ m, img: PHOTOS[m.id]!.find((a) => a.imgs.length)!.imgs[0] }));
+    return out.map((m) => ({ m, img: coverOf(m.id)!.imgs[0] }));
   }, [n]);
 }
 
@@ -49,7 +51,7 @@ export function Home() {
       </header>
 
       <section className="cover">
-        {star ? <img src={photoSrc(star.img)} alt="" referrerPolicy="no-referrer" /> : <div className="cover-blank" />}
+        {star ? <Photo u={star.img} eager className="cover-img" onDead={() => {}} /> : <div className="cover-blank" />}
         <div className="cover-shade" />
         <div className="cover-text">
           <span className="cover-tag">الليلة في الصالة</span>
@@ -128,7 +130,7 @@ export function Home() {
             <div className="strip">
               {show.slice(1).map(({ m, img }) => (
                 <figure key={m.id}>
-                  <img src={photoSrc(img)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  <Photo u={img} className="strip-img" onDead={() => {}} />
                   <figcaption>
                     {m.makeAr} {m.modelAr} <span className="ltr">{m.year}</span>
                     <small>

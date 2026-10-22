@@ -1,3 +1,4 @@
+import { marketOf } from '../../engine/markets';
 import { arDigits, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
@@ -11,6 +12,11 @@ export function Intro({ room }: { room: RoomView }) {
       <div className="intro-screen">
         <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>{s.roomName}</div>
+          <div className="market-banner">
+            <small>سوق الليلة</small>
+            <b>{marketOf(s.mix).label}</b>
+            <span>{marketOf(s.mix).note}</span>
+          </div>
           <div className="t-display">{core.callout?.text ?? 'حيّاكم في مزاد الكراج'}</div>
           <div className="countdown">{arDigits(Math.max(1, Math.ceil(ms / 1000)))}</div>
           <div className="row wrap" style={{ justifyContent: 'center' }}>

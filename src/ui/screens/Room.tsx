@@ -1,3 +1,4 @@
+import { markSeen } from '../../lib/seen';
 import { useEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, Hist } from '../../engine/types';
@@ -209,6 +210,12 @@ function Room({ code, me }: { code: string; me: Me }) {
   const [players, setPlayers] = useState(false);
   const [waited, setWaited] = useState(0);
   useHallSounds(core, room.snap.hist, room.myId);
+  // remember every ad this phone sees, so the next night brings different cars
+  const adKey = room.snap.lot?.adKey;
+  const shown = !!core && ['preview', 'bidding', 'sealed', 'sold', 'unsold', 'approval'].includes(core.phase);
+  useEffect(() => {
+    if (adKey && shown) markSeen(adKey);
+  }, [adKey, shown]);
   useWakeLock(!!core && !['lobby', 'results'].includes(core.phase));
 
   useEffect(() => {

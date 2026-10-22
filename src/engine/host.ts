@@ -45,6 +45,8 @@ export interface HostState {
   approvalAccept: boolean;
   timer: Timer | null;
   paused: boolean;
+  /** paused because the host's phone left the page */
+  away?: boolean;
   callout: Callout | null;
   log: LogEntry[];
   calls: number;
@@ -264,11 +266,11 @@ export class HostEngine {
 
   // ------------------------------------------------------------------ flow
 
-  start(now: number): Changes {
+  start(now: number, seen: Map<string, number> | Set<string> = new Map()): Changes {
     if (this.st.phase !== 'lobby') return {};
     const n = this.active().length;
-    const total = lotsFor(this.st.settings, n);
-    this.st.deck = buildDeck(this.st.seed, this.st.settings, this.catalogue, n, total);
+    // the deck holds as many lots as the market can fill with ads nobody here has seen
+    this.st.deck = buildDeck(this.st.seed, this.st.settings, this.catalogue, n, lotsFor(this.st.settings, n), seen);
     this.st.idx = -1;
     this.st.sales = [];
     this.st.relists = 0;
@@ -559,10 +561,12 @@ export class HostEngine {
 
   // ------------------------------------------------------------------ host controls
 
-  pause(now: number): Changes {
+  /** `away`: the host's phone left the page (screen off / another app), so the clock holds for everyone. */
+  pause(now: number, away = false): Changes {
     const st = this.st;
     if (st.paused || !st.timer || !['preview', 'bidding', 'sealed', 'sold', 'unsold', 'intro'].includes(st.phase)) return {};
     st.paused = true;
+    st.away = away;
     st.timer = { ...st.timer, frozenLeft: Math.max(0, st.timer.endsAt - now) };
     return { core: true };
   }
@@ -571,6 +575,7 @@ export class HostEngine {
     const st = this.st;
     if (!st.paused || !st.timer) return {};
     st.paused = false;
+    st.away = false;
     const floor = st.phase === 'bidding' && st.bid ? this.speed.minExtend : 2500;
     const left = Math.max(floor, st.timer.frozenLeft ?? 0);
     st.timer = { kind: st.timer.kind, endsAt: now + left, total: Math.max(left, st.timer.total) };
@@ -752,6 +757,7 @@ export class HostEngine {
       ext: st.ext,
       timer: st.timer,
       paused: st.paused,
+      away: st.paused && !!st.away,
       callout: st.callout,
       log: st.log,
       sealedCount: st.sealed.length,

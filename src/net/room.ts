@@ -4,6 +4,7 @@ import { CATALOGUE } from '../data/catalogue';
 import { HostEngine, type Changes, type HostState, type Nack } from '../engine/host';
 import type { Action, Core, Envelope, Hist, LotPub, Private } from '../engine/types';
 import { randId, store } from '../lib/util';
+import { recentSeen } from '../lib/seen';
 import { Bus, type BusStatus } from './bus';
 import { roomKeys, seal, unseal, type RoomKeys } from './crypto';
 
@@ -56,6 +57,10 @@ export class HostRoom {
   private tickId: ReturnType<typeof setInterval> | null = null;
   private beatId: ReturnType<typeof setInterval> | null = null;
   private pending: Changes = {};
+  /** ad key -> how recently anyone in the room saw it (0 = most recent) */
+  private avoid = new Map<string, number>();
+  /** the deck object last written to storage */
+  private savedDeck: HostState['deck'] | null = null;
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   status: BusStatus = { connected: false, via: [], active: null };
@@ -69,7 +74,14 @@ export class HostRoom {
   static load(code: string): HostRoom | null {
     const st = store.get<HostState | null>(`mzk:host:${code}`, null);
     if (!st || st.v !== 2) return null;
-    return new HostRoom(new HostEngine(st, CATALOGUE));
+    // the night's deck is big and never changes once dealt, so it's stored on its own (see save)
+    if (!st.deck?.length) {
+      const deck = store.get<HostState['deck'] | null>(`mzk:hostdeck:${code}`, null);
+      if (deck?.length && st.phase !== 'lobby') st.deck = deck;
+    }
+    const room = new HostRoom(new HostEngine(st, CATALOGUE));
+    room.savedDeck = st.deck;
+    return room;
   }
 
   get code() {
@@ -144,12 +156,40 @@ export class HostRoom {
     await Promise.all(jobs);
   }
 
-  private save() {
-    if (this.saveTimer) return;
-    this.saveTimer = setTimeout(() => {
+  /** Persist for a reload, off the hot path: the small state often, the big deck only when it's dealt. */
+  private save(now = false) {
+    const write = () => {
       this.saveTimer = null;
-      store.set(`mzk:host:${this.code}`, this.engine.st);
-    }, 400);
+      const st = this.engine.st;
+      if (st.deck !== this.savedDeck) {
+        store.set(`mzk:hostdeck:${this.code}`, st.deck);
+        this.savedDeck = st.deck;
+      }
+      store.set(`mzk:host:${this.code}`, { ...st, deck: [] });
+    };
+    if (now) {
+      if (this.saveTimer) clearTimeout(this.saveTimer);
+      write();
+      return;
+    }
+    if (this.saveTimer) return;
+    this.saveTimer = setTimeout(write, 1200);
+  }
+
+  /**
+   * The host's page went to the background (screen off, another app) or came back. A hidden page's
+   * timers get throttled, so the clock is held for everyone and the pause goes out immediately.
+   */
+  away(hidden: boolean) {
+    const e = this.engine;
+    if (hidden) {
+      this.apply(e.pause(Date.now(), true));
+      if (this.flushTimer) clearTimeout(this.flushTimer);
+      void this.flush();
+      this.save(true);
+    } else if (e.st.paused && e.st.away) {
+      this.apply(e.resume(Date.now()));
+    }
   }
 
   private async reply(pid: string, msg: Private) {
@@ -207,10 +247,23 @@ export class HostRoom {
         this.apply(r.changes);
         return;
       }
+      case 'seen':
+        if (Array.isArray(a.keys)) {
+          a.keys.slice(0, 1500).forEach((k, i) => {
+            if (typeof k === 'string' && k.length <= 64) this.avoid.set(k, Math.min(i, this.avoid.get(k) ?? i));
+          });
+        }
+        return;
       case 'bye':
         this.apply(e.leave(env.pid, env.sec));
         return;
     }
+  }
+
+  /** Ads anyone in the room has seen before: this phone's history plus what the players sent. */
+  avoidSet(): Map<string, number> {
+    recentSeen(1500).forEach((k, i) => this.avoid.set(k, Math.min(i, this.avoid.get(k) ?? i)));
+    return this.avoid;
   }
 
   /** The host plays too; its own intents skip the network. */
@@ -251,6 +304,7 @@ export class PlayerRoom {
   private helloId: ReturnType<typeof setInterval> | null = null;
   private welcomed = false;
   private behindSince = 0;
+  private sentSeen = false;
   private lastResync = 0;
   private hostGone = false;
   private lastHeard = 0;
@@ -369,7 +423,14 @@ export class PlayerRoom {
           this.offset = best.off;
         }
       }
-      if (p.t === 'welcome') this.welcomed = true;
+      if (p.t === 'welcome') {
+        if (!this.welcomed && !this.sentSeen) {
+          this.sentSeen = true;
+          const keys = recentSeen(800);
+          if (keys.length) void this.send({ t: 'seen', keys });
+        }
+        this.welcomed = true;
+      }
       this.h.onPrivate(p);
     }
   }

@@ -71,7 +71,8 @@ export interface PlatePub {
   ar: string; // 'ح ط ب'
   en: string; // 'J T B'
   num: string; // '4821'
-  special?: { tier: 'rare' | 'top' | 'special' | 'nice'; label: string; value: number };
+  /** a plate that trades for real money in Saudi (Absher auctions / Haraj): what makes it special and its worth */
+  special?: { tier: 'legend' | 'rare' | 'top' | 'special' | 'nice'; label: string; note?: string; value: number };
 }
 
 export interface CarPub {
@@ -125,6 +126,11 @@ export interface CarPub {
   photos?: string[];
   /** Where the photos came from (ad title / link), shown small under the gallery. */
   adTitle?: string;
+  /**
+   * Which details the real ad itself states (km, color, engine, trans, fuel, drive, interior, doors).
+   * Everything else is the model's usual spec, and the sheet says so.
+   */
+  said?: string[];
   adUrl?: string;
 }
 
@@ -148,6 +154,8 @@ export interface LotPub {
   car: CarPub | null;
   cover?: { body: Body; yearFrom: number; yearTo: number; hints: string[]; photo?: string };
   title: string;
+  /** the real ad (or model) behind this lot — phones remember it so the next night shows something new */
+  adKey?: string;
   notes: string[];
   estimate: [number, number] | null;
   opening: number;
@@ -213,7 +221,9 @@ export interface PlayerPub {
 }
 
 export type Speed = 'fast' | 'normal' | 'calm';
-export type Mix = 'balanced' | 'luxury' | 'street';
+export type Mix =
+  | 'balanced' | 'luxury' | 'exotic' | 'giants' | 'sport' | 'family' | 'street' | 'work' | 'classic'
+  | 'japanese' | 'american' | 'german' | 'china';
 
 export interface Settings {
   roomName: string;
@@ -289,6 +299,8 @@ export interface Core {
   ext: number;
   timer: Timer | null;
   paused: boolean;
+  /** the clock is held because the host's phone left the page */
+  away?: boolean;
   callout: Callout | null;
   log: LogEntry[];
   sealedCount: number;
@@ -340,6 +352,8 @@ export type Action =
   | { t: 'bid'; lot: string; amount: number }
   | { t: 'seal'; lot: string; amount: number }
   | { t: 'vote'; scores: Record<string, number> }
+  /** ads this phone saw on earlier nights; the host keeps them out of the next deck */
+  | { t: 'seen'; keys: string[] }
   | { t: 'bye' };
 
 export interface Envelope {

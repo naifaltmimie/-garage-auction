@@ -133,9 +133,37 @@ export function useRoom(code: string, me: Me): RoomView {
       push();
       // keep the host's own lobby view of "online" dots fresh
       const iv = setInterval(push, 3000);
+      // the host's phone runs the auction: keep its screen awake, and if it still leaves the page
+      // (another app, screen off) hold the clock for everyone until it's back
+      let lock: { release: () => Promise<void> } | null = null;
+      const wake = async () => {
+        try {
+          const wl = (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock;
+          if (wl && document.visibilityState === 'visible' && !lock) {
+            lock = await wl.request('screen');
+            (lock as unknown as EventTarget).addEventListener?.('release', () => {
+              lock = null;
+            });
+          }
+        } catch {
+          lock = null; // denied or unsupported: the away-pause still covers it
+        }
+      };
+      const onVis = () => {
+        const hidden = document.visibilityState === 'hidden';
+        room.away(hidden);
+        if (!hidden) void wake();
+      };
+      const onHide = () => room.away(true);
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('pagehide', onHide);
+      void wake();
       return () => {
         clearInterval(iv);
         cancelAnimationFrame(raf);
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('pagehide', onHide);
+        void lock?.release().catch(() => {});
         room.stop();
         hostRef.current = null;
       };
@@ -215,7 +243,10 @@ export function useRoom(code: string, me: Me): RoomView {
       if (r) r.apply(f(r.engine, Date.now()));
     };
     return {
-      start: run((e, n) => e.start(n)),
+      start: () => {
+        const r = hostRef.current;
+        if (r) r.apply(r.engine.start(Date.now(), r.avoidSet()));
+      },
       pause: run((e, n) => e.pause(n)),
       resume: run((e, n) => e.resume(n)),
       advance: run((e, n) => e.advance(n)),

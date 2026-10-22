@@ -588,7 +588,6 @@ img {
   inset: 0;
   z-index: 80;
   background: rgba(4, 22, 15, .45);
-  backdrop-filter: blur(2px);
   animation: fade .2s both;
 }
 
