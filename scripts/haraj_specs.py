@@ -10,6 +10,7 @@ ad doesn't say, the engine is left blank rather than guessed.
 AD_DROP = {
     '11191107178': 'BAW 212 2026: spec and market value not established',
     '11191107432': 'same car as 11191107431 (the seller posted it twice)',
+    '11191080559': 'the seller calls a 2020 Silverado LT Trail Boss «غماره»; that trim was never a single cab, so the words and the photos can\'t both be right',
     '11191109093': 'same car as 11191108839 (the seller posted it twice: same city, same 204,000 km)',
 }
 # the ad's real model year when Haraj's header differs (e.g. «موديل 1999 محول 2002» is a 1999 with a 2002 face)
@@ -21,7 +22,7 @@ AGENT_DROP = {('rollsroyce-cullinan-2020', 2026), ('bmw-730li-2020', 2018)}
 
 # (makeEn, model as listed[, year]) -> (makeEn, modelEn, trim)
 MODEL_FIX = {
-    ('Ford', 'جراند ماركيز'): ('Mercury', 'Grand Marquis', None),
+    ('Ford', 'جراند ماركيز'): ('Ford', 'Grand Marquis', None),  # GCC cars wear the Ford badge
     ('Lexus', 'LX'): ('Lexus', 'LX600', None),
     ('Lexus', 'LS', 1995): ('Lexus', 'LS400', None),
     ('Lexus', 'LS', 2007): ('Lexus', 'LS', '460'),
@@ -230,7 +231,8 @@ OVERRIDE = {
     ('Lamborghini', 'Huracán', 2017): dict(trim='LP610-4', hp=602),
     ('Lamborghini', 'Urus', 2024): dict(value=950000),
     ('Bentley', 'Continental GT', 2015): dict(trim='', hp=582),
-    ('Kia', 'Sorento', 2011): dict(trim='', engine='2.4L 4 سلندر', hp=174, transmission='6AT', value=18000),
+    # cloned from the 2021 diesel import: the 2011 Saudi Sorento is the 2.4 petrol
+    ('Kia', 'Sorento', 2011): dict(trim='', engine='2.4L 4 سلندر', hp=174, fuel='petrol', spec_common='سعودي', transmission='6AT', value=18000),
     ('Hyundai', 'Santa Fe', 2016): dict(trim='', engine='3.3L V6', hp=290, transmission='6AT'),
     ('Hyundai', 'Elantra', 2020): dict(trim='', transmission='6AT'),
     ('Honda', 'Accord', 2016): dict(trim='', engine='2.4L 4 سلندر', hp=185, transmission='CVT', value=36000),
@@ -260,6 +262,10 @@ OVERRIDE = {
     ('Nissan', 'Patrol Super Safari', 2003): dict(value=42000),
     # W140 «شبح» 500 SEL — same body and 5.0 V8 as the researched 1997
     ('Mercedes-Benz', 'S500 (W140)', 1992): dict(value=22000),
+    # a 2020 V8 Bentayga with Saudi-market mileage (the two asks were high-km cars)
+    ('Bentley', 'Bentayga', 2020): dict(value=330000),
+    # the 2022 Highlander was a 3.5 V6 (the 2.4 turbo came with 2023)
+    ('Toyota', 'Highlander', 2022): dict(engine='3.5L V6', hp=295, transmission='8AT'),
 }
 
 # a trim the ad names that changes the engine: (makeEn, modelEn, trim) -> spec (applied per ad).
@@ -286,9 +292,121 @@ TRIM_SPECS = {
     ('GMC', 'Yukon', 'SLE'): [dict(engine='5.3L V8', hp=320, years=(2007, 2014)), dict(engine='5.3L V8', hp=355, years=(2015, 2030))],
     ('Chevrolet', 'Tahoe', 'High Country'): dict(engine='6.2L V8', hp=420, years=(2018, 2030)),
     ('Chevrolet', 'Silverado 1500', 'High Country'): dict(engine='6.2L V8', hp=420, years=(2014, 2030)),
+    # American muscle: the trim is the car
+    ('Dodge', 'Challenger', 'Hellcat'): [dict(engine='6.2L سوبرتشارج V8', hp=707, years=(2015, 2018)), dict(engine='6.2L سوبرتشارج V8', hp=717, years=(2019, 2023))],
+    ('Dodge', 'Challenger', 'Hellcat Redeye'): dict(engine='6.2L سوبرتشارج V8', hp=797, years=(2019, 2023)),
+    ('Dodge', 'Challenger', 'Scat Pack'): dict(engine='6.4L V8', hp=485, years=(2015, 2023)),
+    ('Dodge', 'Challenger', 'R/T'): dict(engine='5.7L V8', hp=375, years=(2015, 2023)),
+    ('Dodge', 'Challenger', 'SRT'): dict(engine='6.4L V8', hp=485, years=(2015, 2023)),
+    ('Dodge', 'Charger', 'Hellcat'): [dict(engine='6.2L سوبرتشارج V8', hp=707, years=(2015, 2018)), dict(engine='6.2L سوبرتشارج V8', hp=717, years=(2019, 2023))],
+    ('Dodge', 'Charger', 'Hellcat Redeye'): dict(engine='6.2L سوبرتشارج V8', hp=797, years=(2021, 2023)),
+    ('Dodge', 'Charger', 'Scat Pack'): dict(engine='6.4L V8', hp=485, years=(2015, 2023)),
+    ('Dodge', 'Charger', 'R/T'): dict(engine='5.7L V8', hp=370, years=(2011, 2023)),
+    ('Dodge', 'Charger', 'SRT'): dict(engine='6.4L V8', hp=485, years=(2015, 2023)),
+    ('Ford', 'Mustang', 'Shelby GT500'): dict(engine='5.2L سوبرتشارج V8', hp=760, years=(2020, 2022)),
+    ('Ford', 'Mustang', 'GT'): [dict(engine='5.0L V8', hp=435, years=(2015, 2017)), dict(engine='5.0L V8', hp=460, years=(2018, 2023)), dict(engine='5.0L V8', hp=480, years=(2024, 2030))],
+    ('Chevrolet', 'Camaro', 'SS'): dict(engine='6.2L V8', hp=455, years=(2016, 2024)),
+    ('Chevrolet', 'Camaro', 'ZL1'): dict(engine='6.2L سوبرتشارج V8', hp=650, years=(2017, 2024)),
+    # Lexus model numbers name the engine
+    ('Lexus', 'ES', '350'): [dict(engine='3.5L V6', hp=268, years=(2013, 2018)), dict(engine='3.5L V6', hp=302, years=(2019, 2030))],
+    ('Lexus', 'ES', '300H'): dict(engine='2.5L 4 سلندر هايبرد', hp=215, years=(2019, 2030)),
+    ('Lexus', 'ES', '250'): dict(engine='2.5L 4 سلندر', hp=204, years=(2019, 2030)),
 }
 
 # per-ad facts the ad states that change the spec (trim decides the engine)
 AD_SPECS = {
     '11191109029': dict(engine='3.5L V6', hp=None),  # «كيا سورنتو فل كامل V6» — the 2011 Sorento's V6 is the 3.5
+    '11190739053': dict(hp=None),  # «Tesla model 3 / 2023 / RWD»: the single-motor car, not the Long Range's output
+}
+
+# Other engines a family was sold with in Saudi: when an ad names its cylinders or engine size and they aren't
+# the model's usual engine, this says what that engine is (a 6-cylinder Fortuner is the 4.0 V6). Used only
+# when exactly one entry fits what the ad says and the model-year.
+ENGINE_ALTS = {
+    ('Toyota', 'Fortuner'): [dict(cyl=6, disp=4.0, years=(2005, 2030), engine='4.0L V6')],
+    ('Toyota', 'Land Cruiser'): [
+        dict(cyl=6, disp=4.5, years=(1998, 2007), engine='4.5L 6 سلندر'),
+        dict(cyl=6, disp=4.0, years=(2008, 2021), engine='4.0L V6'),
+        dict(cyl=8, disp=4.7, years=(1998, 2011), engine='4.7L V8'),
+        dict(cyl=8, disp=4.6, years=(2012, 2021), engine='4.6L V8'),
+        dict(cyl=8, disp=5.7, years=(2016, 2021), engine='5.7L V8'),
+    ],
+    ('Toyota', 'Land Cruiser Prado'): [
+        dict(cyl=4, disp=2.7, years=(2010, 2023), engine='2.7L 4 سلندر'),
+        dict(cyl=6, disp=4.0, years=(2003, 2023), engine='4.0L V6'),
+    ],
+    ('Toyota', 'Hilux'): [dict(cyl=6, disp=4.0, years=(2005, 2015), engine='4.0L V6')],
+    ('Toyota', 'Camry'): [dict(cyl=6, disp=3.5, years=(2007, 2024), engine='3.5L V6')],
+    ('Honda', 'Accord'): [dict(cyl=6, disp=3.0, years=(2003, 2007), engine='3.0L V6'), dict(cyl=6, disp=3.5, years=(2008, 2017), engine='3.5L V6')],
+    ('Nissan', 'Altima'): [dict(cyl=6, disp=3.5, years=(2007, 2018), engine='3.5L V6')],
+    ('Nissan', 'Patrol'): [
+        dict(cyl=6, disp=4.0, years=(2010, 2024), engine='4.0L V6'),
+        dict(cyl=8, disp=5.6, years=(2010, 2024), engine='5.6L V8'),
+        dict(cyl=6, disp=3.8, years=(2025, 2030), engine='3.8L V6'),
+    ],
+    ('Chevrolet', 'Silverado 1500'): [dict(cyl=6, disp=4.3, years=(2014, 2021), engine='4.3L V6', hp=285), dict(cyl=8, disp=6.2, years=(2014, 2030), engine='6.2L V8', hp=420)],
+    ('GMC', 'Sierra 1500'): [dict(cyl=6, disp=4.3, years=(2014, 2021), engine='4.3L V6', hp=285)],
+    ('Chevrolet', 'Caprice'): [dict(cyl=8, disp=6.0, years=(2006, 2013), engine='6.0L V8')],
+    ('Chevrolet', 'Tahoe'): [dict(cyl=8, disp=6.2, years=(2015, 2030), engine='6.2L V8', hp=420)],
+    ('Chevrolet', 'Suburban'): [dict(cyl=8, disp=6.2, years=(2015, 2030), engine='6.2L V8', hp=420)],
+    ('GMC', 'Yukon'): [dict(cyl=8, disp=6.2, years=(2007, 2014), engine='6.2L V8', hp=403), dict(cyl=8, disp=6.2, years=(2015, 2030), engine='6.2L V8', hp=420)],
+    ('Ford', 'Explorer'): [dict(cyl=6, disp=3.0, years=(2020, 2030), engine='3.0L توين تيربو V6')],
+    ('Ford', 'F-150'): [
+        dict(cyl=8, disp=5.0, years=(2011, 2017), engine='5.0L V8'),
+        dict(cyl=8, disp=5.0, years=(2018, 2020), engine='5.0L V8', hp=395),
+        dict(cyl=8, disp=5.0, years=(2021, 2030), engine='5.0L V8', hp=400),
+    ],
+    ('Bentley', 'Continental GT'): [
+        dict(cyl=8, disp=4.0, years=(2012, 2030), engine='4.0L توين تيربو V8'),
+        dict(cyl=12, disp=6.0, years=(2003, 2024), engine='6.0L توين تيربو W12'),
+    ],
+    ('Bentley', 'Bentayga'): [
+        dict(cyl=12, disp=6.0, years=(2016, 2020), engine='6.0L توين تيربو W12', hp=600),
+        dict(cyl=8, disp=4.0, years=(2019, 2030), engine='4.0L توين تيربو V8'),
+    ],
+    ('Land Rover', 'Range Rover'): [
+        dict(cyl=8, disp=5.0, years=(2013, 2021), engine='5.0L سوبرتشارج V8'),
+        dict(cyl=8, disp=4.4, years=(2022, 2030), engine='4.4L توين تيربو V8'),
+    ],
+    ('Land Rover', 'Range Rover Sport'): [
+        dict(cyl=8, disp=5.0, years=(2014, 2022), engine='5.0L سوبرتشارج V8'),
+        dict(cyl=4, disp=2.0, years=(2018, 2022), engine='2.0L تيربو 4 سلندر'),
+        dict(cyl=8, disp=4.4, years=(2023, 2030), engine='4.4L توين تيربو V8'),
+    ],
+    ('Land Rover', 'Defender'): [
+        dict(cyl=4, disp=2.0, years=(2020, 2030), engine='2.0L تيربو 4 سلندر'),
+        dict(cyl=8, disp=5.0, years=(2022, 2030), engine='5.0L سوبرتشارج V8'),
+    ],
+    ('Genesis', 'GV80'): [dict(cyl=4, disp=2.5, years=(2021, 2030), engine='2.5L تيربو 4 سلندر')],
+    ('Genesis', 'G80'): [dict(cyl=6, disp=3.5, years=(2021, 2030), engine='3.5L توين تيربو V6')],
+    ('Kia', 'K8'): [dict(cyl=6, disp=3.5, years=(2022, 2030), engine='3.5L V6')],
+    ('Isuzu', 'D-Max'): [dict(cyl=4, disp=3.0, years=(2012, 2030), engine='3.0L ديزل تيربو')],
+}
+
+# a different fuel than the model's usual one means a different engine: the ones we know
+FUEL_SPECS = {
+    ('Toyota', 'Land Cruiser', 'diesel'): [dict(engine='4.5L توين تيربو V8 ديزل', hp=262, years=(2008, 2021)), dict(engine='3.3L توين تيربو V6 ديزل', hp=304, years=(2022, 2030))],
+    ('Toyota', 'Land Cruiser Prado', 'diesel'): [dict(engine='3.0L ديزل تيربو', hp=171, years=(2010, 2015)), dict(engine='2.8L ديزل تيربو', hp=201, years=(2016, 2030))],
+    ('Toyota', 'Hilux', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=None, years=(2006, 2015)), dict(engine='2.4L ديزل تيربو', hp=148, years=(2016, 2030))],
+    ('Mitsubishi', 'L200', 'diesel'): [dict(engine='2.4L ديزل تيربو', hp=None, years=(2016, 2030))],  # 154 or 181 PS by trim
+    ('Hyundai', 'Santa Fe', 'hybrid'): [dict(engine='1.6L تيربو 4 سلندر هايبرد', hp=231, years=(2021, 2030))],
+    ('Lexus', 'LS', 'hybrid'): [dict(engine='3.5L V6 هايبرد', hp=354, years=(2018, 2030))],
+    ('Toyota', 'Fortuner', 'diesel'): [dict(engine='2.4L ديزل تيربو', hp=148, years=(2016, 2030))],
+    ('Toyota', 'Land Cruiser 79 Pickup', 'diesel'): [dict(engine='4.2L ديزل 6 سلندر', hp=129, years=(1985, 2006)), dict(engine='4.5L V8 ديزل', hp=202, years=(2007, 2023))],
+    ('Hyundai', 'Staria', 'diesel'): [dict(engine='2.2L ديزل تيربو', hp=174, years=(2021, 2030))],
+    ('Hyundai', 'H1', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=168, years=(2008, 2021))],
+    ('Nissan', 'Navara', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=188, years=(2015, 2030))],
+    ('Nissan', 'Patrol', 'diesel'): [dict(engine='4.2L ديزل 6 سلندر', hp=145, years=(1990, 2015))],
+    ('Toyota', 'Camry', 'hybrid'): [dict(engine='2.5L 4 سلندر هايبرد', hp=208, years=(2018, 2024)), dict(engine='2.5L 4 سلندر هايبرد', hp=225, years=(2025, 2030))],
+    ('Toyota', 'Highlander', 'hybrid'): [dict(engine='2.5L 4 سلندر هايبرد', hp=243, years=(2020, 2030))],
+    ('Toyota', 'RAV4', 'hybrid'): [dict(engine='2.5L 4 سلندر هايبرد', hp=219, years=(2019, 2030))],
+    ('Lexus', 'ES', 'hybrid'): [dict(engine='2.5L 4 سلندر هايبرد', hp=215, years=(2019, 2030))],
+    ('Kia', 'Carnival', 'diesel'): [dict(engine='2.2L ديزل تيربو', hp=None, years=(2015, 2030))],
+    ('Chevrolet', 'Silverado 1500', 'diesel'): [dict(engine='3.0L ديزل تيربو 6 سلندر', hp=None, years=(2020, 2030))],
+    ('Nissan', 'Urvan', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=None, years=(2013, 2030))],
+    ('Toyota', 'Hiace', 'diesel'): [dict(engine='2.5L ديزل تيربو', hp=None, years=(2005, 2018)), dict(engine='2.8L ديزل تيربو', hp=None, years=(2019, 2030))],
+    # a petrol ad filed under a diesel model-year (the petrol automatic «ربع» and double-cab شاص)
+    ('Toyota', 'Land Cruiser 76 Hardtop', 'petrol'): [dict(engine='4.0L V6', hp=None, years=(2007, 2030))],
+    ('Toyota', 'Land Cruiser 79 Double Cab', 'petrol'): [dict(engine='4.0L V6', hp=None, years=(2012, 2030))],
+    ('Toyota', 'Hilux', 'petrol'): [dict(engine='2.7L 4 سلندر', hp=None, years=(2005, 2030))],
 }

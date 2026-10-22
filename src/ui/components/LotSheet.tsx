@@ -105,7 +105,16 @@ function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?:
         </>
       ),
     },
-    { k: 'المواصفات', v: car.spec, tone: car.specKind === 'us_salvage' ? 'bad' : undefined },
+    {
+      k: 'المواصفات',
+      v: (
+        <>
+          {car.spec}
+          {car.said && !car.said.includes('spec') && <small className="mute"> غالباً</small>}
+        </>
+      ),
+      tone: car.specKind === 'us_salvage' ? 'bad' : undefined,
+    },
     {
       k: 'تقييم الفحص',
       v: g == null ? (lot.mode === 'asis' ? 'على الحالة' : '—') : <>{g.toFixed(1)}<small> / 5 {gradeWord(g)}</small></>,

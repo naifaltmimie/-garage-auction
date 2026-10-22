@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import { BidLog, Console } from '../components/Console';
+import { photoSrc } from '../components/Gallery';
 import { LotSheet } from '../components/LotSheet';
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
@@ -36,6 +37,21 @@ export function Auction({ room }: { room: RoomView }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [lot?.id]);
+
+  // fetch the next cars' cover photos in the background, so the next lot opens with its photo ready
+  const ahead = lot?.ahead?.join('|') ?? '';
+  useEffect(() => {
+    if (!ahead) return;
+    const t = setTimeout(() => {
+      for (const u of ahead.split('|')) {
+        const img = new Image();
+        img.referrerPolicy = 'no-referrer';
+        img.decoding = 'async';
+        img.src = photoSrc(u);
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [ahead]);
 
   if (!lot) {
     return (

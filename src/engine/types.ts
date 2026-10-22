@@ -159,6 +159,8 @@ export interface LotPub {
   notes: string[];
   estimate: [number, number] | null;
   opening: number;
+  /** the next lots' first photos, so phones fetch them while this one is on the block */
+  ahead?: string[];
 }
 
 export interface Surprise {

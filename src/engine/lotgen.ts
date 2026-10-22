@@ -381,7 +381,8 @@ function trimFor(m: CarModel, ad: AdSet | null, cab: 'single' | 'double' | undef
   let t = (ad ? ad.trim : m.trim) || '';
   if (m.body === 'pickup') {
     t = t.replace(/غمارتين|غماره|غمارة|single\s*cab|double\s*cab|crew\s*cab/gi, ' ').replace(/\s+/g, ' ').trim();
-    if (cab) t = `${cab === 'single' ? 'غمارة' : 'غمارتين'} ${t}`.trim();
+    // the model's own name may already say it («شاص غمارتين»)
+    if (cab && !/غمار/.test(m.modelAr)) t = `${cab === 'single' ? 'غمارة' : 'غمارتين'} ${t}`.trim();
   }
   return t;
 }
@@ -397,10 +398,13 @@ function transFor(m: CarModel, ad: AdSet | null): string {
 function adCondition(text: string): CondClass | null {
   const t = text.replace(/[ًٌٍَُِّْـ]/g, '');
   const no = (re: RegExp) => !re.test(t);
-  if (/تشليح|للتشليح|محترق|محترقه|غرقان|غرقانه|سيل/.test(t)) return 'wreck';
-  if (/مقصوص|قص |قص$|قلبان|مقلوب|مصدوم|مصدومه|مصدومة|صدمه قويه|صدمة قوية/.test(t) && no(/بدون صدمات|ما فيها صدم|مافيها صدم|بدون حوادث|ما عليها حوادث/)) return 'major';
+  // «للتشليح» is a wreck; a panel «من التشليح» is just a used part on a running car
+  if (/للتشليح|يصلح تشليح|يصلح للتشليح|محترق|محترقه|غرقان|غرقانه|سيل/.test(t)) return 'wreck';
+  if (/مقصوص|قص |قص$|قلبان|مقلوب|مصدوم|مصدومه|مصدومة|صدمه قويه|صدمة قوية|كل (قطع )?البد[يى] مبدل|البد[يى] كامل مبدل|البد[يى] مغير كامل/.test(t) && no(/بدون صدمات|ما فيها صدم|مافيها صدم|بدون حوادث|ما عليها حوادث|(غير|مو|مب|ماهي|ما هي|ليست) ?مصدوم|(غير|مو|مب) ?مقلوب/)) return 'major';
   if (/صدمه|صدمة|صدمات|خبطه|خبطة|ضربه|ضربة|حادث/.test(t) && no(/بدون صدمات|ما فيها صدم|مافيها صدم|بدون حوادث|ما عليها حوادث|بدون حادث|خالي من الحوادث/)) return 'hit';
-  if (/رش|رشه|رشة|سمكر|معجون|رنج/.test(t) && no(/بدون رش|ما فيها رش|مافيها رش|ولا رشه|ولا رشة|بدون ولا رش|خالي من الرش/)) return 'painted';
+  if (/رش|رشه|رشة|سمكر|معجون|رنج/.test(t) && no(/بدون رش|ما فيها رش|مافيها رش|ولا رشه|ولا رشة|بدون ولا رش|خالي من الرش|خاليه من الرش/)) return 'painted';
+  // a replaced panel (a trunk lid from the scrapyard) is body work, even on an otherwise clean car
+  if (/مبدل|مبدله|مبدلة|مغير|مستبدل|تبديل/.test(t) && no(/بدون تبديل|ما فيها تبديل|مافيها تبديل|ولا قطعة مبدلة|ولا قطعه مبدله/)) return 'painted';
   if (/وكاله|وكالة|بدون رش|ما فيها رش|مافيها رش|قمة النظافه|قمة النظافة|نظيف|نظيفه|نظيفة|مالك اول|مالك أول|بوية وكالة|صبغ وكالة/.test(t)) return 'clean';
   return null;
 }
@@ -414,13 +418,16 @@ export function adTitleClean(t: string): string {
   const mileage = /(ممشى|ممشا|ممشاه|ممشاها|ماشي|ماشيه|عداد|العداد|الممشى)\s*$/;
   return (
     t
-      // «بسعر 90 الف»، «السعر 55.800»، «اقل سعر 232 300 بضريبة»، «ب 8»
-      .replace(new RegExp(`(^|[\\s\\-–(])(?:بسعر|سعر|السعر|اقل سعر|أقل سعر|سوم|السوم|بـ|ب)\\s*[:：]?\\s*[\\d٠-٩][\\d٠-٩\\s,.،]*(?:\\s*(?:ألف|الف|ريال|k|K))?${TAIL}`, 'g'), '$1')
+      // «بسعر 90 الف»، «السعر 55.800»، «اقل سعر 232 300 بضريبة»، «ب 8»، «الحد 54 ألف ريال»
+      .replace(new RegExp(`(^|[\\s\\-–(])(?:بسعر|سعر|السعر|اقل سعر|أقل سعر|سوم|السوم|الحد|حده|بـ|ب)\\s*[:：]?\\s*[\\d٠-٩][\\d٠-٩\\s,.،]*(?:\\s*(?:ألف|الف|ريال|k|K))*${TAIL}`, 'g'), '$1')
+      // «(435900) شامل الضريبة»: a bare five-to-seven digit figure is a price, not a model or a mileage
+      .replace(new RegExp(`\\(\\s*[\\d٠-٩]{5,7}\\s*\\)${TAIL}|(^|\\s)[\\d٠-٩]{5,7}(?:\\s*ريال)?(?=\\s*(?:شامل|بالضريبة|بضريبة|ريال))${TAIL}`, 'g'), (all: string, pre?: string) => pre ?? '')
       // a bare «287 ألف شامل…» — but «ممشى 98 الف» is the mileage, and stays
       .replace(new RegExp(`(^|\\s)[\\d٠-٩][\\d٠-٩,.،]*\\s*(?:ألف|الف|ريال)${TAIL}`, 'g'), (all: string, pre: string, off: number, str: string) =>
         mileage.test(str.slice(0, off + pre.length)) ? all : pre,
       )
       .replace(/\s*[-–|،,]\s*(?=[-–|،,]|$)/g, '')
+      .replace(/\s+ال$/, '') // a cut-off «الف» left behind
       .replace(/\s{2,}/g, ' ')
       .replace(/^[\s\-–|،,]+|[\s\-–|،,]+$/g, '')
       .trim()
@@ -433,7 +440,7 @@ function adLines(text: string): string[] {
     .replace(/(\+?966|0)?5\d{8}/g, '')
     .split(/[\n\r.!؟?]+|،\s|\s-\s|\s–\s|•|\*/)
     .map((x) => x.replace(/\s+/g, ' ').trim())
-    .filter((x) => x.length >= 8 && x.length <= 110)
+    .filter((x) => x.length >= 8 && x.length <= 110 && x.split(' ').length >= 2)
     .filter((x) => !/ريال|الف|ألف|سعر|السوم|سوم|للتواصل|تواصل|واتس|جوال|اتصال|رقم|حراج|الموقع|المكان|خاص|@|http/.test(x))
     // the photos can be a neighbouring model-year: never quote a year that could contradict the lot
     .filter((x) => !/(^|[^\d])(19|20)\d{2}([^\d]|$)|موديل|ممشى|ممشاها|ماشي|كيلو|\sكم(\s|$)/.test(x))
@@ -462,7 +469,10 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   const kmTag = ratio < 0.55 && age > 1 ? 'low' : ratio > 1.5 ? 'high' : undefined;
 
   const adSays = ad ? [ad.title, ad.text, ...(ad.lines ?? []), ...(ad.feats ?? [])].filter(Boolean).join(' ') : '';
-  let specKind = (adSays && specFromAd(adSays)) || pickSpec(rng, m);
+  // a real ad that doesn't say where the car is from is, like most of Haraj, a Saudi or Gulf car —
+  // never a made-up American import its photos could contradict
+  const specSaid = adSays ? specFromAd(adSays) : null;
+  let specKind = specSaid ?? (ad ? rng.weighted([['saudi', 72], ['gcc', 28]] as const) : pickSpec(rng, m));
   if (ad && specKind === 'us_salvage' && !ad.damaged) specKind = 'us';
   const fromAd = adSays ? adCondition(adSays) : null;
   // a real ad's photos show the body: visible damage only when the ad says so
@@ -473,7 +483,11 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   else if (fromAd === 'major' || fromAd === 'hit' || fromAd === 'painted') cls = fromAd;
   else if (ad.isNew || fromAd === 'clean') cls = rng.chance(0.85) ? 'clean' : 'touched';
   else cls = rng.weighted([['clean', 55], ['touched', 45]] as const);
+  // «طلع الاربكات»، «ارباك طالع»: the airbags went off — a real hit, whatever else the ad says
+  const bagsOut = /(ا|إ|أ)?[يى]?ر?باك(ات)?\s*(طالع|طلع|مفتوح|ضارب|ضاربه|ضاربة|مفقوع)|(طلع|طلعت|ضرب|ضربت|انفتح|انفتحت)\s*(ال)?(ا|إ|أ)?[يى]?ر?باك|(ا|إ|أ)?[يى]?رب?كات\s*(طالع|طلع|مفتوح)|طلع\s*(ال)?(ا|إ|أ)?[يى]?رب?كات/.test(adSays);
+  if (ad && bagsOut && (cls === 'clean' || cls === 'touched' || cls === 'painted')) cls = 'hit';
   const body = buildPanels(rng, cls, doors);
+  if (bagsOut) body.airbags = 'deployed';
 
   // mechanical health grows worse with age and mileage
   const wear = Math.min(1, age / 18 + (ratio - 1) * 0.15);
@@ -634,15 +648,22 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   const shownMicrons: Partial<Record<PanelId, number | null>> = {};
   for (const k of Object.keys(panels) as PanelId[]) shownMicrons[k] = panels[k] === 'unknown' ? null : truthMicrons[k] ?? null;
   const notes: string[] = [];
+  // the inspector words the same fault differently from car to car: no two lots tonight share a note
+  const say = (options: string[]) => {
+    const fresh = options.filter((x) => !used.has(x));
+    const x = rng.pick(fresh.length ? fresh : options);
+    used.add(x);
+    notes.push(x);
+  };
   if (mode === 'asis') notes.push('فحص خارجي فقط، العيوب الخفية ما تنضمن');
-  if (mech.engine === 'minor') notes.push(rng.pick(['تهريب زيت خفيف من غطا البلوف', 'تكتكة خفيفة وهي باردة']));
-  if (mech.engine === 'major') notes.push('دخان أزرق مع الدعسة');
-  if (mech.gearbox === 'minor') notes.push('نتعة خفيفة بين الأول والثاني');
-  if (mech.gearbox === 'major') notes.push('تأخير تعشيق واضح');
-  if (mech.susp === 'minor') notes.push('صوت جلب من قدام');
-  if (mech.ac === 'weak') notes.push('المكيف يبرد على خفيف');
-  if (body.chassis === 'repaired') notes.push('أثر لحام على القائمة الأمامية');
-  if (cls === 'clean' && service === 'dealer' && rng.chance(0.6)) notes.push('السيارة بحالة وكالة');
+  if (mech.engine === 'minor') say(['تهريب زيت خفيف من غطا البلوف', 'تكتكة خفيفة وهي باردة', 'رجفة بسيطة على الفاضي', 'أثر زيت تحت المكينة', 'صوت سير خفيف أول التشغيل', 'المكينة تبي صيانة بواجي وفلاتر']);
+  if (mech.engine === 'major') say(['دخان أزرق مع الدعسة', 'ضغط المكينة ضعيف في سلندر', 'صوت طقطقة من تحت الغطا', 'المكينة تسخن مع الوقفة', 'تهريب ماء من الرديتر وأثر حرارة']);
+  if (mech.gearbox === 'minor') say(['نتعة خفيفة بين الأول والثاني', 'القير يتأخر شوي وهو بارد', 'رفسة بسيطة على الريوس', 'زيت القير يبي تغيير', 'تعشيق الثالث فيه تردد بسيط']);
+  if (mech.gearbox === 'major') say(['تأخير تعشيق واضح', 'القير يفصل على السرعات العالية', 'صوت صفير من القير مع الدعسة', 'القير ينتع بقوة بين الثاني والثالث']);
+  if (mech.susp === 'minor') say(['صوت جلب من قدام', 'المساعدات الخلفية تعبانة شوي', 'ميزانية تبي ضبط، تسحب يمين', 'صوت طقطقة مع اللف من المقص', 'جلد المقصات متشقق']);
+  if (mech.ac === 'weak') say(['المكيف يبرد على خفيف', 'المكيف يبي تعبئة فريون', 'مروحة المكيف ضعيفة', 'المكيف يبرد بعد ما تمشي فيها']);
+  if (body.chassis === 'repaired') say(['أثر لحام على القائمة الأمامية', 'الشاصي الخلفي مسحوب ومعدل', 'أثر تعديل على الدعامة الأمامية', 'برغي القائمة مفكوك ومعاد']);
+  if (cls === 'clean' && service === 'dealer' && rng.chance(0.6)) say(['السيارة بحالة وكالة', 'البودي وكالة والسجل منتظم', 'محركاتها وكالة ما انفكت', 'نظيفة ومخدومة عند الوكيل']);
   // the model's own known weak spots, as a Saudi inspector would flag them
   const freshIssues = m.issues.filter((x) => !used.has(x));
   if (freshIssues.length && rng.chance(cls === 'clean' ? 0.3 : 0.6)) {
@@ -663,7 +684,8 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
     trimAr: ad ? undefined : m.trimAr,
     year: m.year,
     body: m.body,
-    engine: ad?.engine ?? m.engine,
+    // '?' = the ad's car has another engine than the model's usual one and doesn't say which: show none
+    engine: ad?.engine === '?' ? '' : ad?.engine ?? m.engine,
     hp: ad?.engine && !ad.hp ? undefined : (ad?.hp ?? m.hp),
     fuel: ad?.fuel ?? m.fuel,
     drive: ad?.drive ?? m.drive,
@@ -705,8 +727,9 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
     said: ad
       ? [
           ...(ad.km && ad.km >= 1000 ? ['km'] : ad.isNew ? ['km'] : []),
+          ...(specSaid ? ['spec'] : []),
           ...(COLORS[color] ? ['color'] : []),
-          ...(ad.engine ? ['engine', 'hp'] : []),
+          ...(ad.engine ? ['engine', ...(ad.hp ? ['hp'] : [])] : []),
           ...(ad.trans ? ['trans'] : []),
           ...(ad.fuel ? ['fuel'] : []),
           ...(ad.drive ? ['drive'] : []),
@@ -820,7 +843,9 @@ function bucketOf(value: number, perSlot: number, budget: number): Bucket | null
 }
 
 export function titleOf(c: { makeAr: string; modelAr: string; trim: string; nick?: string }) {
-  return `${c.makeAr} ${c.modelAr} ${c.trim}`.trim();
+  // «رنج روفر» is what everyone calls it — «لاند روفر رنج روفر» reads the name twice
+  const make = /^رنج/.test(c.modelAr) ? '' : c.makeAr;
+  return `${make} ${c.modelAr} ${c.trim}`.trim();
 }
 
 const TOP_TRIM = /فل|Limited|Platinum|VXR|VX|Denali|High Country|Ultra|LE|GLX|Titanium|Prestige|Signature/i;

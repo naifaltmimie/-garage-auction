@@ -771,7 +771,13 @@ export class HostEngine {
     if (!l) return null;
     const { carFull: _c, base: _b, surprise: _s, tags: _t, reservePrice: _r, comps: _m, ...pub } = l;
     void _c; void _b; void _s; void _t; void _r; void _m;
-    return pub;
+    // warm the phones' cache with the next two cars' first photos (never a covered car's)
+    const ahead = this.st.deck
+      .slice(this.st.idx + 1, this.st.idx + 3)
+      .filter((x) => x.kind !== 'covered')
+      .map((x) => x.car?.photos?.[0])
+      .filter((x): x is string => !!x);
+    return ahead.length ? { ...pub, ahead } : pub;
   }
 
   hist(): Hist {

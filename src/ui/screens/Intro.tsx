@@ -1,5 +1,5 @@
 import { marketOf } from '../../engine/markets';
-import { arDigits, money } from '../../lib/util';
+import { arDigits, carsN, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 export function Intro({ room }: { room: RoomView }) {
@@ -21,8 +21,8 @@ export function Intro({ room }: { room: RoomView }) {
           <div className="countdown">{arDigits(Math.max(1, Math.ceil(ms / 1000)))}</div>
           <div className="row wrap" style={{ justifyContent: 'center' }}>
             <span className="chip chip-gold">كل واحد معه {money(s.budget)}</span>
-            <span className="chip">الكراج {arDigits(s.garage)} سيارات</span>
-            <span className="chip">{arDigits(core.lotsTotal)} سيارة بالمزاد</span>
+            <span className="chip">الكراج يشيل {carsN(s.garage)}</span>
+            <span className="chip">{carsN(core.lotsTotal)} بالمزاد</span>
           </div>
           <p className="mute" style={{ maxWidth: '36ch', margin: 0 }}>
             اقرأ تقرير الفحص زين وقت المعاينة. القيمة الحقيقية تنكشف بعد ما تنزل المطرقة، ومرات تطلع مفاجأة.

@@ -189,9 +189,12 @@ def tidy_engine(eng, fuel):
         turbo = 'تيربو'
     sc = 'سوبرتشارج' if re.search(r'supercharg|سوبر ?تشارج', low) else ''
     diesel = 'ديزل' if (fuel == 'diesel' or re.search(r'diesel|ديزل', low)) else ''
-    hybrid = 'هايبرد' if (fuel == 'hybrid' or re.search(r'hybrid|هايبرد|هجين', low)) else ''
-    if fuel == 'ev' or re.search(r'\bev\b|electric|كهرب', low):
+    hybrid = 'هايبرد' if (fuel == 'hybrid' or re.search(r'hybrid|هايبرد|هجين|phev|plug-?in', low)) else ''
+    # only a car with no combustion engine is «كهربائي»: an SF90 or LX700h is a V8/V6 hybrid
+    if fuel == 'ev' or (re.search(r'\bev\b|electric|كهرب', low) and not disp and not cyl):
         return 'كهربائي'
+    if re.search(r'electric|كهرب', low):
+        hybrid = 'هايبرد'
     if not disp and not cyl:
         return e.strip()
     parts = [disp]
@@ -257,6 +260,9 @@ def convert(e, seen):
     make_en = (e.get('make_en') or '').strip()
     model_ar = (e.get('model_ar') or e.get('model_en') or '').strip()
     model_en = (e.get('model_en') or '').strip()
+    if make_en == 'Mercury' and 'Grand Marquis' in model_en:
+        # the Gulf's Grand Marquis wore a Ford badge: Saudis call it «فورد جراند ماركيز»
+        make_en, make_ar = 'Ford', 'فورد'
     trim = str(e.get('trim') or '').strip()
     trim_ar = str(e.get('trim_ar') or '').strip() or None
     # long English descriptions ("Hardtop 5-door, premium grade") read badly in an Arabic title

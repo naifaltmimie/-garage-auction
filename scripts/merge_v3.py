@@ -23,7 +23,9 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, '/home/claude/research')
 import build_catalogue as bc  # noqa: E402
 from haraj_maps import MAKE_EN, MODEL  # noqa: E402
-from haraj_specs import AD_DROP, AD_SPECS, AGENT_DROP, MODEL_FIX, NEW_SPECS, OVERRIDE, TRIM_SPECS, YEAR_FIX  # noqa: E402
+from haraj_specs import (  # noqa: E402
+    AD_DROP, AD_SPECS, AGENT_DROP, ENGINE_ALTS, FUEL_SPECS, MODEL_FIX, NEW_SPECS, OVERRIDE, TRIM_SPECS, YEAR_FIX,
+)
 
 RESEARCH = Path('/home/claude/research')
 PACK = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('/tmp/claude-0/-home-claude/15da4d35-95ca-511f-947e-484db8ab0656/scratchpad/gpt2/x/cars.json')
@@ -76,6 +78,7 @@ EMOJI = re.compile('[\U0001F000-\U0001FFFF☀-➿️]')
 def clean_line(x):
     x = PHONE.sub('', x or '')
     x = EMOJI.sub('', x)
+    x = re.sub(r'[​-‏‪-‮⁠﻿]', '', x)  # invisible joiners/direction marks from copy-paste
     x = re.sub(r'\s*\|\s*', '، ', x)
     x = re.sub(r'\s+', ' ', x).strip(' -–•*،.')
     return x
@@ -95,13 +98,40 @@ def km_of(text):
     return int(m.group(1)) if m else None
 
 
+GEAR = r'(?:قير|جير|ناقل(?:\s+ال)?حركة)'
+
+
 def trans_of(*texts):
-    t = ' '.join(x for x in texts if x)
-    if re.search(r'يدوي|قير عادي|جير عادي|مانيوال|manual', t, re.I):
-        return 'MT'
-    if re.search(r'أوتوماتيك|اوتوماتيك|اتوماتيك|تماتيك|automatic', t, re.I):
-        return 'AT'
-    return None
+    """The gearbox the ad names. «يدوي/اوتوماتيك» only count next to the gearbox word or as Haraj's own form
+    value: «مكيف يدوي» is the air conditioning, not a manual Hilux."""
+    mt = at = False
+    for x in texts:
+        s = (x or '').strip()
+        if not s:
+            continue
+        if s in ('يدوي', 'عادي', 'manual', 'Manual'):
+            mt = True
+            continue
+        if re.fullmatch(r'[اأ]وتوماتيك|[اأ]وتماتيك|اتوماتيك|automatic', s, re.I):
+            at = True
+            continue
+        if re.search(GEAR + r'\s*[:：/-]?\s*(?:يدوي|عادي|مانيوال)|مانيوال|\bmanual\b', s, re.I):
+            mt = True
+        if re.search(GEAR + r'\s*[:：/-]?\s*(?:[اأ]وتوماتيك|[اأ]وتماتيك|اتوماتيك|تماتيك|تبترونك)|\bautomatic\b'
+                     r'|(?<!مكيف )(?<!تكييف )(?<!مكيفات )(?:[اأ]وتوماتيك|[اأ]وتماتيك|اتوماتيك|تماتيك)', s, re.I):
+            at = True
+    return 'MT' if mt and not at else 'AT' if at and not mt else None
+
+
+def hp_said(*texts):
+    """The horsepower an ad states («420 حصان»، «190HP»), when it states exactly one."""
+    found = set()
+    for t in texts:
+        for m in re.finditer(r'(?<![\d.])(\d{2,4})\s*(?:حصان|حصانا|خيل|bhp\b|hp\b)', t or '', re.I):
+            v = int(m.group(1))
+            if 60 <= v <= 1600:
+                found.add(v)
+    return found.pop() if len(found) == 1 else None
 
 
 def fuel_of(*texts):
@@ -124,12 +154,54 @@ def cab_of(*texts):
     return None
 
 
+# families sold in Saudi with a diesel: a «ديزل» ticked in Haraj's form for anything else (a Yaris,
+# an Expedition) is the seller's slip, not the car
+DIESEL_FAMILIES = {k[:2] for k in FUEL_SPECS if k[2] == 'diesel'} | {
+    ('Nissan', 'Urvan'), ('Toyota', 'Hiace'), ('Isuzu', 'D-Max'), ('Mitsubishi', 'L200'), ('Kia', 'Tasman'), ('Ford', 'Ranger'),
+    ('Ford', 'F-350'), ('Changan', 'Hunter'), ('Nissan', 'Pickup (Datsun)'), ('Toyota', 'Land Cruiser 79 Double Cab'),
+    ('Toyota', 'Land Cruiser 76 Hardtop'), ('Kia', 'Sorento'), ('Hyundai', 'Santa Fe'), ('Mitsubishi', 'Pajero'),
+}
+
+
+def engine_alt(make_en, model_en, year, cyl=None, disp=None):
+    """The one engine of this family/model-year that fits the cylinders and/or size the ad states, else None."""
+    if not cyl and not disp:
+        return None
+    hits = [x for x in ENGINE_ALTS.get((make_en, model_en), [])
+            if x['years'][0] <= year <= x['years'][1]
+            and (not cyl or x['cyl'] == cyl) and (not disp or abs(x['disp'] - disp) < 0.15)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def pack_fuel(make_en, model_en, said_in_text, said_in_form):
+    if said_in_text:
+        return said_in_text
+    if said_in_form == 'diesel' and (make_en, model_en) not in DIESEL_FAMILIES:
+        return None
+    return said_in_form
+
+
+def damaged_of(t):
+    """The ad says the car is crashed/rolled/burnt — and doesn't say it isn't («غير مصدومة»)."""
+    for m in re.finditer(r'مصدوم|مقلوب|حادث قوي|للتشليح|يصلح تشليح|محترق', t or ''):
+        before = (t or '')[max(0, m.start() - 8):m.start()]
+        if not re.search(r'(غير|مو|مب|ما|بدون|ليس|ليست|ماهي|ماهو|ولا)\s*$', before):
+            return True
+    return False
+
+
 def drive_of(*texts):
-    """Saudi usage: «دبل» after a truck/SUV name means 4x4 (not double cab — that is «غمارتين»)."""
+    """Saudi usage: «دبل» after a truck/SUV name means 4x4 (not double cab — that is «غمارتين»).
+    «دفع خلفي/امامي» names the driven wheels outright. An ad that says both kinds says nothing."""
     t = ' '.join(x for x in texts if x)
-    if re.search(r'(بدون|غير|مو|ماهو|ماهي|مب|مش)\s*دبل|دفع ثنائي|\b4\s*[xX×]\s*2\b|\b2WD\b', t):
-        return '2WD'
-    if re.search(r'دبل(?!\s*(كابين|كبينه|كبينة|غمار|قمار))|دفع رباعي|\b4\s*[xX×]\s*4\b|\b4WD\b|فور ويل', t):
+    two = re.search(r'(بدون|غير|مو|ماهو|ماهي|مب|مش)\s*دبل|دفع ثنائي|\b4\s*[xX×]\s*2\b|\b2WD\b', t)
+    rear = re.search(r'دفع\s*خلف[يى]|\bRWD\b', t)
+    front = re.search(r'دفع\s*[اأ]مام[يى]|\bFWD\b', t)
+    four = re.search(r'(?<!بدون )(?<!غير )(?<!مو )(?<!مب )(?<!مش )دبل(?!\s*(كابين|كبينه|كبينة|غمار|قمار))'
+                     r'|دفع رباعي|دفع كلي|\b4\s*[xX×]\s*4\b|\b4WD\b|فور ويل', t)
+    if (two or rear or front) and not four:
+        return 'RWD' if rear and not front else 'FWD' if front and not rear else '2WD'
+    if four and not (two or rear or front):
         return '4WD'
     return None
 
@@ -151,6 +223,23 @@ def cyl_said(*texts):
             if re.search(rf'(?:^|\s){w}\s*(?:سلندر|سليندر)', t):
                 found.add(n)
     found = {n for n in found if n in (3, 4, 5, 6, 8, 10, 12)}
+    return found.pop() if len(found) == 1 else None
+
+
+DISP_RX = re.compile(
+    r'(?:مكين[هة]|ماكين[هة]|محرك|المحرك|المكين[هة])\s*[:：]?\s*(?:(\d\.\d)(?!\d)|([1-6][0-9]00)(?!\d))'
+    r'|(\d\.\d)\s*(?:تيربو|توربو|لتر)|([1-6][0-9]00)\s*(?:سي\s?سي|cc|تيربو|توربو)')
+
+
+def disp_said(*texts):
+    """The engine size an ad states («مكينة 1.6»، «1600 تيربو»، «محرك 2500»), when it states exactly one."""
+    found = set()
+    for t in texts:
+        for m in DISP_RX.finditer(t or ''):
+            d, cc, d2, cc2 = m.groups()
+            v = float(d or d2) if (d or d2) else int(cc or cc2) / 1000
+            if 0.9 <= v <= 7.0:
+                found.add(round(v, 1))
     return found.pop() if len(found) == 1 else None
 
 
@@ -211,16 +300,24 @@ ARABIC_TRIMS = [
     (r'كاريرا\s?اس|كريرا\s?اس', 'Carrera S'), (r'كومبتشن|كومبيتشن|كومبتيشن', 'Competition'),
     (r'\bار\s?تي\b|آر\s?تي', 'R/T'), (r'رابتر', 'Raptor'),
 ]
-PERF_TRIMS = re.compile(r'\b(Hellcat Redeye|Redeye|Hellcat|Scat ?Pack|SRT|R/T|GT500|Shelby|Trackhawk|SS|ZL1|Raptor|TRX)\b', re.I)
+PERF_TRIMS = re.compile(r'\b(Hellcat Redeye|Redeye|Hellcat|Scat ?Pack|SRT|R/T|GT500|Shelby|Trackhawk|SS|ZL1|Raptor|TRX|GR[\s-]?Sport|GR-S)\b', re.I)
+
+
+LEXUS_NO = re.compile(r'\b(?:ES|LS|GS|IS|RX|NX)\s?-?(\d{3})\s?(h)?\b', re.I)
 
 
 def trim_hint(*texts):
     for t in texts:
         if not t:
             continue
+        m = LEXUS_NO.search(t)
+        if m:
+            return m.group(1) + ('H' if m.group(2) else '')
         m = PERF_TRIMS.search(t)
         if m:
             f = m.group(1)
+            if re.fullmatch(r'GR[\s-]?Sport|GR-S', f, re.I):
+                return 'GR Sport'
             return {'redeye': 'Hellcat Redeye', 'scatpack': 'Scat Pack', 'scat pack': 'Scat Pack', 'shelby': 'Shelby GT500'}.get(f.lower(), f if len(f) > 3 else f.upper())
         for pat, name in ARABIC_TRIMS:
             if re.search(pat, t):
@@ -233,20 +330,82 @@ def trim_hint(*texts):
     return None
 
 
+# a form label with no value («اللون الخارجي»، «المواصفات:»), the model year again, or a bare city says nothing
+LABEL_ONLY = re.compile(
+    r'^(?:ال)?(?:موديل(?: ال?سيار[هة])?|عداد|ممشى|لون(?: ال?(?:خارجي|داخلي))?|مواصفات|وكيل|نوع الوقود|قير|مكين[هة]|محرك|'
+    r'حال[هة]|ملاحظات|تفاصيل|مميزات|وصف|نوع ال?سيار[هة]|فئ[هة]|بيانات ال?سيار[هة])\s*[:：_\-]*\s*(?:\d{4})?\s*$')
+# a section heading («المعلومات والمواصفات الفنية»، «معلومات عن ضمان السيارة») or the make/model/trim said again
+HEADING = re.compile(
+    r'^(?:ال)?معلومات\b|المواصفات الفنية|^نبذ[هة]\b|^وصف ال?سيار[هة]'
+    r'|^(?:نوع\s+)?(?:ال)?(?:سيار[هة]|مركب[هة]|فئ[هة])\s*[:：]?\s*\S+(?:\s+\S+){0,3}$')
+SPEC_SAID = re.compile(r'^(?:ال)?(?:محرك|مكين[هة])\s*[:：]?\s*\d{1,2}\s*سلندر$|^سع[هة] (?:ال)?(?:محرك|مكين[هة])\s*[:：]?\s*[\d.]+\s*(?:L|لتر)?$')
+# the end of a text the source cut short («العداد: 191 ال»): drop the broken word, say it goes on
+CUT_TAIL = re.compile(r'\s(?:ال|لل|ك|ب|و|ف|ل|با|وا)$')
+# Haraj's own form fields copied into the text («قير اوتماتيك»، «نوع الوقود: بنزين»، «8 سلندر») — the card already shows them
+SPEC_ONLY = re.compile(
+    r'^(?:(?:ال)?قير|ناقل الحركة)?\s*[:：]?\s*(?:[اأ]وتوماتيك|[اأ]وتماتيك|تماتيك|عادي|يدوي)(?:\s*[،,-]?\s*(?:بنزين|ديزل|هايبرد))?$'
+    r'|^(?:نوع\s)?(?:ال)?وقود\s*[:：]?\s*(?:بنزين|ديزل|هايبرد|كهرباء|كهربائي)$'
+    r'|^(?:ال)?لون(?:\s(?:ال)?خارجي)?\s*[:：]?\s*\S+$'
+    r'|^(?:ال)?(?:ممشى|ممشي|عداد)\s*[:：]?\s*[\d,.]+\s*(?:ألف|الف)?\s*(?:كم|كيلو)?$'
+    r'|^\d{1,2}\s*سلندر$|^دفع (?:رباعي|ثنائي|خلفي|أمامي|امامي)(?:\s+\w+)?$')
+BARE_CITY = re.compile(r'^(?:في\s|ب)?(?:الرياض|جد[هة]|الدمام|الخبر|الظهران|مك[هة]|المدين[هة]|الطائف|تبوك|ابها|أبها|بريد[هة]|القصيم|'
+                       r'حائل|جازان|جيزان|نجران|الاحساء|الأحساء|ينبع|الجبيل|خميس مشيط|عنيز[هة]|الخرج|القطيف|حفر الباطن|عرعر|الباح[هة])$')
+
+
+def _pieces(t):
+    """Sellers separate their points with new lines, full stops, dashes, bullets or slashes; a long run of
+    points joined by commas is cut at the commas and packed back into readable lines."""
+    for part in re.split(r'[\n\r]+|(?<=[.!؟?])\s+|\s[–—-]\s|\s/\s|[•▪◾●✓✔]|\s\*\s?|\|', t or ''):
+        if len(part) <= 120:
+            yield part
+            continue
+        line = ''
+        for frag in re.split(r'\s*[،,]\s*', part):
+            frag = frag.strip()
+            if not frag or len(frag.split()) < 2 or SPEC_ONLY.match(frag) or LABEL_ONLY.match(frag):
+                continue  # «اتوماتيك»، «بنزين»، «مستعملة» on their own
+            if line and len(line) + len(frag) + 2 > 100:
+                yield line
+                line = frag
+            else:
+                line = f'{line}، {frag}' if line else frag
+        if line:
+            yield line
+
+
 def lines_of(texts, limit=5):
     out = []
     for t in texts:
-        for part in re.split(r'[\n\r]+|(?<=[.!؟?])\s+', t or ''):
+        for part in _pieces(t):
             x = clean_line(part)
-            if len(x) < 6 or len(x) > 110:
+            if CUT_TAIL.search(x):
+                x = CUT_TAIL.sub('', x).rstrip(' ،,:') + '…'
+            if len(x) < 6 or len(x) > 120 or len(x.split()) < 2:
                 continue
-            if re.search(r'ريال|سعر|السوم|سوم|للتواصل|تواصل|واتس|جوال|اتصال|رقم|@|http|حراج|كاش وقسط|تمويل|الموقع', x):
+            bare = x.replace('ـ', '').replace('⁠', '')
+            if bare.endswith((':', '：')) or any(rx.match(bare) for rx in (LABEL_ONLY, BARE_CITY, SPEC_ONLY, SPEC_SAID)) or HEADING.search(bare):
+                continue
+            if re.search(r'ريال|سعر|السوم|سوم|الحد|حده|(?:^|\s)حد\s*\d|للتواصل|تواصل|واتس|جوال|اتصال|رقم|@|http|حراج|كاش وقسط|تمويل|الموقع|موقع|شامل الضريبة', x):
+                continue
+            # a showroom's standing offer, not this car
+            if re.search(r'نرحب ب|يتوفر الشحن|الشحن (?:متوفر|لجميع)|لجميع مناطق المملكة|نستقبل (?:عملاء|طلبات)', x):
                 continue
             if x not in out:
                 out.append(x)
             if len(out) >= limit:
                 return out
     return out
+
+
+def patrol_fix(ad):
+    """«باترول فتك/سفاري/4800» is the Y61 Super Safari, not the Y62/Y63 Patrol."""
+    t = f"{ad.get('title') or ''} {(ad.get('text') or '')[:200]}"
+    if ad['model'] == 'Patrol' and re.search(r'فتك|سفاري|سوبر\s?سفاري|\b4800\b', ad.get('title') or ''):
+        ad['model'] = 'Patrol Super Safari'
+        ad.pop('cid', None)
+        ad.pop('target', None)
+    if ad['model'] == 'Patrol' and ad['year'] >= 2025 and re.search(r'تنفس طبيعي|بدون تيربو|3\.8', t):
+        ad['engine'], ad['hp'] = '3.8L V6', 316
 
 
 def long_trim(ad):
@@ -329,7 +488,7 @@ for c in pack:
         'city': (c.get('city') or '').strip() or None,
         'km': c.get('mileage_km') if isinstance(c.get('mileage_km'), int) and 0 <= c['mileage_km'] < 2_000_000 else km_of(c.get('mileage_as_listed')),
         'price': plausible_price(c.get('price_sar'), c.get('title')),
-        'trans': trans_of(c.get('transmission'), *texts), 'fuel': fuel_of(c.get('fuel'), c.get('engine_as_listed'), *texts),
+        'trans': trans_of(c.get('transmission'), *texts), 'fuel': pack_fuel(mk, model_en, fuel_of(*texts), fuel_of(c.get('fuel'), c.get('engine_as_listed'))),
         'cab': cab_of(*texts), 'drive': drive_of(*texts), 'color': color_of(*seller, c.get('title')),
         'new': c.get('condition') == 'جديد', 'damaged': bool(c.get('is_damaged_or_repair') or c.get('damage_flag_in_title')),
         'feats': [f for f in feats if isinstance(f, str)][:8],
@@ -338,6 +497,7 @@ for c in pack:
     }
     ad.update(AD_SPECS.get(pid, {}))
     long_trim(ad)
+    patrol_fix(ad)
     r = put(ad)
     if r != 'ok':
         say(f'pack {pid} «{c["title"]}»: {r}')
@@ -376,11 +536,16 @@ for cid, ads in agent.items():
             'trans': trans_of(a.get('title'), text), 'fuel': fuel_of(a.get('title'), text), 'cab': cab_of(a.get('title'), text),
             'drive': drive_of(a.get('title'), text),
             'color': color_of(a.get('color'), a.get('title')), 'new': False,
-            'damaged': bool(re.search(r'مصدوم|مقلوب|حادث قوي|تشليح|محترق', f'{a.get("title")} {text}')),
+            'damaged': damaged_of(f'{a.get("title")} {text}'),
             'feats': [], 'lines': lines_of([text]), 'text': text,
             'paths': [p for p in (img_path(u) for u in a.get('imgs') or []) if p], 'curated': False, 'notes': [],
         }
+        # the researcher noted the cab word the ad itself uses (a «CREW CAB» RAM is غمارتين)
+        if not ad['cab'] and a.get('cab') in ('غمارة', 'غماره', 'غمارتين'):
+            ad['cab'] = 'double' if a['cab'] == 'غمارتين' else 'single'
+        ad.update(AD_SPECS.get(pid, {}))
         long_trim(ad)
+        patrol_fix(ad)
         r = put(ad)
         if r != 'ok':
             say(f'agent {pid} ({cid}): {r}')
@@ -544,7 +709,14 @@ for nid, e in new_entries.items():
         v, how = ov['value'], 'hand-checked'
     elif ask and dep:
         ratio = ask / dep
-        v, how = (0.35 * dep + 0.65 * ask, 'blend') if 0.6 <= ratio <= 1.6 else (ask, f'ask (dep {dep:,.0f} off by {ratio:.2f})')
+        if 0.6 <= ratio <= 1.6:
+            v, how = 0.35 * dep + 0.65 * ask, 'blend'
+        elif len(asks) >= 2:
+            v, how = ask, f'asks (dep {dep:,.0f} off by {ratio:.2f})'
+        else:
+            # one hopeful seller is not the market: the priced ad keeps its own ask, its unpriced siblings get
+            # halfway between that ask and the researched neighbour's depreciation
+            v, how = 0.5 * dep + 0.5 * ask, f'half one ask, half dep (off by {ratio:.2f})'
     elif ask:
         v, how = ask, 'ask'
     elif dep:
@@ -578,6 +750,15 @@ for pid, ad in pool.items():
     t = ad.get('trim')
     if t and norm_en(t) and norm_en(t) in norm_en(ad['model']):
         ad['trim'] = t = None
+    # a Lexus model number on a hybrid is the «h» car (an LS 500 ticked هايبرد is the LS 500h)
+    if t and ad['make'] == 'Lexus' and re.fullmatch(r'\d{3}', t) and ad.get('fuel') == 'hybrid':
+        ad['trim'] = t = t + 'H'
+    elif not t and (ad['make'], ad['model']) == ('Lexus', 'ES') and ad.get('fuel') == 'hybrid' and ad['year'] >= 2019:
+        ad['trim'] = t = '300H'  # the only ES hybrid sold here
+    # on a Land Cruiser 300 a bare «GR» is the GR Sport
+    if (ad['make'], ad['model']) == ('Toyota', 'Land Cruiser') and ad['year'] >= 2022 and t != 'GR Sport' \
+            and re.search(r'\bGR\b|جي\s?ار', f"{ad.get('title') or ''} {(ad.get('text') or '')[:200]}"):
+        ad['trim'] = t = 'GR Sport'
     if t:
         ts = TRIM_SPECS.get((ad['make'], ad['model'], t))
         for spec in (ts if isinstance(ts, list) else [ts] if ts else []):
@@ -604,22 +785,61 @@ for cid, ads in assigned.items():
                 ad['value'] = int(round(v * 1.15 / 500) * 500)
         if ad.get('price') and v:
             r = ad['price'] * 0.93 / v
-            if 0.6 <= r <= 1.8 or (v < 30000 and 0.4 <= r <= 1.8):
-                # السعر سوم ليس بيعاً: the asking price pulls this car's value most of the way from the model value
-                ad['value'] = int(round(v * r ** 0.75 / 500) * 500)
+            if 0.45 <= r <= 2.0 or (v < 30000 and 0.35 <= r <= 2.0):
+                # السعر سوم ليس بيعاً: an ask above the model value pulls this car's value most of the way up;
+                # an ask below it (a V8 GT filed with the W12s, a high-km car) is the seller telling us what it's worth
+                ad['value'] = int(round(v * r ** (0.75 if r >= 1 else 0.92) / 500) * 500)
             else:
                 say(f'{ad["src"]} {ad["pid"]} «{ad["title"]}»: asks {ad["price"]:,} vs model value {v:,} — price kept out')
                 ad['price'] = None
         e = by_id.get(cid) or next((x for x in out_entries if x['id'] == cid), None)
         # the ad names its cylinders and they aren't the model's usual engine (a 6-cylinder GXR filed under
         # the V8, a W12 Bentayga): show what the ad says, not the catalogue's engine
+        texts = [ad.get('title'), *(ad.get('lines') or []), (ad.get('text') or '')[:600]]
+        mk_e, md_e = e.get('makeEn') or e.get('make_en') if e else None, e.get('modelEn') or e.get('model_en') if e else None
+        # another fuel than the model's usual one is another engine (a diesel LC300, a hybrid Camry)
+        e_fuel = (e.get('fuel') if e else None)
+        if e and 'هايبرد' in (e.get('engine') or ''):
+            e_fuel = 'hybrid'  # a mild hybrid (EQ Boost, Levante GT) is already the model's usual engine
+        if e and not ad.get('engine') and ad.get('fuel') in ('diesel', 'hybrid', 'petrol') and ad['fuel'] != e_fuel:
+            fs = FUEL_SPECS.get((mk_e, md_e, ad['fuel'])) or []
+            hit = next((x for x in fs if x['years'][0] <= ad['year'] <= x['years'][1]), None)
+            if hit:
+                ad['engine'], ad['hp'] = hit['engine'], hit.get('hp')
+            elif ad['fuel'] != 'petrol':
+                ad['engine'], ad['hp'] = '?', None
+            if ad.get('engine'):
+                say(f'{ad["src"]} {ad["pid"]} «{ad["title"]}»: {ad["fuel"]} where the model is usually {e.get("fuel")} — engine {ad["engine"]}')
+        # the ad names its cylinders or engine size and they aren't the model's usual engine (a 6-cylinder GXR
+        # filed under the V8, a W12 Bentayga, a 1.6 turbo Sportage): show what the ad says, not the catalogue's
         if e and not ad.get('engine'):
-            said = cyl_said(ad.get('title'), *(ad.get('lines') or []), (ad.get('text') or '')[:600])
+            said = cyl_said(*texts)
             have = cyl_of_engine(e.get('engine'))
-            if said and have and said != have:
-                ad['engine'] = f'{said} سلندر'
-                ad['hp'] = None
-                say(f'{ad["src"]} {ad["pid"]} «{ad["title"]}»: ad says {said} cylinders, model usually {e.get("engine")} — engine shown as the ad says')
+            dsaid = disp_said(*texts)
+            dm = re.search(r'(\d\.\d)L', e.get('engine') or '')
+            dhave = float(dm.group(1)) if dm else None
+            if (said and have and said != have) or (dsaid and dhave and abs(dsaid - dhave) >= 0.25):
+                alt = engine_alt(mk_e, md_e, ad['year'], said, dsaid)
+                if alt:
+                    # the family's other engine that matches what the ad says (a 6-cylinder Fortuner = the 4.0 V6)
+                    ad['engine'], ad['hp'] = alt['engine'], alt.get('hp')
+                elif said and have and said != have:
+                    ad['engine'] = f'{dsaid:.1f}L {said} سلندر' if dsaid else f'{said} سلندر'
+                    ad['hp'] = None
+                else:
+                    turbo = ' تيربو' if re.search(r'تيربو|توربو|turbo', ' '.join(x for x in texts if x), re.I) else ''
+                    # never pair the ad's engine size with the model's cylinder count (a 3.5 K8 is not a 4-cylinder);
+                    # a small engine in a family of 4-cylinders is still a 4-cylinder
+                    cyl = said or (4 if have == 4 and dsaid <= 2.5 else None)
+                    ad['engine'] = f'{dsaid:.1f}L{turbo}' + (f' {cyl} سلندر' if cyl else '')
+                    ad['hp'] = None
+                say(f'{ad["src"]} {ad["pid"]} «{ad["title"]}»: ad says {f"{said} cylinders" if said else f"a {dsaid}L engine"}, '
+                    f'model usually {e.get("engine")} — engine {ad["engine"]}')
+        # an engine of the ad's own with no known output: the horsepower the seller states, if he states one
+        if ad.get('engine') and ad['engine'] != '?' and not ad.get('hp'):
+            hp = hp_said(*texts)
+            if hp:
+                ad['hp'] = hp
         if e and ad.get('drive'):
             cdrive = e.get('drive') or e.get('drivetrain')
             body = e.get('body')
@@ -632,6 +852,8 @@ for cid, ads in assigned.items():
                     ad.pop('drive')  # nothing new (or «دبل» on a car where it can't mean 4x4)
                 elif cdrive == 'FWD':
                     ad['drive'] = 'AWD'  # a crossover's «دبل» is its all-wheel drive
+            elif ad['drive'] == cdrive:
+                ad.pop('drive')  # «دفع خلفي» on a car that is rear-driven anyway
         ad['imgs'] = [f'https://mimg6cdn.haraj.com.sa/{p}' for p in ad.pop('paths')]
         ads_out.setdefault(cid, []).append(ad)
 
