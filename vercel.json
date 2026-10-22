@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "installCommand": "echo no-install",
+  "buildCommand": "node probe/probe.mjs && mkdir -p dist && cp probe/index.html dist/index.html",
+  "outputDirectory": "dist"
+}
