@@ -1,5 +1,17 @@
 /* auction: tyre-theme fixes and polish for this area (imported after theme.css, so these win) */
 
+/* ================================================================ the price panel: a dial face set into the dash
+   (the MechanicalOdometer was tried here; at 360px it shrank to small drums in a steel housing, so the price
+   keeps its big rolling ticker) */
+
+.bp-price {
+  background: radial-gradient(120% 150% at 72% 0%, #222328 0%, #131416 55%, #0b0c0d 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .06),
+    inset 0 2px 12px rgba(0, 0, 0, .7),
+    0 1px 0 rgba(255, 255, 255, .04);
+}
+
 /* ================================================================ pushable bid buttons
    The bid button, the quick-bid chips and «أبيها» are the theme's pushable blocks (.btn): a face on a
    dark deck that sinks on the press. The deck never changes the box: a disabled or in-flight button sits

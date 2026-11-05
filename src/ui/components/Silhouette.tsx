@@ -102,7 +102,7 @@ export function Silhouette({ body, color = '#d9d4c8', mono = false, damaged = fa
   const s = SHAPES[body] ?? SHAPES.sedan;
   const light = shade(color, 34);
   const dark = shade(color, -46);
-  const stroke = mono ? 'rgba(28,24,20,.55)' : shade(color, -90);
+  const stroke = mono ? 'rgba(225,227,232,.55)' : shade(color, -90);
   return (
     <svg viewBox="0 0 320 120" role="img" aria-hidden="true">
       <defs>
@@ -123,19 +123,19 @@ export function Silhouette({ body, color = '#d9d4c8', mono = false, damaged = fa
         </radialGradient>
       </defs>
       <ellipse cx="160" cy="110" rx="150" ry="5" fill="rgba(0,0,0,.28)" />
-      <path d={s.body} fill={mono ? 'rgba(28,24,20,.12)' : `url(#p${id})`} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" />
+      <path d={s.body} fill={mono ? 'rgba(225,227,232,.12)' : `url(#p${id})`} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" />
       {s.glass.map((g, i) => (
-        <path key={i} d={g} fill={mono ? 'rgba(28,24,20,.25)' : `url(#g${id})`} stroke={stroke} strokeWidth=".8" />
+        <path key={i} d={g} fill={mono ? 'rgba(225,227,232,.25)' : `url(#g${id})`} stroke={stroke} strokeWidth=".8" />
       ))}
       {s.lines?.map((l, i) => (
         <path key={i} d={l} fill="none" stroke={stroke} strokeWidth=".9" opacity=".55" />
       ))}
-      <path d={`M${s.head[0] - 4} ${s.head[1] - 3} l10 -1 l1 6 l-10 1 z`} fill={mono ? 'rgba(28,24,20,.3)' : '#f7f2df'} opacity=".9" />
-      <path d={`M${s.tail[0] - 4} ${s.tail[1] - 3} l6 0 l0 8 l-6 0 z`} fill={mono ? 'rgba(28,24,20,.3)' : '#b3261e'} opacity=".95" />
+      <path d={`M${s.head[0] - 4} ${s.head[1] - 3} l10 -1 l1 6 l-10 1 z`} fill={mono ? 'rgba(225,227,232,.3)' : '#f7f2df'} opacity=".9" />
+      <path d={`M${s.tail[0] - 4} ${s.tail[1] - 3} l6 0 l0 8 l-6 0 z`} fill={mono ? 'rgba(225,227,232,.3)' : '#b3261e'} opacity=".95" />
       {s.wheels.map((x) => (
         <g key={x}>
           <circle cx={x} cy={108 - s.r} r={s.r} fill="#121212" />
-          <circle cx={x} cy={108 - s.r} r={s.r * 0.62} fill={mono ? 'rgba(28,24,20,.35)' : `url(#w${id})`} />
+          <circle cx={x} cy={108 - s.r} r={s.r * 0.62} fill={mono ? 'rgba(225,227,232,.35)' : `url(#w${id})`} />
           {[0, 72, 144, 216, 288].map((a) => (
             <line
               key={a}
