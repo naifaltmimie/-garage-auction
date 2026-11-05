@@ -4,6 +4,7 @@ import { BidLog, Console } from '../components/Console';
 import { photoSrc } from '../components/Gallery';
 import { LotSheet } from '../components/LotSheet';
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
+import { ReactionLayer } from '../components/Reactions';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 /** Ticks in the last seconds of an open lot. */
@@ -76,6 +77,7 @@ export function Auction({ room }: { room: RoomView }) {
       {core.phase === 'unsold' && saleForLot && <UnsoldReveal core={core} sale={saleForLot} />}
       {core.phase === 'approval' && <ApprovalReveal core={core} />}
       {log && <BidLog core={core} myId={room.myId} onClose={() => setLog(false)} />}
+      <ReactionLayer room={room} />
     </main>
   );
 }

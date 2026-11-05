@@ -6,6 +6,7 @@ import type { Action, Core, Envelope, Hist, LotPub, Private } from '../engine/ty
 import { randId, store } from '../lib/util';
 import { recentSeen } from '../lib/seen';
 import { Bus, type BusStatus } from './bus';
+import { REACT_BY_KEY, REACT_PHASES, ReactGate, reactBus, type ReactEvent } from '../engine/reactions';
 import { roomKeys, seal, unseal, type RoomKeys } from './crypto';
 
 export interface Snapshot {
@@ -22,6 +23,8 @@ const T = (base: string) => ({
   act: (pid: string) => `${base}/a/${pid}`,
   actAll: `${base}/a/+`,
   priv: (pid: string) => `${base}/p/${pid}`,
+  /** one-off events (reactions): never retained, so late phones don't replay them */
+  ev: `${base}/e`,
 });
 
 function bridgeUrl(): string | null {
@@ -66,6 +69,8 @@ export class HostRoom {
   status: BusStatus = { connected: false, via: [], active: null };
   onChange: () => void = () => {};
   onStatus: (s: BusStatus) => void = () => {};
+  private rxGate = new ReactGate();
+  private rxN = 0;
 
   constructor(engine: HostEngine) {
     this.engine = engine;
@@ -192,6 +197,20 @@ export class HostRoom {
     }
   }
 
+  /** A reaction: checked and rate-limited here, shown on the host's screen, sent once to every phone. */
+  react(pid: string, k: unknown, c: unknown, now: number): boolean {
+    const st = this.engine.st;
+    if (typeof k !== 'string' || !REACT_BY_KEY.has(k) || !REACT_PHASES.has(st.phase)) return false;
+    const p = st.players.find((x) => x.id === pid);
+    if (!p || !this.rxGate.allow(pid, now)) return false;
+    this.rxN += 1;
+    const ev: ReactEvent = { i: `${now.toString(36)}.${this.rxN}`, p: pid, n: p.name, k, a: now };
+    if (typeof c === 'string' && c.length <= 16) ev.c = c;
+    reactBus.emit(ev);
+    if (this.bus && this.keys) void seal(this.keys.key, ev).then((pl) => void this.bus.pub(this.t.ev, pl, false, 0));
+    return true;
+  }
+
   private async reply(pid: string, msg: Private) {
     const p = await seal(this.keys.key, msg);
     this.bus.pub(this.t.priv(pid), p, false);
@@ -257,6 +276,9 @@ export class HostRoom {
       case 'bye':
         this.apply(e.leave(env.pid, env.sec));
         return;
+      case 'react':
+        this.react(env.pid, a.k, a.c, now);
+        return;
     }
   }
 
@@ -271,6 +293,7 @@ export class HostRoom {
     const e = this.engine;
     const now = Date.now();
     const id = e.st.hostId;
+    if (a.t === 'react') return { ok: this.react(id, a.k, a.c, now) };
     let r: { ok: boolean; reason?: Nack; changes: Changes } = { ok: false, changes: {} };
     if (a.t === 'bid') r = e.bid(id, a.lot, a.amount, now);
     else if (a.t === 'seal') r = e.seal(id, a.lot, a.amount, now);
@@ -334,6 +357,7 @@ export class PlayerRoom {
     });
     this.bus.start();
     this.bus.sub([this.t.core, this.t.lot, this.t.hist, this.t.host, this.t.priv(this.me.pid)]);
+    this.bus.sub([this.t.ev]);
     this.pingId = setInterval(() => this.ping(), 4000);
     this.helloId = setInterval(() => {
       if (!this.welcomed) this.hello();
@@ -369,8 +393,22 @@ export class PlayerRoom {
     return mid;
   }
 
+  private evSeen = new Set<string>();
+
+  /** A one-off event from the host. Deduped (several brokers can deliver it); stale ones are dropped. */
+  private async onEvent(payload: string) {
+    const ev = await unseal<ReactEvent>(this.keys.key, payload);
+    if (!ev || typeof ev.i !== 'string' || typeof ev.k !== 'string' || !REACT_BY_KEY.has(ev.k)) return;
+    if (this.evSeen.has(ev.i)) return;
+    this.evSeen.add(ev.i);
+    if (this.evSeen.size > 120) this.evSeen = new Set([...this.evSeen].slice(-60));
+    if (Date.now() + this.offset - ev.a > 4000) return;
+    reactBus.emit(ev);
+  }
+
   private async onMsg(topic: string, payload: string) {
     const t = this.t;
+    if (topic === t.ev) return void this.onEvent(payload);
     if (topic === t.core) {
       const c = await unseal<Core>(this.keys.key, payload);
       if (!c) return;

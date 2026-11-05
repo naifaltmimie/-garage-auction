@@ -1,3 +1,4 @@
+import { canBuzz, fxOn } from './fx';
 const nf = new Intl.NumberFormat('en-US');
 
 export const money = (n: number) => nf.format(Math.round(n));
@@ -91,6 +92,7 @@ export const store = {
 
 export function vibrate(p: number | number[]) {
   try {
+    if (!fxOn() || !canBuzz()) return;
     navigator.vibrate?.(p);
   } catch {
     /* ignore */

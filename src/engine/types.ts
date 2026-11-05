@@ -356,6 +356,8 @@ export type Action =
   | { t: 'vote'; scores: Record<string, number> }
   /** ads this phone saw on earlier nights; the host keeps them out of the next deck */
   | { t: 'seen'; keys: string[] }
+  /** a live reaction (see engine/reactions.ts); `c` is the sender's nonce, echoed back */
+  | { t: 'react'; k: string; c?: string }
   | { t: 'bye' };
 
 export interface Envelope {
