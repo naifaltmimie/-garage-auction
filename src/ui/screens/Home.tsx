@@ -5,6 +5,7 @@ import { PHOTOS } from '../../data/photos';
 import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util';
 import { go } from '../App';
 import { Photo } from '../components/Gallery';
+import { WhatsNew, hasNews } from '../components/WhatsNew';
 import { GavelMark } from './Room';
 
 /** A few real cars from tonight's market, for the front page. */
@@ -36,8 +37,10 @@ export function Home() {
   const clean = normalizeCode(code);
   const show = useShowroom();
   const star = show[0];
+  const [news, setNews] = useState(hasNews);
   return (
     <div className="home">
+      <WhatsNew open={news} onClose={() => setNews(false)} />
       <header className="apphead">
         <span className="brand">
           <span className="brand-seal">
@@ -181,6 +184,14 @@ export function Home() {
           <button className="btn btn-quiet" onClick={() => go('/rules')}>
             كيف نلعب؟
           </button>
+        </p>
+        <p className="foot">
+          <button className="btn btn-quiet" onClick={() => setNews(true)}>
+            الجديد
+          </button>
+          <a className="btn btn-quiet" href="/classic/">
+            النسخة القديمة
+          </a>
         </p>
       </main>
     </div>
