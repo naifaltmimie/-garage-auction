@@ -486,6 +486,24 @@
   inset: 0;
 }
 
+/* ---------- intro countdown: every second clicks over ---------- */
+
+.fx-count {
+  display: block;
+  animation: fx-count 560ms var(--fx-spring) both;
+}
+
+@keyframes fx-count {
+  from { transform: scale(1.32); opacity: 0 }
+  45% { opacity: 1 }
+  to { transform: none; opacity: 1 }
+}
+
+/* lobby rows join on the same curve as everything else */
+.player-row {
+  animation-timing-function: var(--fx-out);
+}
+
 /* ---------- reduced motion: keep the information, drop the movement ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -502,6 +520,7 @@
   }
 
   .ring.hot,
+  .fx-count,
   .rv-stamp,
   .rv-hero > img,
   .rv-hero > .rv-studio,

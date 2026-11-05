@@ -20,7 +20,12 @@ export function Intro({ room }: { room: RoomView }) {
             <span>{marketOf(s.mix).note}</span>
           </div>
           <div className="t-display">{core.callout?.text ?? 'حيّاكم في مزاد الكراج'}</div>
-          <div className="countdown">{arDigits(Math.max(1, Math.ceil(ms / 1000)))}</div>
+          <div className="countdown">
+            {/* keyed per second, so each number lands like a dial clicking over */}
+            <span key={Math.max(1, Math.ceil(ms / 1000))} className="fx-count">
+              {arDigits(Math.max(1, Math.ceil(ms / 1000)))}
+            </span>
+          </div>
           <div className="row wrap" style={{ justifyContent: 'center' }}>
             <span className="chip chip-gold">كل واحد معه {money(s.budget)}</span>
             <span className="chip">الكراج يشيل {carsN(s.garage)}</span>

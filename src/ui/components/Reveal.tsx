@@ -72,7 +72,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
   }
   return (
     <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة اللوت">
-      {mine && stage >= 0 && <GoldLeaf />}
+      {mine && stage >= 0 && <GoldLeaf once={`${sale.lotId}-${sale.no}`} />}
       <div className="reveal">
         {sealed && (
           <div className="rv-sec">

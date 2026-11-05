@@ -4,22 +4,25 @@ import { prefersReducedMotion } from './motion';
 type Leaf = { x: number; y: number; vx: number; vy: number; w: number; h: number; r: number; vr: number; f: number; vf: number; c: string };
 
 const TONES = ['#f4e2a8', '#e2bf68', '#d6ad52', '#b98c31', '#fff4d2'];
+// one burst per sale: reopening the result after «رجوع للتقرير» doesn't throw the leaf again
+const fired = new Set<string>();
 
 /**
  * Gold leaf, not party confetti: a few dozen thin flakes thrown up from the stamp at the hammer's impact,
  * flipping as they fall and fading out. Only the buyer's phone gets it. Removes itself (≈2.4s).
  */
-export function GoldLeaf({ count = 42, delay = 330, from = '.rv-stamp' }: { count?: number; delay?: number; from?: string }) {
+export function GoldLeaf({ count = 42, delay = 330, from = '.rv-stamp', once }: { count?: number; delay?: number; from?: string; once?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
+    if (prefersReducedMotion() || (once != null && fired.has(once))) {
       setDone(true);
       return;
     }
     let raf = 0;
     const timer = window.setTimeout(() => {
+      if (once != null) fired.add(once);
       const c = ref.current;
       const ctx = c?.getContext('2d');
       if (!c || !ctx) return setDone(true);
@@ -87,7 +90,7 @@ export function GoldLeaf({ count = 42, delay = 330, from = '.rv-stamp' }: { coun
       window.clearTimeout(timer);
       cancelAnimationFrame(raf);
     };
-  }, [count, delay, from]);
+  }, [count, delay, from, once]);
 
   if (done) return null;
   return <canvas ref={ref} className="fx-leaf" aria-hidden="true" />;
