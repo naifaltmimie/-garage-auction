@@ -13,8 +13,8 @@
   background:
     radial-gradient(120% 140% at 100% 0%, rgba(214, 173, 82, .16), transparent 46%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-opacity='.04' stroke-width='1'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #073626 0%, var(--green-900) 60%, #052a1e 100%);
-  box-shadow: 0 1px 0 rgba(214, 173, 82, .6), 0 10px 24px -8px rgba(4, 33, 26, .45);
+    linear-gradient(180deg, #1c1d22 0%, var(--green-900) 60%, #0e0e11 100%);
+  box-shadow: 0 1px 0 rgba(214, 173, 82, .6), 0 10px 24px -8px rgba(10, 10, 12, .45);
 }
 
 /* thin gold line that fills as the night goes on */
@@ -253,8 +253,8 @@
   background:
     radial-gradient(120% 140% at 100% 0%, rgba(214, 173, 82, .16), transparent 46%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-opacity='.04' stroke-width='1'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #073626 0%, var(--green-900) 60%, #052a1e 100%);
-  box-shadow: 0 1px 0 rgba(214, 173, 82, .6), 0 10px 24px -8px rgba(4, 33, 26, .45);
+    linear-gradient(180deg, #1c1d22 0%, var(--green-900) 60%, #0e0e11 100%);
+  box-shadow: 0 1px 0 rgba(214, 173, 82, .6), 0 10px 24px -8px rgba(10, 10, 12, .45);
 }
 
 .apphead-date {
@@ -291,7 +291,7 @@
 .cover-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(4, 22, 15, 0) 35%, rgba(4, 22, 15, .82));
+  background: linear-gradient(180deg, rgba(10, 10, 12, 0) 35%, rgba(10, 10, 12, .82));
 }
 
 .cover-text {
@@ -930,7 +930,7 @@
 .kp-emblem {
   width: calc(var(--band) * .78);
   height: calc(var(--band) * .78);
-  color: #0f4b32;
+  color: #1c1d22;
 }
 
 .kp-band b {
@@ -1153,7 +1153,7 @@
   gap: 4px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(6, 20, 14, .82);
+  background: rgba(9, 9, 11, .82);
   color: #fff;
   font-size: 12.5px;
   font-weight: 700;
@@ -1178,7 +1178,7 @@
   inset-inline-end: 12px;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(6, 20, 14, .66);
+  background: rgba(9, 9, 11, .66);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -1287,7 +1287,7 @@
   padding: 16px 16px 14px;
   border-radius: 22px 22px 0 0;
   background: var(--card);
-  box-shadow: 0 -6px 20px rgba(4, 33, 26, .1);
+  box-shadow: 0 -6px 20px rgba(10, 10, 12, .1);
   display: grid;
   gap: 12px;
 }
@@ -2191,7 +2191,7 @@
 }
 
 .btn-primary.bid-main {
-  background: linear-gradient(180deg, #19ad6f 0%, #0f8456 46%, #096541 100%);
+  background: linear-gradient(180deg, #f0353b 0%, #d9232a 46%, #b5161d 100%);
 }
 
 .btn-top {
@@ -2224,7 +2224,7 @@
 
 /* tapped: the bid is on its way to the host — the button keeps its colour so the tap feels instant */
 .btn-primary.bid-main.sending:disabled {
-  background: linear-gradient(180deg, #13935e 0%, #0d7a4f 50%, #08603e 100%);
+  background: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
   color: #fff;
   border-color: transparent;
   justify-content: space-between;
@@ -2262,14 +2262,14 @@
   border-radius: 13px;
   border: 1px solid var(--line-2);
   background: linear-gradient(180deg, #fff, #f5f6f2);
-  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(14, 28, 21, .06);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(18, 18, 20, .06);
   transition: transform .12s var(--ease), background-color .15s, box-shadow .15s;
 }
 
 .bid-chips button:active:not(:disabled) {
   transform: scale(.95);
   background: var(--green-50);
-  box-shadow: inset 0 1px 3px rgba(12, 122, 78, .18);
+  box-shadow: inset 0 1px 3px rgba(229, 38, 45, .18);
 }
 
 .bid-chips button:disabled {
@@ -2385,7 +2385,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(4, 22, 15, .64);
+  background: rgba(10, 10, 12, .64);
   animation: fade .25s both;
 }
 
@@ -2422,7 +2422,7 @@
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 24px 24px 0 0;
-  background: #0b1611;
+  background: #0d0d10;
 }
 
 .rv-hero img {
@@ -2466,8 +2466,8 @@
   border: 4px solid #fff;
   border-radius: 12px;
   color: #fff;
-  background: rgba(12, 122, 78, .82);
-  box-shadow: 0 0 0 3px rgba(12, 122, 78, .82), 0 18px 40px rgba(0, 0, 0, .35);
+  background: rgba(229, 38, 45, .82);
+  box-shadow: 0 0 0 3px rgba(229, 38, 45, .82), 0 18px 40px rgba(0, 0, 0, .35);
   animation: stamp .55s var(--ease-pop) both;
 }
 
@@ -2778,9 +2778,9 @@
   gap: 2px;
   padding: 12px 22px 13px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #0f3b2a, #0a2a1e);
+  background: linear-gradient(180deg, #1f2026, #0e0e11);
   color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .45), 0 6px 18px rgba(6, 30, 20, .25);
+  box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .45), 0 6px 18px rgba(12, 12, 14, .25);
 }
 
 .market-banner small {

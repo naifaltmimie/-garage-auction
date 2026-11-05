@@ -1,0 +1,243 @@
+/* ================================================================ theme: «بطاقة السعر»
+   The night palette that goes with the price-tag logo.
+   - Charcoal chrome: top bars, covers, dark panels, the TV.
+   - The tag's red: every primary action (open, bid, take), selected states, focus.
+   - Gold: only the big moments (start the auction, the winner, awards, the top bid).
+   - Green: only what is good news: «بيعت», gains, good deals, «مفحوصة». Never a background.
+   The old dark-green token names are kept so every screen follows; they now hold charcoal.
+   Imported last, so it wins over the per-screen sheets. */
+
+:root {
+  /* paper */
+  --bg: #f4f3f0;
+  --bg-2: #ebe9e4;
+  --card: #ffffff;
+  --card-2: #faf9f7;
+  --line: #e6e3dd;
+  --line-2: #d6d2ca;
+
+  /* ink */
+  --ink: #121214;
+  --ink-2: #34353b;
+  --mute: #6b6d74;
+  --dim: #a1a3a9;
+
+  /* night chrome (these names used to hold the dark greens) */
+  --green-950: #0a0a0c;
+  --green-900: #121216;
+  --green-800: #1c1d22;
+
+  /* the tag's red, for action */
+  --brand: #e5262d;
+  --brand-hi: #ff4b50;
+  --brand-lo: #b8141b;
+  --brand-50: #fdeceb;
+  --brand-100: #f8cfcd;
+  --green: var(--brand);
+  --green-500: var(--brand-hi);
+
+  /* good news only */
+  --ok: #17924f;
+  --ok-700: #11683a;
+  --ok-50: #e9f6ee;
+  --ok-100: #cfe9da;
+  --green-700: var(--ok-700);
+  --green-100: var(--ok-100);
+  --green-50: var(--ok-50);
+
+  /* gold, for the big moments */
+  --gold: #a87b22;
+  --gold-hi: #e3b24f;
+  --gold-lo: #7c5c17;
+  --gold-50: #fbf3df;
+
+  --red: #e5262d;
+  --red-50: #fdeceb;
+
+  --sh-1: 0 1px 2px rgba(18, 18, 20, .06), 0 1px 1px rgba(18, 18, 20, .03);
+  --sh-2: 0 2px 6px rgba(18, 18, 20, .06), 0 10px 28px rgba(18, 18, 20, .09);
+  --sh-3: 0 -8px 30px rgba(18, 18, 20, .16);
+}
+
+::selection {
+  background: var(--brand-100);
+}
+
+/* ---------------------------------------------------------------- chrome */
+
+.topbar,
+.apphead {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-opacity='.035' stroke-width='1'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #1c1d22 0%, #121216 58%, #0e0e11 100%);
+  box-shadow: 0 1px 0 rgba(227, 178, 79, .45), 0 10px 24px -10px rgba(0, 0, 0, .55);
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn-primary {
+  background: linear-gradient(180deg, #f0353b 0%, #dc252c 50%, #bc171e 100%);
+  border-color: #9e1218;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .26),
+    inset 0 -2px 0 rgba(0, 0, 0, .14),
+    0 1px 1px rgba(10, 10, 12, .22),
+    0 8px 18px -8px rgba(229, 38, 45, .6);
+}
+
+.btn-dark {
+  background: linear-gradient(180deg, #24252b, #0e0e11);
+  border-color: #050506;
+}
+
+.btn-quiet {
+  color: var(--ink);
+}
+
+.btn-quiet:active:not(:disabled) {
+  background: var(--bg-2);
+}
+
+/* ---------------------------------------------------------------- selected states: ink and red, not green */
+
+.budget[aria-pressed='true'],
+.market[aria-checked='true'] {
+  background: var(--brand-50);
+}
+
+.budget[aria-pressed='true'] .t-money,
+.seg > button[aria-pressed='true'],
+.tabs button[aria-selected='true'] {
+  color: var(--ink);
+}
+
+.paddle.me {
+  border-color: var(--brand);
+}
+
+.car-year b,
+.bp-line.top,
+.bid-chips b,
+.news-num,
+.rv-adlink b,
+.rm-ic,
+.rx-fab {
+  color: var(--ink);
+}
+
+.bid-chips button:active:not(:disabled) {
+  background: var(--brand-50);
+}
+
+.log li.me {
+  background: var(--brand-50);
+  color: var(--brand-lo);
+}
+
+.rm-ic {
+  background: var(--bg-2);
+}
+
+.rx-f.mine .rx-n {
+  color: var(--brand-lo);
+}
+
+/* the clock: calm in ink, red only when it's hot */
+.ring .bar {
+  stroke: var(--ink);
+}
+
+/* the price estimate panel on the car sheet: quiet paper, not a green box */
+.pricebar {
+  background: var(--card-2);
+  border-color: var(--line);
+}
+
+.pricebar small {
+  color: var(--mute);
+}
+
+/* dutch: the falling price rail and the estimate */
+.dc-fill {
+  background: linear-gradient(270deg, var(--brand-lo), var(--brand));
+}
+
+.dc-est {
+  color: var(--ink-2);
+}
+
+/* the TV leader lines read in ink on paper and in gold on the dark board */
+.tv-leader b,
+.tv-feed li.top b,
+.tv-buyer b {
+  color: var(--gold-hi);
+}
+
+/* ---------------------------------------------------------------- good news stays green */
+
+.gain,
+.gcar-nums b.gain,
+.aw-row-fig.gain .t-money,
+.cr-best .gain {
+  color: var(--ok);
+}
+
+.envelopes li.win {
+  background: var(--ok-50);
+  color: var(--ok-700);
+  border-color: var(--ok-100);
+}
+
+.tv-voted {
+  color: var(--ok);
+}
+
+/* ---------------------------------------------------------------- bid button: the tag's red */
+
+.btn-primary.bid-main {
+  background: linear-gradient(180deg, #f0353b 0%, #d9232a 46%, #b5161d 100%);
+}
+
+.btn-primary.bid-main.sending:disabled {
+  background: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
+}
+
+/* ---------------------------------------------------------------- details */
+
+/* the engraved hero lines: gold and a whisper of ink, never red */
+.fx-paths-b {
+  stroke: rgba(18, 18, 20, .12);
+}
+
+/* the hall opening leads with the logo */
+.idn-logo {
+  display: block;
+  width: 156px;
+  height: auto;
+  margin: 0 auto 6px;
+}
+
+/* a primary button that can't be pressed yet goes quiet grey, not washed-out red */
+.btn-primary:disabled:not(.bid-main) {
+  background: var(--bg-2);
+  border-color: var(--line-2);
+  color: var(--mute);
+  box-shadow: none;
+  text-shadow: none;
+  opacity: 1;
+}
+
+/* the news sheet leads with the tag, not a round seal */
+.news-seal.news-tag {
+  width: auto;
+  height: auto;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.news-seal.news-tag .logomark {
+  height: 40px;
+  width: auto;
+}

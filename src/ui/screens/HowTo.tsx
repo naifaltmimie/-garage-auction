@@ -1,13 +1,12 @@
 import { go } from '../App';
+import { LOGO } from '../components/Logo';
 
 export function HowTo() {
   return (
     <main className="shell narrow howto-page">
       <div className="row between" style={{ marginBottom: 8 }}>
         <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
-        <span className="brandmark">
-          مزاد <em>الكراج</em>
-        </span>
+        <img className="howto-logo" src={LOGO.row} width={102} height={34} alt="مزاد الكراج" draggable={false} />
       </div>
       <h1 className="section-title">كيف نلعب</h1>
       <ol className="howto" style={{ padding: 0, marginTop: 14 }}>

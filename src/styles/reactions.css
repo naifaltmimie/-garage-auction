@@ -43,7 +43,7 @@
   border-radius: 999px;
   background: var(--card);
   border: 1px solid var(--line);
-  box-shadow: 0 1px 0 rgba(14, 28, 21, .04), 0 8px 18px -6px rgba(14, 28, 21, .28);
+  box-shadow: 0 1px 0 rgba(18, 18, 20, .04), 0 8px 18px -6px rgba(18, 18, 20, .28);
   transform-origin: 50% 100%;
   animation: rx-pop 520ms linear both;
   white-space: nowrap;
@@ -71,7 +71,7 @@
 .rx-f.t-gold .rx-t { color: var(--gold-lo); }
 
 /* mine: same chip, a green ring and "أنت" */
-.rx-f.mine .rx-pop { box-shadow: 0 0 0 1.5px var(--green), 0 8px 18px -6px rgba(14, 28, 21, .28); }
+.rx-f.mine .rx-pop { box-shadow: 0 0 0 1.5px var(--green), 0 8px 18px -6px rgba(18, 18, 20, .28); }
 .rx-f.mine .rx-n { color: var(--green-700); }
 
 /* emoji float bare, bigger, with only the name in a small pill */
@@ -84,7 +84,7 @@
 .rx-f.emo .rx-t {
   font-size: 34px;
   line-height: 1.05;
-  filter: drop-shadow(0 4px 6px rgba(14, 28, 21, .22));
+  filter: drop-shadow(0 4px 6px rgba(18, 18, 20, .22));
 }
 .rx-f.emo .rx-n {
   padding: 1px 7px;
@@ -183,7 +183,7 @@
   border-radius: var(--r);
   background: var(--card);
   border: 1px solid var(--line);
-  box-shadow: var(--sh-2), 0 18px 40px -12px rgba(4, 33, 26, .28);
+  box-shadow: var(--sh-2), 0 18px 40px -12px rgba(10, 10, 12, .28);
   transform-origin: 0 100%;
   overflow: hidden;
   animation: rx-tray-in 260ms var(--ease-pop) both;

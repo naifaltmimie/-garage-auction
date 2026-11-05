@@ -13,7 +13,7 @@
   border: 0;
   border-radius: 99px;
   overflow: hidden;
-  background: rgba(6, 47, 34, .12); /* --green-900 at 12% */
+  background: rgba(18, 18, 22, .12); /* --green-900 at 12% */
   animation: none;
 }
 
@@ -175,7 +175,7 @@
   margin-top: 6px;
   border-radius: 99px;
   overflow: hidden;
-  background: rgba(6, 47, 34, .12); /* --green-900 at 12% */
+  background: rgba(18, 18, 22, .12); /* --green-900 at 12% */
 }
 
 .idn-rail > i {

@@ -1,132 +1,87 @@
-/* مزاد الكراج — brand layer
-   The title is the identity: «مزاد» stacked over «الكراج» in Marhey Bold, cream over gold, the two
-   lines run the same width and lock together (the ز of «مزاد» drops into the line below).
-   The monogram is the same font's «م» in a round gold seal (src/ui/components/Logo.tsx).
-   Rules: Arabic is never letter-spaced (it breaks the joins); the title keeps its two colours
-   and its hard shadow on every screen; Marhey is for the title only, the UI stays in IBM Plex. */
+/* مزاد الكراج — brand layer: the price-tag logo.
+   The drawings live in public/brand/*.svg (see src/ui/components/Logo.tsx); this file only sizes,
+   places and animates them. Rules: never recolour or stretch the logo, never put it in a circle,
+   keep it level with the header's centre line. */
 
-:root {
-  --f-brand: 'Marhey', 'IBM Plex Sans Arabic', system-ui, sans-serif;
-  --brand-cream: #fff6df;
-  --brand-gold: var(--gold-hi);
-  --brand-shadow: #021912;
-  --brand-ring: #04211a;
-}
-
-/* a thin ring so the two lines read as layered where they lock, then a hard drop.
-   Declared on the elements (not :root) so a tone can swap the ring and drop colours. */
-.brand-name,
-.wordmark {
-  --brand-type-shadow:
-    .045em 0 0 var(--brand-ring), -.045em 0 0 var(--brand-ring), 0 .045em 0 var(--brand-ring), 0 -.045em 0 var(--brand-ring),
-    .032em .032em 0 var(--brand-ring), -.032em .032em 0 var(--brand-ring), .032em -.032em 0 var(--brand-ring), -.032em -.032em 0 var(--brand-ring),
-    0 .1em 0 var(--brand-shadow);
-}
-
-/* ---------------------------------------------------------------- header lockup */
+/* ---------------------------------------------------------------- top bars */
 
 .brand {
-  gap: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  flex: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.brand-seal {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: var(--brand-gold);
-  background:
-    radial-gradient(circle at 35% 28%, rgba(214, 173, 82, .26), rgba(214, 173, 82, .06) 62%),
-    rgba(2, 25, 18, .4);
-  box-shadow:
-    inset 0 0 0 1.5px rgba(214, 173, 82, .62),
-    inset 0 0 0 4px rgba(2, 25, 18, .5),
-    inset 0 0 0 5px rgba(214, 173, 82, .18),
-    0 2px 0 rgba(2, 25, 18, .55);
-}
-
-.brand-seal .gavelmark,
-.brand-seal .logomark {
-  width: 31px;
-  height: 31px;
-  color: var(--brand-gold);
-  filter: drop-shadow(0 1.5px 0 var(--brand-shadow));
-}
-
-/* «مزاد» is the text node, «الكراج» the <b>: stacked, centred, same width */
-.brand-name {
-  display: inline-grid;
-  justify-items: center;
-  font-family: var(--f-brand);
-  font-weight: 700;
-  font-size: 27px;
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--brand-cream);
-  text-shadow: var(--brand-type-shadow);
-  padding-bottom: 3px;
-}
-
-.brand-name b {
+.brand-logo {
   display: block;
-  margin-top: -.2em;
-  font-size: .7em;
-  font-weight: 700;
-  color: var(--brand-gold);
+  height: 40px;
+  width: auto;
+  transform-origin: 85% 60%;
+  transition: transform .18s var(--ease);
+}
+
+button.brand:active .brand-logo {
+  transform: scale(.95) rotate(-2deg);
+}
+
+/* the tag lands once when Home opens: a short drop and settle, nothing on every render */
+.apphead .brand-logo {
+  animation: brand-land .7s var(--ease-pop) .05s both;
+}
+
+@keyframes brand-land {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px) rotate(-7deg) scale(.9);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 370px) {
-  .brand {
-    gap: 8px;
-  }
-
-  .brand-seal {
-    width: 36px;
+  .brand-logo {
     height: 36px;
   }
-
-  .brand-seal .gavelmark,
-  .brand-seal .logomark {
-    width: 28px;
-    height: 28px;
-  }
-
-  .brand-name {
-    font-size: 25px;
-  }
 }
 
-/* ---------------------------------------------------------------- standalone wordmark */
+/* ---------------------------------------------------------------- standalone logo */
 
-.wordmark {
-  display: inline-grid;
-  justify-items: center;
-  font-family: var(--f-brand);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-  white-space: nowrap;
-  color: var(--brand-cream);
-  text-shadow: var(--brand-type-shadow);
+.wordmark,
+.logomark {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.wordmark-top,
-.wordmark-bottom {
+/* the join screen and how-to: the logo leads, centred */
+.join-logo {
   display: block;
+  margin: 0 auto 4px;
+  width: min(220px, 62vw);
+  height: auto;
+  animation: brand-land .7s var(--ease-pop) .05s both;
 }
 
-.wordmark-bottom {
-  margin-top: -.2em;
-  font-size: .7em;
-  color: var(--brand-gold);
+.howto-logo {
+  height: 34px;
+  width: auto;
 }
 
-/* on plate-white / stone: green over dark gold, paper-coloured ring, soft green drop */
-.wordmark.is-light {
-  --brand-ring: var(--plate);
-  --brand-shadow: rgba(6, 47, 34, .2);
-  color: var(--green-900);
-}
-
-.wordmark.is-light .wordmark-bottom {
-  color: var(--gold);
+@media (prefers-reduced-motion: reduce) {
+  .apphead .brand-logo,
+  .join-logo {
+    animation: none;
+  }
 }

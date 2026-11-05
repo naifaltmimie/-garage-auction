@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSheet } from './Bits';
+import { LogoMark } from './Logo';
 import { store } from '../../lib/util';
 
 /** Bumped with each release that has something worth announcing; a phone sees each one once. */
@@ -12,7 +13,8 @@ const ITEMS: { title: string; body: string }[] = [
   { title: 'ردود فعل على الهواء', body: 'لقطة، غالية، يا سلام… تطير على شاشات الكل، والجوال يهتز لما أحد يزاود عليك.' },
   { title: 'جوائز الليلة وسجلّك', body: 'صفقة الليلة وأغلى غلطة والحوت، وسجلّك من ليلة لليلة محفوظ في جوالك.' },
   { title: 'شارك كراجك', body: 'صورة مرتبة لكراجك ولقطاتك، جاهزة ترسلها للقروب.' },
-  { title: 'شكل أفخم', body: 'حركات أنعم وتفاصيل أدق بكل شاشة، من المعاينة لين المطرقة.' },
+  { title: 'هوية جديدة', body: 'شعار «بطاقة السعر» وألوان الليل: فحمي وأحمر وذهبي، وصفحة السيارة بمعرض صور تكبّره بلمسة.' },
+  { title: 'أسرع وأسلس', body: 'اللعبة تفتح عند اللاعب بثلث الحجم، السوم يحس فوري، وزر الرجوع ما يطلّعك من الصالة بالغلط.' },
 ];
 
 /** Whether this phone hasn't seen the current release notes yet. */
@@ -47,12 +49,8 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
       >
         <div className="news-grip" aria-hidden />
         <header className="news-head">
-          <span className="news-seal" aria-hidden>
-            <svg viewBox="0 0 48 48" width="44" height="44">
-              <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 3" />
-              <path d="M15 27l10-10 4 4-10 10zM27 15l4-4 6 6-4 4zM21 33h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <span className="news-seal news-tag" aria-hidden>
+            <LogoMark size={40} />
           </span>
           <div>
             <span className="news-kicker">إصدار جديد</span>

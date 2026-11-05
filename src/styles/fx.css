@@ -453,7 +453,7 @@
 }
 
 .fx-paths-b {
-  stroke: rgba(12, 122, 78, .2);
+  stroke: rgba(229, 38, 45, .2);
   stroke-width: 1;
   opacity: .55;
   animation: fx-drift-b 23s var(--fx-in-out) infinite alternate;

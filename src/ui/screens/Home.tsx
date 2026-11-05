@@ -8,7 +8,7 @@ import { CareerChip } from '../components/CareerPanel';
 import { Photo } from '../components/Gallery';
 import { WhatsNew, hasNews } from '../components/WhatsNew';
 import { BackgroundPaths } from '../components/fx/BackgroundPaths';
-import { GavelMark } from './Room';
+import { BrandLogo } from '../components/Logo';
 
 /** A few real cars from tonight's market, for the front page. */
 function useShowroom(n = 8) {
@@ -44,12 +44,7 @@ export function Home() {
       <WhatsNew open={news} onClose={() => setNews(false)} />
       <header className="apphead">
         <span className="brand">
-          <span className="brand-seal">
-            <GavelMark />
-          </span>
-          <span className="brand-name">
-            مزاد <b>الكراج</b>
-          </span>
+          <BrandLogo />
         </span>
         <span className="apphead-date">{hijriToday()}</span>
       </header>

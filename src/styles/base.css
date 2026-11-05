@@ -306,13 +306,13 @@ img {
 /* Saudi green, lit from above */
 .btn-primary {
   color: #fff;
-  background: linear-gradient(180deg, #16a067 0%, #0e8253 48%, #0a6b44 100%);
-  border-color: #07573a;
+  background: linear-gradient(180deg, #f0353b 0%, #dc252c 48%, #bc171e 100%);
+  border-color: #9e1218;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .28),
     inset 0 -2px 0 rgba(0, 0, 0, .12),
-    0 1px 1px rgba(4, 33, 26, .22),
-    0 8px 18px -8px rgba(12, 122, 78, .7);
+    0 1px 1px rgba(10, 10, 12, .22),
+    0 8px 18px -8px rgba(229, 38, 45, .7);
   text-shadow: 0 1px 0 rgba(0, 0, 0, .18);
 }
 
@@ -321,7 +321,7 @@ img {
 }
 
 .btn-primary:active:not(:disabled) {
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .22), 0 1px 1px rgba(4, 33, 26, .15);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .22), 0 1px 1px rgba(10, 10, 12, .15);
 }
 
 /* brushed gold: the big moments (open the hall, start the auction) */
@@ -344,15 +344,15 @@ img {
 .btn-dark {
   color: #fff;
   background: linear-gradient(180deg, var(--green-800), var(--green-950));
-  border-color: #021a13;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 18px -10px rgba(4, 33, 26, .8);
+  border-color: #050506;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 18px -10px rgba(10, 10, 12, .8);
 }
 
 .btn-ghost {
   color: var(--ink);
   background: linear-gradient(180deg, #fff, #f7f8f5);
   border-color: var(--line-2);
-  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(14, 28, 21, .06);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(18, 18, 20, .06);
 }
 
 .btn-ghost:active:not(:disabled) {
@@ -467,7 +467,7 @@ img {
 .input:focus {
   outline: none;
   border-color: var(--green);
-  box-shadow: 0 0 0 4px rgba(12, 122, 78, .12);
+  box-shadow: 0 0 0 4px rgba(229, 38, 45, .12);
 }
 
 .input::placeholder {
@@ -587,7 +587,7 @@ img {
   position: fixed;
   inset: 0;
   z-index: 80;
-  background: rgba(4, 22, 15, .45);
+  background: rgba(10, 10, 12, .45);
   animation: fade .2s both;
 }
 

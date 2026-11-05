@@ -5,7 +5,7 @@ import type { Core, Hist } from '../../engine/types';
 import { money, store } from '../../lib/util';
 import { go, goHome, useBack } from '../App';
 import { Icon, Toasts } from '../components/Bits';
-import { LogoMark } from '../components/Logo';
+import { BrandLogo, LOGO, LogoMark } from '../components/Logo';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
 import { Auction } from './Auction';
 import { Intro } from './Intro';
@@ -35,9 +35,7 @@ export function RoomGate({ code }: { code: string }) {
             setMe(joinAs(code, name.trim()));
           }}
         >
-          <span className="brandmark" style={{ fontSize: 34 }}>
-            مزاد <em>الكراج</em>
-          </span>
+          <img className="join-logo" src={LOGO.stack} width={220} height={193} alt="مزاد الكراج" draggable={false} />
           <div className="code">{code}</div>
           <p className="mute" style={{ margin: 0 }}>انعزمت على المزاد. اكتب اسمك وادخل الصالة.</p>
           <input className="input" autoFocus value={name} maxLength={18} onChange={(e) => setName(e.target.value)} placeholder="اسمك" autoComplete="nickname" />
@@ -141,12 +139,7 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
       </button>
       {!inGame && (
         <button className="brand" onClick={() => onMenu('leave')} aria-label="الرئيسية">
-          <span className="brand-seal">
-            <GavelMark />
-          </span>
-          <span className="brand-name">
-            مزاد <b>الكراج</b>
-          </span>
+          <BrandLogo />
         </button>
       )}
       {inGame && core.lotNo > 0 && (
@@ -192,9 +185,9 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
   );
 }
 
-/** Small gold gavel used as the brand mark. */
+/** The price tag on its own (kept under its old name for any caller that still uses it). */
 export function GavelMark() {
-  return <LogoMark className="gavelmark" />;
+  return <LogoMark className="gavelmark" size={24} />;
 }
 
 function Room({ code, me }: { code: string; me: Me }) {

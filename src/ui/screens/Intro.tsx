@@ -4,6 +4,7 @@ import type { Core } from '../../engine/types';
 import { carsN, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 import { BackgroundPaths } from '../components/fx/BackgroundPaths';
+import { LOGO } from '../components/Logo';
 
 /** «مزايد / مزايدين» with the number shown on its own. */
 const biddersWord = (n: number) => (n === 1 ? 'مزايد' : n === 2 ? 'مزايدَين' : n <= 10 ? 'مزايدين' : 'مزايد');
@@ -29,7 +30,8 @@ export function Intro({ room }: { room: RoomView }) {
       <div className="intro-screen fx-host idn-intro">
         <BackgroundPaths />
         <div className="idn-seq">
-          <div className="idn-kicker idn-step" style={{ ['--d' as string]: 0 }}>
+          <img className="idn-logo idn-step" style={{ ['--d' as string]: 0 }} src={LOGO.stack} width={156} height={137} alt="" aria-hidden="true" draggable={false} />
+          <div className="idn-kicker idn-step" style={{ ['--d' as string]: 0.5 }}>
             {s.roomName}
           </div>
           <h1 className="idn-call idn-step" style={{ ['--d' as string]: 1 }}>

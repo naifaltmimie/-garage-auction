@@ -297,7 +297,7 @@ html.tv-mode body {
   font-size: 124px;
   font-weight: 700;
   line-height: 1;
-  box-shadow: inset 0 -6px 0 rgba(14, 28, 21, 0.08);
+  box-shadow: inset 0 -6px 0 rgba(18, 18, 20, 0.08);
   animation: tv-tile-in 0.5s var(--ease) backwards;
   animation-delay: calc(0.15s + var(--i, 0) * 70ms);
 }
@@ -523,7 +523,7 @@ html.tv-mode body {
   min-height: 0;
   border-radius: var(--r-lg);
   overflow: hidden;
-  background: #0a1510;
+  background: #0b0b0d;
   isolation: isolate;
 }
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#062f22" />
+    <meta name="theme-color" content="#121216" />
     <meta name="color-scheme" content="light" />
     <meta name="referrer" content="no-referrer" />
     <title>مزاد الكراج</title>
@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://garage-auction.vercel.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="شعار مزاد الكراج: مطرقة مزاد رأسها لوحة سيارة سعودية" />
+    <meta property="og:image:alt" content="شعار مزاد الكراج: كلمة مزاد على بطاقة سعر حمراء فوق كلمة الكراج" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://garage-auction.vercel.app/og.png" />
     <!-- open the photo CDNs and the realtime brokers while the app boots -->
@@ -36,27 +36,24 @@
          replaces everything inside #root. Colours are the base.css tokens (--bg, --green-900, --gold).
          The logo is plain text in one block marked LOGO below, so a new logo is a one-block swap. -->
     <style>
-      html, body { background: #f1f2ee; }
-      html.boot-tv, html.boot-tv body { background: #04211a; }
-      #boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #f1f2ee; color: #062f22; font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
-      #boot .boot-bar { position: absolute; top: 0; left: 0; right: 0; height: calc(58px + env(safe-area-inset-top, 0px)); background: linear-gradient(180deg, #073626 0%, #062f22 60%, #052a1e 100%); box-shadow: 0 1px 0 rgba(214, 173, 82, .6); }
+      html, body { background: #f4f3f0; }
+      html.boot-tv, html.boot-tv body { background: #0a0a0c; }
+      #boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #f4f3f0; }
+      #boot .boot-bar { position: absolute; top: 0; left: 0; right: 0; height: calc(58px + env(safe-area-inset-top, 0px)); background: linear-gradient(180deg, #1c1d22 0%, #121216 58%, #0e0e11 100%); box-shadow: 0 1px 0 rgba(227, 178, 79, .45); }
       #boot .boot-core { display: grid; justify-items: center; padding-top: calc(58px + env(safe-area-inset-top, 0px)); }
-      #boot .boot-logo { opacity: 0; transform: translateY(6px); transition: opacity .45s cubic-bezier(.2, .8, .2, 1), transform .45s cubic-bezier(.2, .8, .2, 1); }
+      /* LOGO: the stacked price-tag logo (public/brand/lockup.svg) */
+      #boot .boot-logo { display: block; width: min(230px, 60vw); height: auto; opacity: 0; transform: translateY(-10px) rotate(-6deg) scale(.92); transition: opacity .4s cubic-bezier(.2, .8, .2, 1), transform .6s cubic-bezier(.2, 1.5, .4, 1); }
       #boot.is-ready .boot-logo { opacity: 1; transform: none; }
-      /* LOGO */
-      .boot-logo { display: grid; justify-items: center; font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; font-size: 56px; font-weight: 700; line-height: 1.05; color: #062f22; }
-      .boot-logo-bottom { font-size: .6em; color: #a37b25; }
-      .boot-tv .boot-logo { font-size: 104px; color: #f3f4ef; }
-      .boot-tv .boot-logo-bottom { color: #d6ad52; }
+      .boot-tv #boot .boot-logo { width: min(420px, 40vw); }
       /* end LOGO */
-      #boot .boot-load { display: block; width: 76px; height: 3px; margin-top: 28px; border-radius: 99px; overflow: hidden; background: rgba(6, 47, 34, .12); opacity: 0; animation: boot-in .4s .45s both; }
-      #boot .boot-load i { display: block; width: 26px; height: 100%; border-radius: 99px; background: #a37b25; animation: boot-sweep 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
-      #boot noscript p { margin: 22px 0 0; font-size: 15px; color: #66746b; }
-      .boot-tv #boot { background: #04211a; }
+      #boot .boot-load { display: block; width: 76px; height: 3px; margin-top: 30px; border-radius: 99px; overflow: hidden; background: rgba(18, 18, 22, .1); opacity: 0; animation: boot-in .4s .45s both; }
+      #boot .boot-load i { display: block; width: 26px; height: 100%; border-radius: 99px; background: #e5262d; animation: boot-sweep 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
+      #boot noscript p { margin: 22px 0 0; font: 15px system-ui, sans-serif; color: #6b6d74; }
+      .boot-tv #boot { background: #0a0a0c; }
       .boot-tv #boot .boot-bar { display: none; }
       .boot-tv #boot .boot-core { padding-top: 0; }
-      .boot-tv #boot .boot-load { width: 120px; background: rgba(243, 244, 239, .1); }
-      .boot-tv #boot .boot-load i { width: 40px; background: #d6ad52; }
+      .boot-tv #boot .boot-load { width: 120px; background: rgba(255, 255, 255, .1); }
+      .boot-tv #boot .boot-load i { width: 40px; }
       @keyframes boot-in { to { opacity: 1; } }
       @keyframes boot-sweep { from { transform: translateX(110%); } to { transform: translateX(-300%); } }
       @media (prefers-reduced-motion: reduce) {
@@ -70,25 +67,23 @@
       <div id="boot" role="status" aria-label="مزاد الكراج، نفتح الصالة">
         <div class="boot-bar"></div>
         <div class="boot-core">
-          <div class="boot-logo" aria-hidden="true"><span class="boot-logo-top">مزاد</span><span class="boot-logo-bottom">الكراج</span></div>
+          <img class="boot-logo" src="/brand/lockup.svg?v=3" width="230" height="201" alt="" aria-hidden="true" />
           <span class="boot-load" aria-hidden="true"><i></i></span>
           <noscript><p>شغّل الجافاسكربت في المتصفح عشان تدخل المزاد</p></noscript>
         </div>
       </div>
     </div>
     <script>
-      // show the logo once its font is in (capped, so a slow font never holds the splash blank);
-      // the big screen («شاشة العرض», #/tv/…) boots on its own dark green
+      // the logo drops in once its drawing has loaded (capped, so a slow network never holds the splash
+      // blank); the big screen («شاشة العرض», #/tv/…) boots on its own dark board
       (function () {
         var b = document.getElementById('boot');
         if (!b) return;
         if (/^#\/?tv\//.test(location.hash)) document.documentElement.classList.add('boot-tv');
         var done = function () { b.classList.add('is-ready'); };
-        setTimeout(done, 600);
-        try {
-          var l = b.querySelector('.boot-logo'), cs = getComputedStyle(l);
-          document.fonts.load(cs.fontWeight + ' 56px ' + cs.fontFamily, 'مزاد الكراج').then(done, done);
-        } catch (e) { done(); }
+        setTimeout(done, 700);
+        var l = b.querySelector('.boot-logo');
+        if (l) { if (l.complete) done(); else l.addEventListener('load', done); }
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
