@@ -852,6 +852,7 @@ html.tv-mode body {
 
 .tv-verdict {
   gap: 10px;
+  justify-content: center;
   animation: tv-in 0.5s var(--ease) both;
 }
 
