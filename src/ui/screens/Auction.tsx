@@ -5,6 +5,7 @@ import { photoSrc } from '../components/Gallery';
 import { LotSheet } from '../components/LotSheet';
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
 import { ReactionLayer } from '../components/Reactions';
+import { TireLoader } from '../components/TireLoader';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 // the car sheet (photos, damage map, specs) is the heaviest part of the screen: it only redraws when its
@@ -66,7 +67,7 @@ export function Auction({ room }: { room: RoomView }) {
   if (!lot) {
     return (
       <div className="center-screen">
-        <div className="spinner" />
+        <TireLoader label="السيارة الجاية في الطريق" />
       </div>
     );
   }

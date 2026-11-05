@@ -126,7 +126,7 @@ export function Gallery({
         </>
       ) : (
         <div className="g-studio">
-          <Silhouette body={body} color={covered ? '#1d2a23' : color} mono={covered} />
+          <Silhouette body={body} color={covered ? '#2a2c31' : color} mono={covered} />
         </div>
       )}
       {covered && (

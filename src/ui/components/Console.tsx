@@ -9,6 +9,7 @@ import { Paddle } from './Plate';
 import { BorderBeam } from './fx/BorderBeam';
 import { NumberTicker } from './fx/NumberTicker';
 import { DutchConsole, DutchHint } from './DutchConsole';
+import { TireLoader } from './TireLoader';
 
 export function maxBidFor(cash: number, lot: LotPub | null): number {
   if (!lot) return cash;
@@ -288,14 +289,21 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
         </div>
       )}
 
-      {compact ? null : watching ? (
+      {compact ? null : core.phase === 'sold' || core.phase === 'unsold' ? (
+        <div className="bp-next">
+          <TireLoader className="tl-inline" size={30} label={core.paused ? 'المزاد واقف' : 'السيارة الجاية في الطريق'} />
+        </div>
+      ) : watching ? (
         <div className="bp-note">{spectator ? 'أنت متفرج بهالجولة، تابع السوم' : 'كراجك فل، تفرّج على الباقين'}</div>
       ) : core.phase === 'sealed' ? (
         <div className="envelope">
           {mine != null && (
-            <div className="row between">
-              <span className="mute">ظرفك مختوم على</span>
-              <b className="t-money">{money(mine)}</b>
+            <div className="env-wait">
+              <TireLoader className="tl-inline" size={30} label="ننتظر ظروف الباقين" />
+              <div className="env-mine">
+                <small>ظرفك مختوم على</small>
+                <b className="t-money">{money(mine)}</b>
+              </div>
             </div>
           )}
           <input
@@ -310,7 +318,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
             {[1, 1.25, 1.6].map((f) => {
               const a = Math.min(maxBid, Math.round((core.opening * f) / step) * step);
               return (
-                <button key={f} onClick={() => setSealVal(String(a))} disabled={a < core.opening}>
+                <button key={f} className="btn btn-ghost" onClick={() => setSealVal(String(a))} disabled={a < core.opening}>
                   <b className="ltr">{money(a)}</b>
                   <small>{f === 1 ? 'أقل ظرف' : `×${f}`}</small>
                 </button>
@@ -369,12 +377,12 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
           </button>
           <div className="bid-chips">
             {chips.map((c) => (
-              <button key={c.n} disabled={!bidding || !!reason || sending || c.amount > maxBid} onClick={() => bid(c.amount)} aria-label={`سُم ${money(c.amount)}`}>
+              <button key={c.n} className="btn btn-ghost" disabled={!bidding || !!reason || sending || c.amount > maxBid} onClick={() => bid(c.amount)} aria-label={`سُم ${money(c.amount)}`}>
                 <b className="ltr">+{money(c.amount - (top?.amount ?? core.opening))}</b>
                 <small className="ltr">{money(c.amount)}</small>
               </button>
             ))}
-            <button className="chip-free" disabled={!bidding || !!reason || sending} onClick={() => setCustom(true)}>
+            <button className="btn btn-ghost chip-free" disabled={!bidding || !!reason || sending} onClick={() => setCustom(true)}>
               <b>سوم حر</b>
               <small>اكتب مبلغك</small>
             </button>

@@ -9,6 +9,7 @@ import { CarTitle } from './LotSheet';
 import { CarPlate, Paddle } from './Plate';
 import { Silhouette } from './Silhouette';
 import { GoldLeaf } from './fx/GoldLeaf';
+import { TireLoader } from './TireLoader';
 
 function useCount(target: number, run: boolean, ms = 1100) {
   const [v, setV] = useState(0);
@@ -37,6 +38,7 @@ function CountUp({ target, run }: { target: number; run: boolean }) {
 }
 
 function Hero({ sale, stamp, grey }: { sale: Sale; stamp: string; grey?: boolean }) {
+  // the stamp itself: ink-white for a sale, the buyer's own in rim gold (via .fx-mine), red when it didn't sell
   const photo = sale.car.photos?.[0];
   return (
     <div className={`rv-hero ${grey ? 'grey' : ''}`}>
@@ -262,14 +264,7 @@ export function ApprovalReveal({ core }: { core: Core }) {
   return (
     <div className="overlay" role="dialog" aria-label="بانتظار موافقة البائع">
       <div className="reveal thinking">
-        <div className="rv-think">
-          <span className="dots" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-          <b>صاحب السيارة يفكّر</b>
-        </div>
+        <TireLoader className="rv-think" size={46} label="صاحب السيارة يفكّر…" />
         <p className="rv-line">
           السوم وقف على <b className="ltr">{money(core.bid?.amount ?? 0)}</b> عند {who}
         </p>
