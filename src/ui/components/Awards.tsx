@@ -74,7 +74,9 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   const core = room.snap.core!;
   const res = room.snap.hist?.results ?? null;
   const sales = room.snap.hist?.sales ?? [];
-  const items = useMemo(() => (res ? computeAwards(core, sales, res) : []), [res, sales, core]);
+  // keyed on the results and sales only, so the core's frequent snapshots never restart the show
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const items = useMemo(() => (res ? computeAwards(core, sales, res) : []), [res?.at, res?.awards.length, sales.length, core.players.length]);
   const total = items.length;
   const meRow = res?.rows.find((r) => r.id === room.myId) ?? null;
   const nightKey = `${room.code}:${core.startedAt || res?.at || 0}`;
@@ -118,7 +120,8 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
     if (!ready || over || total === 0) return;
     const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 500 : items[step - 1]?.grand ? 3400 : 2600);
     return () => clearTimeout(t);
-  }, [ready, over, step, total, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, over, step, total]);
   useEffect(() => {
     if (!ready || skipped || step < 1 || step > total) return;
     try {
@@ -127,13 +130,14 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
     } catch {
       /* sound is optional */
     }
-  }, [step, ready, skipped, total, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, ready, skipped, total]);
 
   if (!ready || !res) return null;
   const cur = !over && step >= 1 && step <= total ? items[step - 1] : null;
   const listed = over ? items : items.slice(0, Math.max(0, step - 1));
   const myTitles = items.filter((a) => a.who === room.myId).map((a) => a.title);
-  const nightBadges = [...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)];
+  const nightBadges = [...new Set([...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)])];
 
   return (
     <section className="aw" aria-label="جوائز الليلة">
@@ -198,7 +202,12 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
                 </b>
                 <small>{a.line}</small>
               </div>
-              {a.figure && <span className={`aw-row-fig t-money ${a.tone ?? ''}`}>{a.figure}</span>}
+              {a.figure && (
+                <span className={`aw-row-fig ${a.tone ?? ''}`}>
+                  <small>{a.figureLabel}</small>
+                  <span className="t-money">{a.figure}</span>
+                </span>
+              )}
             </li>
           ))}
         </ol>

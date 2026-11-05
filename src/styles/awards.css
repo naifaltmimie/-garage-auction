@@ -227,15 +227,27 @@
 }
 
 .aw-row-fig {
-  font-size: 15px;
+  display: grid;
+  justify-items: end;
+  line-height: 1.2;
   color: var(--ink-2);
 }
 
-.aw-row-fig.gain {
+.aw-row-fig small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.aw-row-fig .t-money {
+  font-size: 15px;
+}
+
+.aw-row-fig.gain .t-money {
   color: var(--green);
 }
 
-.aw-row-fig.loss {
+.aw-row-fig.loss .t-money {
   color: var(--red);
 }
 
@@ -389,8 +401,8 @@
 
 .cr-grid dd {
   margin: 2px 0 0;
-  font-size: 24px;
-  text-align: start;
+  font-size: 22px;
+  text-align: right;
 }
 
 .cr-best {

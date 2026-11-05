@@ -111,37 +111,41 @@ export async function drawPoster(d: PosterData): Promise<HTMLCanvasElement> {
   y += 48;
   rule(ctx, y);
 
-  // the cars
-  const top = y + 8;
-  const bottom = 1010;
+  // the cars: generous rows when the garage is small, the block centred in its space
+  const top = y + 10;
+  const bottom = 956;
   const n = Math.max(1, d.cars.length);
-  const rowH = Math.min(132, (bottom - top) / n);
-  const big = rowH >= 110 ? 40 : rowH >= 90 ? 34 : 28;
-  const small = rowH >= 110 ? 26 : 22;
+  const rowH = Math.min(168, (bottom - top) / n);
+  const big = rowH >= 150 ? 46 : rowH >= 110 ? 40 : rowH >= 90 ? 34 : 28;
+  const small = rowH >= 150 ? 28 : rowH >= 110 ? 26 : 22;
+  const y00 = top + Math.max(0, (bottom - top - rowH * n) / 2);
   if (!d.cars.length) {
     txt(ctx, 'طلع من الليلة بلا سيارة، وفلوسه بجيبه', W / 2, top + (bottom - top) / 2, { size: 38, weight: 600, color: C.mute, align: 'center' });
   }
   d.cars.forEach((c, i) => {
-    const y0 = top + i * rowH;
+    const y0 = y00 + i * rowH;
     const mid = y0 + rowH / 2;
     const profit = c.value - c.paid;
+    const l2 = mid + small + 12;
+    // number of the car in the garage, a quiet gold index
+    txt(ctx, String(i + 1).padStart(2, '0'), R, y0 + 34, { size: 20, weight: 600, color: C.goldLine, dir: 'ltr' });
     // left block: paid, then value and the gain/loss
-    txt(ctx, money(c.paid), PAD, mid - 4, { size: big, weight: 700, color: C.cream, align: 'left', dir: 'ltr' });
-    const lineB = `${signed(profit)}`;
-    txt(ctx, lineB, PAD, mid + small + 10, { size: small, weight: 600, color: profit >= 0 ? C.gain : C.loss, align: 'left', dir: 'ltr' });
+    txt(ctx, money(c.paid), PAD, mid, { size: big, weight: 700, color: C.cream, align: 'left', dir: 'ltr' });
+    const lineB = signed(profit);
+    txt(ctx, lineB, PAD, l2, { size: small, weight: 600, color: profit >= 0 ? C.gain : C.loss, align: 'left', dir: 'ltr' });
     ctx.font = `600 ${small}px ${FONT}`;
     const wB = ctx.measureText(lineB).width;
-    txt(ctx, `القيمة ${money(c.value)}`, PAD + wB + 18, mid + small + 10, { size: small, weight: 500, color: C.mute, align: 'left', dir: 'rtl' });
+    txt(ctx, `القيمة ${money(c.value)}`, PAD + wB + 18, l2, { size: small, weight: 500, color: C.mute, align: 'left', dir: 'rtl' });
     // right block: the car
     ctx.font = `700 ${big}px ${FONT}`;
-    txt(ctx, clip(ctx, c.name, 560), R, mid - 4, { size: big, weight: 700, color: C.cream });
+    txt(ctx, clip(ctx, c.name, 540), R - 52, mid, { size: big, weight: 700, color: C.cream });
     ctx.font = `500 ${small}px ${FONT}`;
-    txt(ctx, clip(ctx, `${c.trim ? `${c.trim}  ·  ` : ''}${c.year}`, 520), R, mid + small + 10, { size: small, weight: 500, color: C.mute });
+    txt(ctx, clip(ctx, `${c.trim ? `${c.trim}  ·  ` : ''}${c.year}`, 500), R - 52, l2, { size: small, weight: 500, color: C.mute });
     if (i < d.cars.length - 1) rule(ctx, y0 + rowH - 1);
   });
 
   // the totals
-  const ty = 1036;
+  const ty = 980;
   ctx.strokeStyle = C.goldLine;
   ctx.lineWidth = 2;
   ctx.strokeRect(PAD, ty, W - PAD * 2, 140);
@@ -162,30 +166,33 @@ export async function drawPoster(d: PosterData): Promise<HTMLCanvasElement> {
     }
   });
 
-  // the night's badges
-  let bx = R;
-  let by = 1236;
+  // the night's badges, one centred row of gold pills
   ctx.font = `600 26px ${FONT}`;
-  for (const b of d.badges.slice(0, 6)) {
+  const pills: { b: string; w: number }[] = [];
+  let tw = 0;
+  for (const b of [...new Set(d.badges)]) {
     const w = ctx.measureText(b).width + 44;
-    if (bx - w < PAD) {
-      if (by > 1236) break;
-      bx = R;
-      by += 0;
-      break;
-    }
+    if (tw + w + (pills.length ? 14 : 0) > W - PAD * 2) break;
+    tw += w + (pills.length ? 14 : 0);
+    pills.push({ b, w });
+  }
+  let bx = W / 2 + tw / 2;
+  const by = 1150;
+  for (const { b, w } of pills) {
     ctx.strokeStyle = C.goldLine;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(bx - w, by - 38, w, 54, 27);
+    if (ctx.roundRect) ctx.roundRect(bx - w, by, w, 54, 27);
+    else ctx.rect(bx - w, by, w, 54);
     ctx.stroke();
-    txt(ctx, b, bx - w / 2, by - 2, { size: 26, weight: 600, color: C.gold, align: 'center' });
+    txt(ctx, b, bx - w / 2, by + 36, { size: 26, weight: 600, color: C.gold, align: 'center' });
     bx -= w + 14;
   }
 
   // foot
-  txt(ctx, 'garage-auction.vercel.app', PAD, H - 72, { size: 22, weight: 500, color: C.dim, align: 'left', dir: 'ltr' });
-  txt(ctx, 'سيارات حقيقية من السوق السعودي', R, H - 72, { size: 22, weight: 500, color: C.dim });
+  rule(ctx, H - 112, C.hair);
+  txt(ctx, 'garage-auction.vercel.app', PAD, H - 78, { size: 22, weight: 500, color: C.dim, align: 'left', dir: 'ltr' });
+  txt(ctx, 'سيارات حقيقية من السوق السعودي', R, H - 78, { size: 22, weight: 500, color: C.dim });
   return cv;
 }
 
