@@ -10,6 +10,7 @@ import { Icon, QR } from '../components/Bits';
 import { TvGlyph, openTv } from './Tv';
 import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
+import { useBack } from '../App';
 
 const SPEED_AR: Record<Speed, string> = { fast: 'سريع', normal: 'عادي', calm: 'هادي' };
 const MIX_AR = Object.fromEntries(MARKETS.map((x) => [x.id, x.label])) as Record<Mix, string>;
@@ -206,6 +207,7 @@ export function Lobby({ room }: { room: RoomView }) {
 }
 
 function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void }) {
+  useBack(true, onClose);
   const s = room.snap.core!.settings;
   const set = room.host!.settings;
   return (
