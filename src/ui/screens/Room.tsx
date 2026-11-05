@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, Hist } from '../../engine/types';
 import { money, store } from '../../lib/util';
-import { go } from '../App';
+import { go, goHome, useBack } from '../App';
 import { Icon, Toasts } from '../components/Bits';
 import { LogoMark } from '../components/Logo';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
@@ -16,6 +16,7 @@ import { Showcase } from './Showcase';
 import { Standings } from './Standings';
 import { Voting } from './Voting';
 import { FxToggle } from '../components/Reactions';
+import { RoomMenu, RoomStatus, type MenuStep } from '../components/RoomMenu';
 
 export function RoomGate({ code }: { code: string }) {
   const [me, setMe] = useState<Me | null>(() => meFor(code));
@@ -120,7 +121,7 @@ function useHallSounds(core: Core | null, hist: Hist | null, myId: string) {
   }, [core?.phase, hist, myId, core]);
 }
 
-function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) {
+function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => void; onMenu: (s: MenuStep) => void }) {
   const core = room.snap.core!;
   const me = core.players.find((p) => p.id === room.myId);
   const [prefs, setPrefs] = useState(sound.prefs);
@@ -135,14 +136,11 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
   const progress = core.lotsTotal > 0 ? Math.min(1, Math.max(0, core.lotNo / core.lotsTotal)) : 0;
   return (
     <header className={`topbar ${inGame ? 'ingame' : ''}`}>
-      {inGame ? (
-        <span className="brand" aria-hidden="true">
-          <span className="brand-seal">
-            <GavelMark />
-          </span>
-        </span>
-      ) : (
-        <button className="brand" onClick={() => go('/')} aria-label="الرئيسية">
+      <button className="iconbtn tb-btn tb-menu" aria-label="القائمة والخروج" aria-haspopup="dialog" onClick={() => onMenu('menu')}>
+        <Icon name="list" />
+      </button>
+      {!inGame && (
+        <button className="brand" onClick={() => onMenu('leave')} aria-label="الرئيسية">
           <span className="brand-seal">
             <GavelMark />
           </span>
@@ -203,8 +201,35 @@ function Room({ code, me }: { code: string; me: Me }) {
   const room = useRoom(code, me);
   const core = room.snap.core;
   const [players, setPlayers] = useState(false);
+  const [menu, setMenu] = useState<MenuStep | null>(null);
   const [waited, setWaited] = useState(0);
   useHallSounds(core, room.snap.hist, room.myId);
+  // back gesture with nothing of ours open: close whatever sheet another screen has up, else ask first
+  const hasCore = useRef(false);
+  hasCore.current = !!core;
+  const tried = useRef<WeakSet<Element>>(new WeakSet());
+  useBack(true, () => {
+    if (!hasCore.current) return goHome();
+    const backs = document.querySelectorAll<HTMLElement>('.drawer-back');
+    if (backs.length) return backs[backs.length - 1].click();
+    const dlg = document.querySelector('[role="dialog"], [aria-modal="true"]');
+    if (dlg && !tried.current.has(dlg)) {
+      tried.current.add(dlg);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      return;
+    }
+    setMenu('leave');
+  });
+  // a new screen starts at the top; phases inside the auction keep their scroll
+  const screen = !core ? 'wait' : ['lobby', 'intro', 'showcase', 'voting', 'results'].includes(core.phase) ? core.phase : 'auction';
+  const firstScreen = useRef(true);
+  useEffect(() => {
+    if (firstScreen.current) {
+      firstScreen.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+  }, [screen]);
   // remember every ad this phone sees, so the next night brings different cars
   const adKey = room.snap.lot?.adKey;
   const shown = !!core && ['preview', 'bidding', 'sealed', 'sold', 'unsold', 'approval'].includes(core.phase);
@@ -254,15 +279,12 @@ function Room({ code, me }: { code: string; me: Me }) {
                   ? 'متصلين بس المضيف ما فتح الصالة للحين. تأكد من الكود أو خلّ المضيف يفتح الصفحة.'
                   : 'متصلين، ننتظر المضيف…'}
             </p>
-            <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
+            <button className="btn btn-quiet" onClick={goHome}>رجوع</button>
           </div>
         </div>
       </main>
     );
   }
-
-  const stale = room.role === 'player' && room.net.lastHeard > 0 && Date.now() - room.net.lastHeard > 9000;
-  const hostGone = room.role === 'player' && (room.net.hostGone || stale);
 
   let body: React.ReactNode;
   switch (core.phase) {
@@ -287,26 +309,12 @@ function Room({ code, me }: { code: string; me: Me }) {
 
   return (
     <>
-      <TopBar room={room} onPlayers={() => setPlayers(true)} />
-      {hostGone && (
-        <div className="shell" style={{ paddingBottom: 0 }}>
-          <div className="banner">
-            <span className="netdot off" />
-            <span>المضيف انقطع اتصاله، ننتظره يرجع. لا تسكّر الصفحة.</span>
-          </div>
-        </div>
-      )}
-      {!room.net.connected && room.role === 'host' && (
-        <div className="shell" style={{ paddingBottom: 0 }}>
-          <div className="banner">
-            <span className="netdot off" />
-            <span>الاتصال بالمزاد مقطوع، نحاول نرجع…</span>
-          </div>
-        </div>
-      )}
+      <TopBar room={room} onPlayers={() => setPlayers(true)} onMenu={setMenu} />
+      <RoomStatus room={room} />
       {body}
-      {['lobby', 'showcase', 'voting', 'results'].includes(core.phase) && <TvLink code={code} />}
+      {['showcase', 'voting', 'results'].includes(core.phase) && <TvLink code={code} />}
       {players && <Standings room={room} onClose={() => setPlayers(false)} />}
+      {menu && <RoomMenu room={room} start={menu} onClose={() => setMenu(null)} onPlayers={() => setPlayers(true)} />}
       <Toasts items={room.toasts} />
     </>
   );

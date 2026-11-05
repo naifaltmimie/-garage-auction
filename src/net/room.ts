@@ -125,7 +125,17 @@ export class HostRoom {
   stop() {
     if (this.tickId) clearInterval(this.tickId);
     if (this.beatId) clearInterval(this.beatId);
-    this.bus?.stop();
+    // let a last flush (a pause on the way out) reach the phones before the socket closes
+    const bus = this.bus;
+    setTimeout(() => bus?.stop(), 200);
+  }
+
+  /** The host is walking out on purpose: freeze the clock and get that to every phone right away. */
+  hold() {
+    this.apply(this.engine.pause(Date.now()));
+    if (this.flushTimer) clearTimeout(this.flushTimer);
+    void this.flush();
+    this.save(true);
   }
 
   /** Apply engine changes: bump revisions, notify the UI, broadcast, persist. */

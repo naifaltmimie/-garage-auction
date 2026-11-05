@@ -39,6 +39,8 @@ export interface HostControls {
   rematch(): void;
   kick(pid: string): void;
   admit(pid: string): void;
+  /** freeze the clock on the way out, so nothing sells while the host's phone is away */
+  hold(): void;
   settings(p: Partial<Settings>): void;
 }
 
@@ -147,7 +149,10 @@ export function useRoom(code: string, me: Me): RoomView {
       };
       room.onChange = push;
       room.onStatus = (s: BusStatus) => setNet({ connected: s.connected, via: s.via, hostGone: false, lastHeard: Date.now() });
-      void room.start();
+      void room.start().then(() => {
+        // back after a refresh or a trip to Home: the away-hold lifts by itself, a deliberate pause stays
+        if (document.visibilityState === 'visible') room.away(false);
+      });
       push();
       // keep the host's own lobby view of "online" dots fresh
       const iv = setInterval(push, 3000);
@@ -221,7 +226,22 @@ export function useRoom(code: string, me: Me): RoomView {
     });
     playerRef.current = room;
     void room.start();
+    // the phone woke up or the network came back: say hello so the host resends the room right away
+    let last = 0;
+    const resync = () => {
+      if (document.visibilityState !== 'visible') return;
+      const t = Date.now();
+      if (t - last < 1500) return;
+      last = t;
+      room.hello();
+    };
+    document.addEventListener('visibilitychange', resync);
+    window.addEventListener('online', resync);
+    window.addEventListener('pageshow', resync);
     return () => {
+      document.removeEventListener('visibilitychange', resync);
+      window.removeEventListener('online', resync);
+      window.removeEventListener('pageshow', resync);
       cancelAnimationFrame(raf);
       room.stop();
       playerRef.current = null;
@@ -285,6 +305,7 @@ export function useRoom(code: string, me: Me): RoomView {
         const r = hostRef.current;
         if (r) r.apply(r.engine.setSettings(p));
       },
+      hold: () => hostRef.current?.hold(),
     };
   }, [isHost]);
 

@@ -3,11 +3,15 @@ import { GarageCard } from '../components/Garage';
 import { Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 import { useState } from 'react';
+import { useBack } from '../App';
 
 export function Standings({ room, onClose }: { room: RoomView; onClose: () => void }) {
   const core = room.snap.core!;
   const sales = room.snap.hist?.sales ?? [];
   const [open, setOpen] = useState<string | null>(null);
+  const [ask, setAsk] = useState<'kick' | 'end' | null>(null);
+  // back steps out: a confirm, then a garage, then the sheet
+  useBack(true, () => (ask ? setAsk(null) : open ? setOpen(null) : onClose()));
   const rows = core.players
     .filter((p) => !p.spectator)
     .map((p) => {
@@ -25,7 +29,30 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
         {sel ? (
           <div className="stack">
             <GarageCard p={sel.p} sales={sales} slots={core.settings.garage} me={sel.p.id === room.myId} />
-            <button className="btn btn-quiet" onClick={() => setOpen(null)}>رجوع للترتيب</button>
+            {room.host && !sel.p.host && !['showcase', 'voting', 'results'].includes(core.phase) &&
+              (ask === 'kick' ? (
+                <div className="rm-inline" role="group" aria-label={`تطلّع ${sel.p.name}؟`}>
+                  <p>يصير {sel.p.name} متفرج، وتنشال سوماته وظروفه. فلوسه وكراجه تبقى مثل ما هي.</p>
+                  <div className="row" style={{ gap: 8 }}>
+                    <button
+                      className="btn btn-primary rm-danger-solid"
+                      onClick={() => {
+                        room.host!.kick(sel.p.id);
+                        setAsk(null);
+                        setOpen(null);
+                      }}
+                    >
+                      إيه، طلّعه
+                    </button>
+                    <button className="btn btn-quiet" onClick={() => setAsk(null)}>لا</button>
+                  </div>
+                </div>
+              ) : (
+                <button className="btn btn-ghost rm-danger" onClick={() => setAsk('kick')}>
+                  طلّع {sel.p.name} من المزاد
+                </button>
+              ))}
+            <button className="btn btn-quiet" onClick={() => { setAsk(null); setOpen(null); }}>رجوع للترتيب</button>
           </div>
         ) : (
           <div>
@@ -68,9 +95,21 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
         )}
         <button className="btn btn-quiet btn-block" onClick={onClose}>سكّر</button>
         {room.host && !['lobby', 'showcase', 'voting', 'results'].includes(core.phase) && (
-          <button className="btn btn-ghost btn-block" style={{ marginTop: 6 }} onClick={() => { room.host!.endNow(); onClose(); }}>
-            أنهِ المزاد الحين
-          </button>
+          ask === 'end' ? (
+            <div className="rm-inline" role="group" aria-label="تنهي المزاد؟">
+              <p>يوقف البيع عند الكل وننتقل للكراجات والنتايج. ما فيه رجعة.</p>
+              <div className="row" style={{ gap: 8 }}>
+                <button className="btn btn-primary rm-danger-solid" onClick={() => { room.host!.endNow(); onClose(); }}>
+                  أنهِ المزاد
+                </button>
+                <button className="btn btn-quiet" onClick={() => setAsk(null)}>لا، كمّل</button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-ghost btn-block rm-danger" style={{ marginTop: 6 }} onClick={() => setAsk('end')}>
+              أنهِ المزاد الحين
+            </button>
+          )
         )}
       </div>
     </>

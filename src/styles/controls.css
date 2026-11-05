@@ -1,0 +1,269 @@
+/* ---------------------------------------------------------------- room controls: menu, leaving, status
+   Owned by the controls work. Reuses .drawer / .drawer-back from base.css. */
+
+.tb-menu {
+  flex: none;
+}
+
+/* ---- the menu sheet */
+.rm-sheet {
+  display: grid;
+  gap: 10px;
+}
+
+.rm-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rm-head h3 {
+  margin: 0;
+}
+
+.rm-code {
+  font-size: 22px;
+  letter-spacing: .12em;
+  color: var(--mute);
+}
+
+.rm-group {
+  display: grid;
+  gap: 6px;
+}
+
+.rm-group .t-label {
+  margin: 4px 2px 0;
+}
+
+.rm-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--card-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: transform .12s var(--ease), background-color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rm-row:active {
+  transform: scale(.985);
+  background: var(--bg-2);
+}
+
+.rm-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.rm-row.on .rm-ic {
+  background: var(--green);
+  color: #fff;
+}
+
+.rm-row.danger .rm-ic {
+  background: var(--red-50);
+  color: var(--red);
+}
+
+.rm-row.danger b {
+  color: var(--red);
+}
+
+.rm-tx {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.rm-tx b {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.rm-tx small {
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rm-leave {
+  margin-top: 4px;
+}
+
+/* ---- confirms */
+.rm-confirm {
+  display: grid;
+  gap: 6px;
+  animation: rm-in .22s var(--ease) both;
+}
+
+.rm-confirm h3 {
+  margin: 0;
+}
+
+.rm-confirm p,
+.rm-inline p {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.rm-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.rm-inline {
+  padding: 12px;
+  border-radius: var(--r);
+  background: var(--red-50);
+  border: 1px solid #f3cfcb;
+  animation: rm-in .2s var(--ease) both;
+}
+
+.rm-inline .btn {
+  flex: 1;
+}
+
+.btn.rm-danger {
+  color: var(--red);
+}
+
+.btn.rm-danger-solid {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  box-shadow: none;
+}
+
+.btn.rm-danger-solid:active:not(:disabled) {
+  background: #b32925;
+}
+
+@keyframes rm-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- the room's one status line (reconnecting / host away / paused): fixed, so nothing jumps */
+.room-status {
+  position: fixed;
+  top: calc(var(--top-total) + 8px);
+  inset-inline: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+  animation: rs-in .28s var(--ease) both;
+}
+
+.rs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 6px 8px 6px 14px;
+  padding-inline: 14px 8px;
+  border-radius: 99px;
+  background: var(--green-950);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: var(--sh-2);
+  pointer-events: auto;
+}
+
+.rs-pill > span {
+  min-width: 0;
+}
+
+.rs-pill i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--gold-hi);
+}
+
+.room-status.net .rs-pill i {
+  background: var(--amber);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.rs-act {
+  flex: none;
+  min-height: 32px;
+  min-width: 56px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--gold-hi);
+  color: var(--green-950);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.rs-act:active {
+  transform: scale(.96);
+}
+
+/* a 44px hit area around the small resume chip */
+.rs-act {
+  position: relative;
+}
+
+.rs-act::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+
+@keyframes rs-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- screen changes inside a room: a short settle-in instead of a hard cut */
+html[data-phase] #root > main {
+  animation: screen-in .26s var(--ease) both;
+}
+
+/* opacity only: a transform here would re-anchor the fixed bid bar for the length of the fade */
+@keyframes screen-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-status,
+  .rm-confirm,
+  .rm-inline,
+  html[data-phase] #root > main {
+    animation: none;
+  }
+  .room-status.net .rs-pill i {
+    animation: none;
+  }
+}

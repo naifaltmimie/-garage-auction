@@ -13,6 +13,7 @@ import './styles/brand.css';
 import './styles/console.css';
 import './styles/lot.css';
 import './styles/identity.css';
+import './styles/controls.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';

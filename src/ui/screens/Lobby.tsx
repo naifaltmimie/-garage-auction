@@ -9,6 +9,8 @@ import { Icon, QR } from '../components/Bits';
 import { TvGlyph, openTv } from './Tv';
 import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
+import { useBack } from '../App';
+import { useEffect } from 'react';
 
 const SPEED_AR: Record<Speed, string> = { fast: 'سريع', normal: 'عادي', calm: 'هادي' };
 const MIX_AR = Object.fromEntries(MARKETS.map((x) => [x.id, x.label])) as Record<Mix, string>;
@@ -19,6 +21,13 @@ export function Lobby({ room }: { room: RoomView }) {
   const link = `${location.origin}/#/r/${room.code}`;
   const [copied, setCopied] = useState(false);
   const [edit, setEdit] = useState(false);
+  // removing someone takes a second tap on the same button within a few seconds
+  const [kickAsk, setKickAsk] = useState<string | null>(null);
+  useEffect(() => {
+    if (!kickAsk) return;
+    const t = setTimeout(() => setKickAsk(null), 3500);
+    return () => clearTimeout(t);
+  }, [kickAsk]);
   const active = core.players.filter((p) => !p.spectator);
   const host = core.players.find((p) => p.host);
   const msg = `🔨 ${s.roomName || 'مزاد الكراج'} فاتح الحين\nادخل الصالة وسُم معنا:\n${link}\nكود الصالة: ${room.code}`;
@@ -101,8 +110,18 @@ export function Lobby({ room }: { room: RoomView }) {
                     </div>
                     <span className={`netdot ${p.online ? '' : 'off'}`} title={p.online ? 'متصل' : 'غير متصل'} />
                     {room.host && !p.host && (
-                      <button className="btn btn-quiet" style={{ color: 'var(--red)' }} onClick={() => room.host!.kick(p.id)} aria-label={`طلّع ${p.name}`}>
-                        طلّع
+                      <button
+                        className={`btn ${kickAsk === p.id ? 'btn-primary rm-danger-solid' : 'btn-quiet'}`}
+                        style={kickAsk === p.id ? undefined : { color: 'var(--red)' }}
+                        onClick={() => {
+                          if (kickAsk === p.id) {
+                            setKickAsk(null);
+                            room.host!.kick(p.id);
+                          } else setKickAsk(p.id);
+                        }}
+                        aria-label={kickAsk === p.id ? `أكّد تطليع ${p.name}` : `طلّع ${p.name}`}
+                      >
+                        {kickAsk === p.id ? 'أكيد؟' : 'طلّع'}
                       </button>
                     )}
                   </div>
@@ -205,6 +224,7 @@ export function Lobby({ room }: { room: RoomView }) {
 }
 
 function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void }) {
+  useBack(true, onClose);
   const s = room.snap.core!.settings;
   const set = room.host!.settings;
   return (
