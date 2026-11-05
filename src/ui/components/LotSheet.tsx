@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, memo, useMemo, useRef, useState } from 'react';
 import { MODE_LABEL, SELLER_LABEL, chassisCard, damageLine } from '../../engine/lotgen';
 import { gradeWord } from '../../engine/realism';
 import type { CarPub, Cond, LotPub, PanelId } from '../../engine/types';
@@ -54,10 +54,14 @@ function SpecLine({ car }: { car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'tran
   return (
     <span className="spec-line">
       {parts.map((x, i) => (
-        <span key={i}>
-          <bdi dir="rtl">{x}</bdi>
-          {i < parts.length - 1 ? '، ' : ''}
-        </span>
+        <Fragment key={i}>
+          <span>
+            <bdi dir="rtl">{x}</bdi>
+            {i < parts.length - 1 ? '،' : ''}
+          </span>
+          {/* the gap sits between the pieces, where the line may break */}
+          {i < parts.length - 1 ? ' ' : ''}
+        </Fragment>
       ))}
     </span>
   );
@@ -138,12 +142,16 @@ function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?:
 
 type Tab = 'inspect' | 'records' | 'ad' | 'specs';
 
-export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: LotPub; total: number; reserveMet: boolean; opening: number; revealed?: CarPub | null }) {
-  const [picked, setPicked] = useState<PanelId | null>(null);
-  const [tab, setTab] = useState<Tab>('inspect');
-  const car = revealed ?? lot.car;
-  const covered = lot.kind === 'covered' && !revealed;
+/** Synced state arrives as fresh objects on every message. While a value's content is unchanged this
+ *  hands back the very same object, so the memoised parts below skip every bid and every clock tick. */
+function useSame<T>(v: T): T {
+  const s = useMemo(() => JSON.stringify(v ?? null), [v]);
+  const r = useRef<{ s: string; v: T } | null>(null);
+  if (!r.current || r.current.s !== s) r.current = { s, v };
+  return r.current.v;
+}
 
+const LotGallery = memo(function LotGallery({ lot, car }: { lot: LotPub; car: CarPub | null }) {
   const badges = (
     <>
       {lot.kind === 'covered' && <span className="g-kind">تحت الغطا</span>}
@@ -152,18 +160,56 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
       {lot.relist > 0 && <span className="g-kind gold">إعادة عرض</span>}
     </>
   );
+  return car ? (
+    <Gallery photos={car.photos} body={car.body} color={car.colorHex}>
+      {badges}
+    </Gallery>
+  ) : (
+    <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered>
+      {badges}
+    </Gallery>
+  );
+});
+
+const LotHead = memo(function LotHead({ lot, car, revealed }: { lot: LotPub; car: CarPub | null; revealed: boolean }) {
+  if (!car) {
+    return (
+      <div className="car-title">
+        <div className="car-make">سيارة تحت الغطا</div>
+        <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
+        <div className="car-year">
+          <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
+          <span>الغطا ما ينشال إلا بعد ما تنزل المطرقة</span>
+        </div>
+        <div className="hints">
+          {lot.cover?.hints.map((h) => (
+            <span key={h} className="chip">{h}</span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="lot-head">
+        <CarTitle car={car} />
+        <CarPlate plate={car.plate} size="sm" />
+      </div>
+      <KeyFacts car={car} lot={lot} revealed={revealed} />
+    </>
+  );
+});
+
+export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: { lot: LotPub; total: number; reserveMet: boolean; opening: number; revealed?: CarPub | null }) {
+  const lot = useSame(lotIn);
+  const revealed = useSame(revIn ?? null);
+  const car = revealed ?? lot.car;
+  const covered = lot.kind === 'covered' && !revealed;
+  const shown = covered || !car ? null : car;
 
   return (
     <article className="lot" key={lot.id} aria-label={`لوت ${lot.no}`}>
-      {covered || !car ? (
-        <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered>
-          {badges}
-        </Gallery>
-      ) : (
-        <Gallery photos={car.photos} body={car.body} color={car.colorHex}>
-          {badges}
-        </Gallery>
-      )}
+      <LotGallery lot={lot} car={shown} />
 
       <div className="lot-card">
         <div className="lot-tags">
@@ -175,37 +221,15 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
             ) : (
               <span className="chip chip-gold">بدون حد</span>
             ))}
-          {car?.plate.special && !covered && (
-            <span className={`chip chip-gold plate-chip ${car.plate.special.tier}`}>
-              {car.plate.special.label}
-              {car.plate.special.note && <small> · {car.plate.special.note}</small>}
+          {shown?.plate.special && (
+            <span className={`chip chip-gold plate-chip ${shown.plate.special.tier}`}>
+              {shown.plate.special.label}
+              {shown.plate.special.note && <small> · {shown.plate.special.note}</small>}
             </span>
           )}
         </div>
 
-        {covered || !car ? (
-          <div className="car-title">
-            <div className="car-make">سيارة تحت الغطا</div>
-            <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
-            <div className="car-year">
-              <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
-              <span>الغطا ما ينشال إلا بعد ما تنزل المطرقة</span>
-            </div>
-            <div className="hints">
-              {lot.cover?.hints.map((h) => (
-                <span key={h} className="chip">{h}</span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="lot-head">
-              <CarTitle car={car} />
-              <CarPlate plate={car.plate} size="sm" />
-            </div>
-            <KeyFacts car={car} lot={lot} revealed={!!revealed} />
-          </>
-        )}
+        <LotHead lot={lot} car={shown} revealed={!!revealed} />
 
         <div className="pricebar">
           <div>
@@ -220,203 +244,223 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
         </div>
       </div>
 
-      {car && !covered && (
-        <div className="lot-tabs">
-          <div className="tabs" role="tablist">
+      {shown && <LotTabs lot={lot} car={shown} revealed={!!revealed} />}
+    </article>
+  );
+}
+
+const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car: CarPub; revealed: boolean }) {
+  const [picked, setPicked] = useState<PanelId | null>(null);
+  const [tab, setTab] = useState<Tab>('inspect');
+  const box = useRef<HTMLDivElement>(null);
+
+  // when the tab bar is stuck under the header, the new section starts at its top, not half-way down the old one
+  const pick = (k: Tab) => {
+    if (k === tab) return;
+    const el = box.current;
+    const bar = el?.firstElementChild as HTMLElement | null | undefined;
+    if (el && bar) {
+      const stick = parseFloat(getComputedStyle(bar).top) || 0;
+      const top = el.getBoundingClientRect().top;
+      if (top < stick - 1) window.scrollTo({ top: window.scrollY + top - stick });
+    }
+    setTab(k);
+  };
+
+  return (
+    <div className="lot-tabs" ref={box}>
+      <div className="tabs" role="tablist">
+        {(
+          [
+            ['inspect', 'الفحص'],
+            ['records', 'السجلات'],
+            ['ad', 'كلام المعلن'],
+            ['specs', 'المواصفات'],
+          ] as [Tab, string][]
+        ).map(([k, label]) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => pick(k)}>
+            {label}
+            {k === 'ad' && lot.notes.length > 0 && <i className="tab-dot" />}
+          </button>
+        ))}
+      </div>
+      {tab === 'inspect' && (
+        <div className="pane">
+          <div className="verdicts">
+            {(() => {
+              const g = revealed ? null : lot.grade;
+              return (
+                <div className={`vbox tone-${gradeTone(g)}`}>
+                  <small>تقييم الحالة</small>
+                  {g == null ? <b>{lot.mode === 'asis' ? 'ما انفحصت' : '—'}</b> : <b className="big ltr">{g.toFixed(1)}</b>}
+                  {g != null && <small>{gradeWord(g)}</small>}
+                </div>
+              );
+            })()}
+            {(() => {
+              const c = chassisCard(car);
+              return (
+                <div className={`vbox tone-${c.tone === 'unknown' ? 'mid' : c.tone}`}>
+                  <small>كرت الشاصي</small>
+                  <b>{c.label}</b>
+                </div>
+              );
+            })()}
+            <div className={`vbox tone-${car.najm === 0 ? 'good' : car.najm === 1 ? 'mid' : 'bad'}`}>
+              <small>سجل نجم</small>
+              <b>{car.najm === 0 ? 'بدون حوادث' : car.najm === 1 ? 'حادث واحد' : `${car.najm} حوادث`}</b>
+            </div>
+          </div>
+
+          <h4>خريطة البودي وجهاز الطلاء</h4>
+          <div className="damage">
+            <DamageMap car={car} onPick={(p) => setPicked((x) => (x === p ? null : p))} picked={picked} />
+            <div className="stack" style={{ gap: 10, alignContent: 'start' }}>
+              <PanelList car={car} />
+              <Legend />
+            </div>
+          </div>
+
+          <h4>الميكانيكا</h4>
+          <div className="mech">
             {(
               [
-                ['inspect', 'الفحص'],
-                ['records', 'السجلات'],
-                ['ad', 'كلام المعلن'],
-                ['specs', 'المواصفات'],
-              ] as [Tab, string][]
-            ).map(([k, label]) => (
-              <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>
-                {label}
-                {k === 'ad' && lot.notes.length > 0 && <i className="tab-dot" />}
-              </button>
+                ['المكينة', car.mech.engine],
+                ['القير', car.mech.gearbox],
+                ['الشاصي', mechOf(car).chassis],
+                ['المكيف', mechOf(car).ac],
+                ['الإيرباقات', mechOf(car).airbags],
+                ['التعليق', car.mech.susp],
+              ] as [string, Cond][]
+            ).map(([n, c]) => (
+              <div key={n} className={`mitem ${c}`}>
+                <i aria-hidden="true" />
+                <span>{n}</span>
+                <small>{COND_LABEL[c]}</small>
+              </div>
             ))}
           </div>
 
-          {tab === 'inspect' && (
-            <div className="pane">
-              <div className="verdicts">
-                {(() => {
-                  const g = revealed ? null : lot.grade;
-                  return (
-                    <div className={`vbox tone-${gradeTone(g)}`}>
-                      <small>تقييم الحالة</small>
-                      {g == null ? <b>{lot.mode === 'asis' ? 'ما انفحصت' : '—'}</b> : <b className="big ltr">{g.toFixed(1)}</b>}
-                      {g != null && <small>{gradeWord(g)}</small>}
-                    </div>
-                  );
-                })()}
-                {(() => {
-                  const c = chassisCard(car);
-                  return (
-                    <div className={`vbox tone-${c.tone === 'unknown' ? 'mid' : c.tone}`}>
-                      <small>كرت الشاصي</small>
-                      <b>{c.label}</b>
-                    </div>
-                  );
-                })()}
-                <div className={`vbox tone-${car.najm === 0 ? 'good' : car.najm === 1 ? 'mid' : 'bad'}`}>
-                  <small>سجل نجم</small>
-                  <b>{car.najm === 0 ? 'بدون حوادث' : car.najm === 1 ? 'حادث واحد' : `${car.najm} حوادث`}</b>
-                </div>
-              </div>
-
-              <h4>خريطة البودي وجهاز الطلاء</h4>
-              <div className="damage">
-                <DamageMap car={car} onPick={(p) => setPicked((x) => (x === p ? null : p))} picked={picked} />
-                <div className="stack" style={{ gap: 10, alignContent: 'start' }}>
-                  <PanelList car={car} />
-                  <Legend />
-                </div>
-              </div>
-
-              <h4>الميكانيكا</h4>
-              <div className="mech">
-                {(
-                  [
-                    ['المكينة', car.mech.engine],
-                    ['القير', car.mech.gearbox],
-                    ['الشاصي', mechOf(car).chassis],
-                    ['المكيف', mechOf(car).ac],
-                    ['الإيرباقات', mechOf(car).airbags],
-                    ['التعليق', car.mech.susp],
-                  ] as [string, Cond][]
-                ).map(([n, c]) => (
-                  <div key={n} className={`mitem ${c}`}>
-                    <i aria-hidden="true" />
-                    <span>{n}</span>
-                    <small>{COND_LABEL[c]}</small>
-                  </div>
+          {car.inspector.length > 0 && (
+            <>
+              <h4>ملاحظات الفاحص</h4>
+              <ul className="notes">
+                {car.inspector.map((t) => (
+                  <li key={t}>{t}</li>
                 ))}
-              </div>
-
-              {car.inspector.length > 0 && (
-                <>
-                  <h4>ملاحظات الفاحص</h4>
-                  <ul className="notes">
-                    {car.inspector.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          )}
-
-          {tab === 'records' && (
-            <div className="pane">
-              <ul className="records">
-                <li className={car.scan.status === 'clean' ? '' : 'warn'}>
-                  <b>فحص الكمبيوتر</b>
-                  <span>
-                    {SCAN_LABEL[car.scan.status]}
-                    {car.scan.codes.length > 0 && <span className="ltr codes">{car.scan.codes.map((c) => c[0]).join(' ')}</span>}
-                  </span>
-                </li>
-                {car.history.map((h) => {
-                  const [k, ...rest] = h.split(':');
-                  return (
-                    <li key={h}>
-                      <b>{rest.length ? k : 'سجل'}</b>
-                      <span>{rest.length ? rest.join(':').trim() : h}</span>
-                    </li>
-                  );
-                })}
               </ul>
-              <dl className="table">
-                {(
-                  [
-                    ['الملاك', car.owners === 1 ? 'المالك الأول' : car.owners === 2 ? 'مالكين' : `${car.owners} ملاك`],
-                    ['الصيانة', car.service === 'dealer' ? 'وكالة' : car.service === 'workshop' ? 'ورش خارجية' : 'ما فيه سجل'],
-                    ['الاستمارة', car.istimara === 'valid' ? 'سارية' : 'منتهية'],
-                    ['الفحص الدوري', car.mvpi === 'valid' ? `ساري لين ${car.mvpiUntil ?? ''}` : 'منتهي'],
-                    ['التأمين', car.insurance === 'comp' ? 'شامل' : car.insurance === 'tpl' ? 'ضد الغير' : 'بدون'],
-                    ['المخالفات', car.fines > 0 ? `${money(car.fines)} ريال` : 'ما عليها'],
-                    ['التسجيل', car.regType],
-                  ] as [string, string][]
-                ).map(([k, v]) => (
-                  <div key={k}>
-                    <dt>{k}</dt>
-                    <dd>{v}</dd>
-                  </div>
-                ))}
-              </dl>
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'records' && (
+        <div className="pane">
+          <ul className="records">
+            <li className={car.scan.status === 'clean' ? '' : 'warn'}>
+              <b>فحص الكمبيوتر</b>
+              <span>
+                {SCAN_LABEL[car.scan.status]}
+                {car.scan.codes.length > 0 && <span className="ltr codes">{car.scan.codes.map((c) => c[0]).join(' ')}</span>}
+              </span>
+            </li>
+            {car.history.map((h) => {
+              const [k, ...rest] = h.split(':');
+              return (
+                <li key={h}>
+                  <b>{rest.length ? k : 'سجل'}</b>
+                  <span>{rest.length ? rest.join(':').trim() : h}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <dl className="table">
+            {(
+              [
+                ['الملاك', car.owners === 1 ? 'المالك الأول' : car.owners === 2 ? 'مالكين' : `${car.owners} ملاك`],
+                ['الصيانة', car.service === 'dealer' ? 'وكالة' : car.service === 'workshop' ? 'ورش خارجية' : 'ما فيه سجل'],
+                ['الاستمارة', car.istimara === 'valid' ? 'سارية' : 'منتهية'],
+                ['الفحص الدوري', car.mvpi === 'valid' ? `ساري لين ${car.mvpiUntil ?? ''}` : 'منتهي'],
+                ['التأمين', car.insurance === 'comp' ? 'شامل' : car.insurance === 'tpl' ? 'ضد الغير' : 'بدون'],
+                ['المخالفات', car.fines > 0 ? `${money(car.fines)} ريال` : 'ما عليها'],
+                ['التسجيل', car.regType],
+              ] as [string, string][]
+            ).map(([k, v]) => (
+              <div key={k}>
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      {tab === 'ad' && (
+        <div className="pane">
+          {car.adTitle && (
+            <div className="ad-head">
+              <small>عنوان الإعلان</small>
+              <h4 dir="auto">{car.adTitle}</h4>
             </div>
           )}
-
-          {tab === 'ad' && (
-            <div className="pane">
-              {car.adTitle && (
-                <div className="ad-head">
-                  <small>عنوان الإعلان</small>
-                  <h4 dir="auto">{car.adTitle}</h4>
-                </div>
-              )}
-              {lot.notes.length ? (
-                <blockquote className="quote">
-                  {lot.notes.map((n) => (
-                    <p key={n}>{n}</p>
-                  ))}
-                </blockquote>
-              ) : (
-                <p className="mute">المعلن ما كتب شي.</p>
-              )}
-              <p className="mute small">كلام المعلن على مسؤوليته، والفحص هو الحكم.</p>
-            </div>
+          {lot.notes.length ? (
+            <blockquote className="quote">
+              {lot.notes.map((n) => (
+                <p key={n}>{n}</p>
+              ))}
+            </blockquote>
+          ) : (
+            <p className="mute">المعلن ما كتب شي.</p>
           )}
+          <p className="mute small">كلام المعلن على مسؤوليته، والفحص هو الحكم.</p>
+        </div>
+      )}
 
-          {tab === 'specs' && (
-            <div className="pane">
-              {(() => {
-                // a real ad's car: the details its ad states are plain; the model's usual spec is marked
-                const said = car.said;
-                const typical = (key: string) => !!said && !said.includes(key);
-                const rows: [string, string, boolean][] = [
-                  ['المحرك', car.engine || '—', typical('engine') && !!car.engine],
-                  ['القوة', car.hp ? `${car.hp} حصان` : '—', typical('hp') && !!car.hp],
-                  ['الدفع', DRIVE_AR[car.drive], typical('drive')],
-                  ['القير', transAr(car.trans), typical('trans')],
-                  ['الوقود', FUEL_AR[car.fuel], typical('fuel')],
-                  ['الأبواب', said && !said.includes('doors') ? 'حسب الصور' : `${car.doors}`, false],
-                  ['الداخلية', car.interior, false],
-                  ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد', false],
-                  ['الكفرات', `صنع ${car.tires}`, false],
-                  ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة', false],
-                  ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين '), false] as [string, string, boolean]] : []),
-                ];
-                return (
-                  <>
-                    <dl className="table">
-                      {rows.map(([k, v, t]) => (
-                        <div key={k} className={t ? 'typical' : ''}>
-                          <dt>{k}</dt>
-                          <dd>
-                            {v}
-                            {t && <sup aria-label="المعتاد للموديل">*</sup>}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                    {rows.some((r) => r[2]) && <p className="mute small spec-note">* المعتاد لهالموديل، الإعلان ما ذكره</p>}
-                  </>
-                );
-              })()}
-              {car.extras.length > 0 && (
-                <div className="hints" style={{ marginTop: 12 }}>
-                  {car.extras.map((e) => (
-                    <span key={e} className="chip">{e}</span>
+      {tab === 'specs' && (
+        <div className="pane">
+          {(() => {
+            // a real ad's car: the details its ad states are plain; the model's usual spec is marked
+            const said = car.said;
+            const typical = (key: string) => !!said && !said.includes(key);
+            const rows: [string, string, boolean][] = [
+              ['المحرك', car.engine || '—', typical('engine') && !!car.engine],
+              ['القوة', car.hp ? `${car.hp} حصان` : '—', typical('hp') && !!car.hp],
+              ['الدفع', DRIVE_AR[car.drive], typical('drive')],
+              ['القير', transAr(car.trans), typical('trans')],
+              ['الوقود', FUEL_AR[car.fuel], typical('fuel')],
+              ['الأبواب', said && !said.includes('doors') ? 'حسب الصور' : `${car.doors}`, false],
+              ['الداخلية', car.interior, false],
+              ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد', false],
+              ['الكفرات', `صنع ${car.tires}`, false],
+              ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة', false],
+              ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين '), false] as [string, string, boolean]] : []),
+            ];
+            return (
+              <>
+                <dl className="table">
+                  {rows.map(([k, v, t]) => (
+                    <div key={k} className={t ? 'typical' : ''}>
+                      <dt>{k}</dt>
+                      <dd>
+                        {v}
+                        {t && <sup aria-label="المعتاد للموديل">*</sup>}
+                      </dd>
+                    </div>
                   ))}
-                </div>
-              )}
+                </dl>
+                {rows.some((r) => r[2]) && <p className="mute small spec-note">* المعتاد لهالموديل، الإعلان ما ذكره</p>}
+              </>
+            );
+          })()}
+          {car.extras.length > 0 && (
+            <div className="hints" style={{ marginTop: 12 }}>
+              {car.extras.map((e) => (
+                <span key={e} className="chip">{e}</span>
+              ))}
             </div>
           )}
         </div>
       )}
-    </article>
+    </div>
   );
-}
+});
