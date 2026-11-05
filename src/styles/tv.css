@@ -636,10 +636,16 @@ html.tv-mode body {
   white-space: nowrap;
 }
 
-.tv-specs span + span::before {
-  content: '·';
-  margin: 0 14px;
-  color: var(--tv-dim);
+.tv-specs span + span::before,
+.tv-sep > span + span::before {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.8em;
+  margin: 0 0.6em;
+  vertical-align: -0.08em;
+  background: currentColor;
+  opacity: 0.3;
 }
 
 .tv-specs .tv-year {

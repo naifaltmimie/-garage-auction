@@ -300,8 +300,12 @@ function IntroBoard({ core }: { core: Core }) {
     <div className="tv-intro">
       <div className="tv-kicker">الليلة في الصالة</div>
       <h1>{core.settings.roomName || 'مزاد الكراج'}</h1>
-      <p>
-        {indic(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} لوت · {indic(players.length)} مزايدين · كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
+      <p className="tv-sep">
+        <span>{indic(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} لوت</span>
+        <span>{indic(players.length)} مزايدين</span>
+        <span>
+          كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
+        </span>
       </p>
       <ul className="tv-intro-names">
         {players.map((p, i) => (
@@ -383,7 +387,7 @@ function Stage({ lot, sale, phase }: { lot: LotPub; sale: Sale | null; phase: Ph
           <Silhouette body={body} color={car?.colorHex} mono={covered} />
         </div>
       )}
-      {covered && !sale && <div className="tv-covered-tag">سيارة مغطاة · تنكشف بعد البيع</div>}
+      {covered && !sale && <div className="tv-covered-tag">سيارة مغطاة، تنكشف بعد البيع</div>}
       {car && list.length > 1 && (
         <div className="tv-dots" aria-hidden="true">
           {list.map((u, k) => (
@@ -430,7 +434,6 @@ function CarHead({ lot, sale }: { lot: LotPub; sale: Sale | null }) {
         <span className="tv-year">{indic(car.year)}</span>
         <span>{km(car.km)}</span>
         <span>{specLine(car)}</span>
-        {car.color && <span>{car.color}</span>}
       </div>
     </div>
   );
@@ -541,7 +544,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
           <div className={`tv-v v-${sale.verdict}`}>
             <b>{VERDICT[sale.verdict]}</b>
             <span>
-              قيمتها <span className="ltr">{money(sale.value)}</span> · {sale.profit >= 0 ? 'ربح' : 'خسارة'} <span className="ltr">{signed(sale.profit)}</span>
+              قيمتها <span className="ltr">{money(sale.value)}</span>، {sale.profit >= 0 ? 'ربح' : 'خسارة'} <span className="ltr">{signed(sale.profit)}</span>
             </span>
           </div>
           {sale.roast && <p className="tv-roast">{sale.roast}</p>}
