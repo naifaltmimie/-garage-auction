@@ -1,0 +1,31 @@
+{
+  "id": "/",
+  "name": "مزاد الكراج",
+  "short_name": "مزاد الكراج",
+  "description": "مزاد سيارات حي بين الشباب: سيارات حقيقية من السوق السعودي، صور إعلانات، تقرير فحص، ولوحات مميزة.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f2ee",
+  "theme_color": "#062f22",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,42 +1,73 @@
+import { memo, useLayoutEffect, useState } from 'react';
 import { marketOf } from '../../engine/markets';
-import { arDigits, carsN, money } from '../../lib/util';
+import type { Core } from '../../engine/types';
+import { carsN, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 import { BackgroundPaths } from '../components/fx/BackgroundPaths';
 
+/** «مزايد / مزايدين» with the number shown on its own. */
+const biddersWord = (n: number) => (n === 1 ? 'مزايد' : n === 2 ? 'مزايدَين' : n <= 10 ? 'مزايدين' : 'مزايد');
+/** «سيارة / سيارتين / سيارات» with the number shown on its own. */
+const carsWord = (n: number) => (n === 1 ? 'سيارة' : n === 2 ? 'سيارتين' : n <= 10 ? 'سيارات' : 'سيارة');
+
+/**
+ * The hall opening: a short title sequence before the first lot. The lines land one after another
+ * (CSS delays, transform/opacity only), then hold on the night's real numbers while the host's
+ * clock runs out. Only the countdown leaf re-renders on clock ticks.
+ */
 export function Intro({ room }: { room: RoomView }) {
   const core = room.snap.core!;
-  const now = useNow(room.offset, 8);
-  const { ms } = timeLeft(core, now);
   const s = core.settings;
+  const market = marketOf(s.mix);
+  const bidders = core.players.filter((p) => !p.spectator).length;
+  // the host taps «ابدأ» at the foot of the lobby: open the title sequence from its first line
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <main className="shell narrow">
-      <div className="intro-screen fx-host">
+      <div className="intro-screen fx-host idn-intro">
         <BackgroundPaths />
-        <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
-          <div className="t-label" style={{ color: 'var(--gold)' }}>{s.roomName}</div>
-          <div className="market-banner">
+        <div className="idn-seq">
+          <div className="idn-kicker idn-step" style={{ ['--d' as string]: 0 }}>
+            {s.roomName}
+          </div>
+          <h1 className="idn-call idn-step" style={{ ['--d' as string]: 1 }}>
+            {core.callout?.text ?? 'حيّاكم في مزاد الكراج'}
+          </h1>
+          <div className="idn-market idn-step" style={{ ['--d' as string]: 2 }}>
             <small>سوق الليلة</small>
-            <b>{marketOf(s.mix).label}</b>
-            <span>{marketOf(s.mix).note}</span>
+            <b>{market.label}</b>
+            <span>{market.note}</span>
           </div>
-          <div className="t-display">{core.callout?.text ?? 'حيّاكم في مزاد الكراج'}</div>
-          <div className="countdown">
-            {/* keyed per second, so each number lands like a dial clicking over */}
-            <span key={Math.max(1, Math.ceil(ms / 1000))} className="fx-count">
-              {arDigits(Math.max(1, Math.ceil(ms / 1000)))}
-            </span>
-          </div>
-          <div className="row wrap" style={{ justifyContent: 'center' }}>
-            <span className="chip chip-gold">كل واحد معه {money(s.budget)}</span>
-            <span className="chip">الكراج يشيل {carsN(s.garage)}</span>
-            <span className="chip">{carsN(core.lotsTotal)} بالمزاد</span>
-            {s.dutch !== false && <span className="chip">فيه مزاد هولندي، السعر ينزل</span>}
-          </div>
-          <p className="mute" style={{ maxWidth: '36ch', margin: 0 }}>
+          <dl className="idn-ledger">
+            <div className="idn-step" style={{ ['--d' as string]: 3 }}>
+              <dt>{biddersWord(bidders)}</dt>
+              <dd>{bidders}</dd>
+            </div>
+            <div className="idn-step" style={{ ['--d' as string]: 3.5 }}>
+              <dt>{carsWord(core.lotsTotal)} بالمزاد</dt>
+              <dd>{core.lotsTotal}</dd>
+            </div>
+            <div className="idn-step" style={{ ['--d' as string]: 4 }}>
+              <dt>ريال لكل واحد</dt>
+              <dd className="ltr">{money(s.budget)}</dd>
+            </div>
+            <div className="idn-step" style={{ ['--d' as string]: 4.5 }}>
+              <dt>ريال بالصالة</dt>
+              <dd className="ltr">{money(s.budget * Math.max(1, bidders))}</dd>
+            </div>
+          </dl>
+          <p className="idn-rules idn-step" style={{ ['--d' as string]: 5 }}>
+            الكراج يشيل {carsN(s.garage)}
+            {s.dutch !== false && <> · فيه مزاد هولندي، السعر ينزل</>}
+          </p>
+          <IntroCount core={core} offset={room.offset} />
+          <p className="idn-hint idn-step" style={{ ['--d' as string]: 6 }}>
             اقرأ تقرير الفحص زين وقت المعاينة. القيمة الحقيقية تنكشف بعد ما تنزل المطرقة، ومرات تطلع مفاجأة.
           </p>
           {room.host && (
-            <button className="btn btn-ghost" onClick={room.host.advance}>
+            <button className="btn btn-ghost idn-step" style={{ ['--d' as string]: 6 }} onClick={room.host.advance}>
               ابدأ الحين
             </button>
           )}
@@ -45,3 +76,26 @@ export function Intro({ room }: { room: RoomView }) {
     </main>
   );
 }
+
+/**
+ * The only piece that follows the clock. The number is keyed per second (it clicks over like a
+ * dial); the rail under it is one CSS animation started once with the time left at mount, and it
+ * holds while the host pauses.
+ */
+const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offset: number }) {
+  const now = useNow(offset, 8);
+  const { ms } = timeLeft(core, now);
+  const [total] = useState(() => Math.max(400, ms));
+  const sec = Math.max(1, Math.ceil(ms / 1000));
+  return (
+    <div className="idn-count idn-step" style={{ ['--d' as string]: 5.5 }} role="timer" aria-label={`أول سيارة بعد ${sec} ثواني`}>
+      <small>أول سيارة بعد</small>
+      <span key={sec} className="idn-count-n fx-count ltr">
+        {sec}
+      </span>
+      <i className="idn-rail" aria-hidden="true">
+        <i style={{ animationDuration: `${total}ms`, animationPlayState: core.paused ? 'paused' : 'running' }} />
+      </i>
+    </div>
+  );
+});

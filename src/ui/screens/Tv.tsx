@@ -3,17 +3,21 @@
 // snapshots and never joins, so it never counts as a player.
 import { useEffect, useMemo, useState } from 'react';
 import type { Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
-import { carsN, indic, isCode, km, money, normalizeCode, signed } from '../../lib/util';
+import { carsN, isCode, km, money, normalizeCode, signed } from '../../lib/util';
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
 import { QR } from '../components/Bits';
+import { Wordmark } from '../components/Logo';
 import { Photo } from '../components/Gallery';
 import { specLine } from '../components/LotSheet';
 import { CarPlate, Paddle } from '../components/Plate';
 import { Silhouette } from '../components/Silhouette';
 import { lotsFor } from '../../engine/rules';
 import { timeLeft, useNow } from '../useRoom';
+
+/** Counts in Latin digits, like the money and the phones (the board used to mix ١٦ with 4 سيارات). */
+const num = (n: number | string) => String(n);
 
 const W = 1920;
 const H = 1080;
@@ -198,12 +202,10 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
   return (
     <header className="tv-top">
       <div className="tv-brand">
-        <span className="tv-seal" aria-hidden="true">
-          <GavelGlyph />
-        </span>
+        {core && <Wordmark size={40} className="tv-wordmark" />}
         <span className="tv-brand-t">
-          <b>مزاد الكراج</b>
-          <small>{core?.settings.roomName || 'صالة المزاد'}</small>
+          <small>شاشة العرض</small>
+          <b>{core?.settings.roomName || 'صالة المزاد'}</b>
         </span>
       </div>
       {ph && (
@@ -217,7 +219,7 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
           <div className="tv-lotno">
             <small>اللوت</small>
             <b>
-              {indic(core!.lotNo)} <span>من {indic(core!.lotsTotal)}</span>
+              {num(core!.lotNo)} <span>من {num(core!.lotsTotal)}</span>
             </b>
           </div>
         )}
@@ -232,18 +234,11 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
   );
 }
 
-function GavelGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.5 3.5l6 6M12 6l6 6M13.2 4.8l-4.4 4.4 6 6 4.4-4.4M11.8 12.2L4 20" />
-      <path d="M3 21h9" />
-    </svg>
-  );
-}
-
 function Waiting({ code, status }: { code: string; status: ViewerStatus }) {
   return (
     <div className="tv-wait">
+      <Wordmark size={112} className="tv-wait-mark" />
+      <div className="tv-code-label">كود الصالة</div>
       <div className="tv-wait-code ltr">{code}</div>
       <p>{status.connected ? 'ننتظر المضيف يفتح الصالة…' : 'نتصل بالصالة…'}</p>
       <small>شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</small>
@@ -266,7 +261,9 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
         <div className="tv-code-label">كود الصالة</div>
         <div className="tv-code ltr" aria-label={`كود الصالة ${code.split('').join(' ')}`}>
           {code.split('').map((ch, i) => (
-            <span key={i}>{ch}</span>
+            <span key={i} style={{ ['--i' as string]: i }}>
+              {ch}
+            </span>
           ))}
         </div>
         <div className="tv-link ltr">{shown}</div>
@@ -277,7 +274,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
           </span>
           <span>
             <small>عدد اللوتات</small>
-            <b>{indic(lotsFor(s, Math.max(2, players.length)))}</b>
+            <b>{num(lotsFor(s, Math.max(2, players.length)))}</b>
           </span>
           <span>
             <small>الكراج يشيل</small>
@@ -294,7 +291,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
           <div className="tv-joined-h">
             <span>المزايدين</span>
             <b>
-              {indic(players.length)} <small>من {indic(s.maxPlayers)}</small>
+              {num(players.length)} <small>من {num(s.maxPlayers)}</small>
             </b>
           </div>
           <ul>
@@ -321,8 +318,8 @@ function IntroBoard({ core }: { core: Core }) {
       <div className="tv-kicker">الليلة في الصالة</div>
       <h1>{core.settings.roomName || 'مزاد الكراج'}</h1>
       <p className="tv-sep">
-        <span>{indic(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} لوت</span>
-        <span>{indic(players.length)} مزايدين</span>
+        <span>{num(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} لوت</span>
+        <span>{num(players.length)} مزايدين</span>
         <span>
           كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
         </span>
@@ -434,7 +431,7 @@ function CarHead({ lot, sale }: { lot: LotPub; sale: Sale | null }) {
         <div className="tv-specs">
           {c && (
             <span>
-              موديل {indic(c.yearFrom)}–{indic(c.yearTo)}
+              موديل {num(c.yearFrom)}–{num(c.yearTo)}
             </span>
           )}
           {c?.hints.slice(0, 3).map((h) => (
@@ -451,7 +448,7 @@ function CarHead({ lot, sale }: { lot: LotPub; sale: Sale | null }) {
         {car.trimAr || car.trim ? <small> {car.trimAr || car.trim}</small> : null}
       </h2>
       <div className="tv-specs">
-        <span className="tv-year">{indic(car.year)}</span>
+        <span className="tv-year">{num(car.year)}</span>
         <span>{km(car.km)}</span>
         <span>{specLine(car)}</span>
       </div>
@@ -480,7 +477,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
       {sealed ? (
         <div className="tv-price-main">
           <div className="tv-label">الظروف المختومة</div>
-          <div className="tv-amount sealed">{indic(core.sealedCount)}</div>
+          <div className="tv-amount sealed">{num(core.sealedCount)}</div>
           <div className="tv-leader">كل واحد يكتب سعره بالسر، وأعلى ظرف ياخذها</div>
         </div>
       ) : (
@@ -509,7 +506,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
       {core.timer && (
         <div className={`tv-clock ${hot ? 'hot' : ''}`}>
           <div className="tv-clock-n">
-            <b>{indic(Math.max(0, secs))}</b>
+            <b>{num(Math.max(0, secs))}</b>
             <small>{preview ? 'ثانية للمعاينة' : core.phase === 'approval' ? 'ثانية للبايع' : 'ثانية'}</small>
           </div>
           <div className="tv-bar">
@@ -610,11 +607,11 @@ function Ticker({ core, sales }: { core: Core; sales: Sale[] }) {
     <ol className="tv-ticker">
       {rows.map(({ p, cars }, i) => (
         <li key={p.id} className={core.phase === 'bidding' && core.bid?.by === p.id ? 'lead' : ''}>
-          <span className="tv-rank">{indic(i + 1)}</span>
+          <span className="tv-rank">{num(i + 1)}</span>
           <span className="tv-tk-name">{p.name}</span>
           <span className="tv-tk-cash ltr">{money(p.cash)}</span>
           <span className="tv-tk-cars">
-            {indic(cars)}/{indic(core.settings.garage)}
+            {num(cars)}/{num(core.settings.garage)}
           </span>
         </li>
       ))}
@@ -627,7 +624,7 @@ function LastSale({ core, sale }: { core: Core; sale: Sale }) {
     <div className="tv-last">
       <small>آخر بيعة</small>
       <b>
-        {sale.car.makeAr} {sale.car.modelAr} {indic(sale.car.year)}
+        {sale.car.makeAr} {sale.car.modelAr} {num(sale.car.year)}
       </b>
       <span>
         على {nameOf(core, sale.buyer)} بـ <span className="ltr">{money(sale.hammer)}</span>
@@ -650,7 +647,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
           <h1>{voting ? 'التصويت على الكراجات' : 'ترتيب الصالة'}</h1>
           {voting && (
             <p className="tv-board-sub">
-              صوّت {indic(core.voted.length)} من {indic(voters.length)}
+              صوّت {num(core.voted.length)} من {num(voters.length)}
             </p>
           )}
         </div>
@@ -705,7 +702,7 @@ function Table({
         const mine = sales.filter((s) => s.outcome === 'sold' && s.buyer === p.id);
         return (
           <li key={p.id} className={i === 0 ? 'first' : ''} style={{ ['--i' as string]: i }}>
-            <span className="tv-rank">{indic(i + 1)}</span>
+            <span className="tv-rank">{num(i + 1)}</span>
             <span className="tv-who">
               <Paddle n={p.paddle} />
               <b>{p.name}</b>
@@ -724,14 +721,14 @@ function Table({
                     .join('، ')
                 : 'فاضي'}
               <small>
-                {indic(cars)} من {indic(garage)}
+                {num(cars)} من {num(garage)}
               </small>
             </span>
             <span className="tv-cash ltr">{money(cash)}</span>
             <span className={`tv-val ${points ? '' : value >= 0 ? 'gain' : 'loss'}`}>
               {points ? (
                 <>
-                  {indic(value)} <small>نقطة</small>
+                  {num(value)} <small>نقطة</small>
                 </>
               ) : (
                 <span className="ltr">{signed(value)}</span>
