@@ -180,7 +180,7 @@ html.tv-mode body {
   display: grid;
   gap: 2px;
   padding: 10px 24px;
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--tv-tile);
   text-align: center;
 }
@@ -521,7 +521,7 @@ html.tv-mode body {
 .tv-photo {
   position: relative;
   min-height: 0;
-  border-radius: 24px;
+  border-radius: var(--r-lg);
   overflow: hidden;
   background: #0a1510;
   isolation: isolate;
@@ -692,7 +692,7 @@ html.tv-mode body {
   flex-direction: column;
   gap: 26px;
   padding: 34px 40px;
-  border-radius: 24px;
+  border-radius: var(--r-lg);
   background: var(--card);
   color: var(--ink);
   overflow: hidden;
@@ -932,7 +932,7 @@ html.tv-mode body {
   gap: 6px;
   margin-top: 18px;
   padding: 16px 22px;
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--bg);
   font-size: 24px;
   color: var(--ink-2);
@@ -1004,7 +1004,7 @@ html.tv-mode body {
   column-gap: 12px;
   align-content: center;
   padding: 14px 20px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--tv-tile);
 }
 
@@ -1052,7 +1052,7 @@ html.tv-mode body {
   gap: 0;
   padding: 8px 26px;
   line-height: 1.35;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--tv-tile);
   border-inline-start: 4px solid var(--gold-hi);
   animation: tv-in 0.5s var(--ease) both;
@@ -1133,7 +1133,7 @@ html.tv-mode body {
   align-items: center;
   gap: 24px;
   padding: 14px 28px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--tv-tile);
   font-size: 30px;
   animation: tv-row 0.5s var(--ease) both;
@@ -1263,7 +1263,7 @@ html.tv-mode body {
   display: grid;
   gap: 2px;
   padding: 16px 22px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--tv-tile);
   border-top: 4px solid var(--gold-hi);
   animation: tv-in 0.5s var(--ease) both;
