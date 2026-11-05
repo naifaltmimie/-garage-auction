@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { sound } from '../../audio/sound';
 import { arDigits, carsN, money, signed } from '../../lib/util';
 import { go } from '../App';
+import { NightAwards } from '../components/Awards';
 import { GarageCard } from '../components/Garage';
 import { Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
@@ -71,20 +72,8 @@ export function Results({ room }: { room: RoomView }) {
           })}
         </div>
         {open && nameOf(open) && <GarageCard p={nameOf(open)!} sales={sales} slots={core.settings.garage} me={open === room.myId} />}
-        {shown >= rows.length && res.awards.length > 0 && (
-          <>
-            <h2 className="t-title" style={{ margin: '8px 0 0', fontSize: 28 }}>ألقاب الليلة</h2>
-            <div className="awards">
-              {res.awards.map((a, i) => (
-                <div key={a.key} className="card award" style={{ animationDelay: `${i * 0.12}s` }}>
-                  <span className="t-display">{a.title}</span>
-                  <b>{nameOf(a.who)?.name}</b>
-                  <small>{a.detail}</small>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        {/* the night's awards as a ceremony (derived on this phone, includes the host's titles), «سجلي» save and «شارك كراجك» */}
+        <NightAwards room={room} ready={shown >= rows.length} />
         <div className="row wrap" style={{ justifyContent: 'center', marginTop: 6 }}>
           {room.host && (
             <button className="btn btn-primary" onClick={room.host.rematch}>

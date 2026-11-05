@@ -1,0 +1,530 @@
+/* Awards ceremony, «سجلي» and «شارك كراجك». Uses the tokens in base.css. */
+
+.aw {
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.aw-head {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.aw-kicker {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .02em;
+}
+
+.aw-head h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.aw-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--mute);
+}
+
+/* the stage: one envelope at a time */
+.aw-stage {
+  display: grid;
+  gap: 10px;
+}
+
+.aw-frame {
+  position: relative;
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+  padding: 26px 18px;
+  border-radius: var(--r-lg);
+  background: radial-gradient(120% 80% at 50% 0%, #0d4a35 0%, var(--green-950) 62%);
+  color: #f3eee1;
+  box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .5), inset 0 0 0 7px var(--green-950), inset 0 0 0 8px rgba(214, 173, 82, .2), var(--sh-2);
+  overflow: hidden;
+}
+
+.aw-card {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  width: 100%;
+  max-width: 420px;
+  animation: aw-in .5s var(--ease) both;
+}
+
+.aw-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9fb4a8;
+}
+
+.aw-title {
+  margin: 2px 0 0;
+  font-size: clamp(30px, 9vw, 40px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--gold-hi);
+}
+
+.aw-card.grand .aw-title {
+  font-size: clamp(36px, 11vw, 50px);
+}
+
+.aw-rule {
+  display: block;
+  width: 64px;
+  height: 2px;
+  background: var(--gold-hi);
+  transform-origin: center;
+  animation: aw-rule .5s .15s var(--ease) both;
+}
+
+.aw-goes {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #9fb4a8;
+  animation: aw-fade .4s .35s both;
+}
+
+.aw-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(24px, 7vw, 30px);
+  font-weight: 700;
+  line-height: 1.25;
+  animation: aw-in .45s .5s var(--ease) both;
+}
+
+.aw-name em,
+.aw-row-name em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gold-hi);
+  color: var(--green-950);
+}
+
+.aw-fig {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+  animation: aw-fade .4s .75s both;
+}
+
+.aw-fig small {
+  font-size: 13px;
+  color: #9fb4a8;
+}
+
+.aw-fig .t-money {
+  font-size: 26px;
+  color: #f3eee1;
+}
+
+.aw-fig.gain .t-money {
+  color: #86d9ab;
+}
+
+.aw-fig.loss .t-money {
+  color: #f2a093;
+}
+
+.aw-line {
+  margin: 2px 0 0;
+  max-width: 34ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #c9d4cd;
+  animation: aw-fade .4s .85s both;
+}
+
+.aw-wait .aw-title {
+  color: #9fb4a8;
+}
+
+.aw-ctrl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+/* the list that stays */
+.aw-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.aw-row {
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  animation: rise .4s var(--ease) both;
+}
+
+.aw-row.mine {
+  background: var(--gold-50);
+  border-color: #ead8a8;
+}
+
+.aw-row.grand {
+  border: 2px solid var(--gold-hi);
+  box-shadow: 0 0 0 4px var(--gold-50);
+}
+
+.aw-n {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.aw-row-body {
+  display: grid;
+  min-width: 0;
+}
+
+.aw-row-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.aw-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.aw-row-body small {
+  font-size: 12.5px;
+  color: var(--mute);
+  line-height: 1.45;
+}
+
+.aw-row-fig {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.aw-row-fig.gain {
+  color: var(--green);
+}
+
+.aw-row-fig.loss {
+  color: var(--red);
+}
+
+/* your night */
+.aw-mine {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.aw-badges {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.aw-badges-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.aw-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.aw-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  border: 1px solid #e3cf98;
+  background: var(--gold-50);
+  color: var(--gold-lo);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.aw-badge.new {
+  background: var(--gold-lo);
+  border-color: var(--gold-lo);
+  color: #fff;
+}
+
+.aw-saved {
+  margin: 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--mute);
+}
+
+/* share preview + career sheet */
+.sg-back {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  background: rgba(4, 18, 13, .62);
+  animation: fade .2s both;
+}
+
+.sg-sheet,
+.cr-sheet {
+  width: min(100%, 520px);
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: 16px 16px calc(16px + var(--safe-b));
+  box-shadow: var(--sh-3);
+  animation: up .3s var(--ease) both;
+}
+
+.sg-sheet {
+  display: grid;
+  gap: 12px;
+}
+
+.sg-img {
+  width: 100%;
+  height: auto;
+  max-height: 64dvh;
+  object-fit: contain;
+  border-radius: var(--r);
+  background: var(--green-950);
+}
+
+.sg-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sg-btns .btn-quiet {
+  grid-column: 1 / -1;
+}
+
+.cr-chip {
+  min-height: 44px;
+}
+
+.cr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cr-head h2 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.cr-empty {
+  margin: 0 0 8px;
+  color: var(--mute);
+}
+
+.cr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.cr-grid > div {
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.cr-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.cr-grid dt {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.cr-grid dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  text-align: start;
+}
+
+.cr-best {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  background: var(--green-950);
+  color: #f3eee1;
+}
+
+.cr-best b {
+  font-size: 17px;
+}
+
+.cr-best small {
+  color: #c9d4cd;
+  font-size: 13px;
+}
+
+.cr-best .gain {
+  color: #86d9ab;
+}
+
+.cr-sub {
+  margin: 18px 0 8px;
+  font-size: 16px;
+}
+
+.cr-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cr-badges li {
+  display: grid;
+  gap: 1px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  border: 1px dashed var(--line-2);
+  color: var(--dim);
+}
+
+.cr-badges li b {
+  font-size: 14px;
+}
+
+.cr-badges li small {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cr-badges li.got {
+  border: 1px solid #e3cf98;
+  background: var(--gold-50);
+  color: var(--gold-lo);
+}
+
+.cr-nights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cr-nights li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.cr-nights li .grow {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.cr-nights small {
+  color: var(--mute);
+  font-size: 12.5px;
+}
+
+@keyframes aw-in {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes aw-rule {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes aw-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (min-width: 720px) {
+  .aw-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .aw-row.grand {
+    grid-column: 1 / -1;
+  }
+  .sg-back {
+    align-items: center;
+  }
+  .sg-sheet,
+  .cr-sheet {
+    border-radius: var(--r-lg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-card,
+  .aw-rule,
+  .aw-goes,
+  .aw-name,
+  .aw-fig,
+  .aw-line,
+  .aw-row,
+  .sg-back,
+  .sg-sheet,
+  .cr-sheet {
+    animation: none !important;
+  }
+}
