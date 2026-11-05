@@ -9,6 +9,7 @@ import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
 import { Auction } from './Auction';
 import { Intro } from './Intro';
 import { Lobby } from './Lobby';
+import { TvLink } from './Tv';
 import { Results } from './Results';
 import { Showcase } from './Showcase';
 import { Standings } from './Standings';
@@ -310,6 +311,7 @@ function Room({ code, me }: { code: string; me: Me }) {
         </div>
       )}
       {body}
+      {['lobby', 'showcase', 'voting', 'results'].includes(core.phase) && <TvLink code={code} />}
       {players && <Standings room={room} onClose={() => setPlayers(false)} />}
       <Toasts items={room.toasts} />
     </>
