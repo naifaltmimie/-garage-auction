@@ -1,0 +1,217 @@
+/* ================================================================ Home: the logo under the lamp
+   A dark rubber stage lit from above, two tyre tracks drifting across behind the logo (drawn once),
+   tread fading up from the floor, and the big price-tag logo dropping in. Then the two ways in. */
+
+.home {
+  background: var(--rubber-1);
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: min(100svh, 880px);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 30px;
+  background: radial-gradient(130% 75% at 50% 0%, #2a2b30 0%, #17181b 52%, #0f1012 100%);
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* the showroom lamp */
+.hero-lamp {
+  position: absolute;
+  inset: -12% -10% auto;
+  height: 72%;
+  background:
+    radial-gradient(46% 58% at 50% 0%, rgba(255, 244, 226, .17), transparent 72%),
+    radial-gradient(30% 26% at 50% 46%, rgba(229, 38, 45, .1), transparent 75%);
+}
+
+/* the floor: tread fading up */
+.hero-tread {
+  position: absolute;
+  inset: auto 0 0;
+  height: 150px;
+  background: var(--tex-tread) center / 36px 22px;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 45%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 45%, transparent 100%);
+  opacity: .9;
+}
+
+/* two drift tracks: a dark band each, with tread blocks printed in it */
+.hero-skid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-skid-band {
+  fill: none;
+  stroke: rgba(0, 0, 0, .34);
+  stroke-width: 30;
+}
+
+.hero-skid-tread {
+  fill: none;
+  stroke: rgba(0, 0, 0, .42);
+  stroke-width: 22;
+  stroke-dasharray: 5 6;
+}
+
+.hero-skid-draw {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 44;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: skid-draw 1.15s cubic-bezier(.35, .7, .2, 1) .2s forwards;
+}
+
+@keyframes skid-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.hero-top {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-date {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.hero-how {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.hero-how:active {
+  background: rgba(255, 255, 255, .1);
+}
+
+.hero-title {
+  margin: clamp(14px, 6vh, 60px) 0 0;
+  line-height: 0;
+}
+
+.hero-logo {
+  display: block;
+  width: min(300px, 76vw);
+  height: auto;
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .65));
+  animation: hero-drop .85s var(--ease-pop) .05s both;
+}
+
+/* the tag lands like it was thrown on the table: a drop, a small bounce, still */
+@keyframes hero-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-44px) rotate(-9deg) scale(.86);
+  }
+  50% {
+    opacity: 1;
+  }
+  72% {
+    transform: translateY(7px) rotate(1.2deg) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-line {
+  margin: 18px 0 6px;
+  font-size: 23px;
+  font-weight: 700;
+  color: #fff;
+  animation: hero-rise .5s var(--ease) .55s both;
+}
+
+.hero-sub {
+  margin: 0 auto;
+  max-width: 340px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--mute);
+  animation: hero-rise .5s var(--ease) .65s both;
+}
+
+.hero-cta {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 28px;
+  animation: hero-rise .5s var(--ease) .75s both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.btn-hero {
+  min-height: 64px;
+  font-size: 19px;
+  border-radius: 18px;
+}
+
+.hero-cta .btn-ghost {
+  min-height: 56px;
+}
+
+.hero-cta .joinrow .input {
+  text-align: center;
+  letter-spacing: .14em;
+  font-weight: 700;
+}
+
+.home-below {
+  padding-bottom: calc(28px + var(--safe-b));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-logo,
+  .hero-line,
+  .hero-sub,
+  .hero-cta {
+    animation: none;
+  }
+
+  .hero-skid-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

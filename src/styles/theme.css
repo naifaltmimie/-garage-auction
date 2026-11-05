@@ -1,104 +1,460 @@
-/* ================================================================ theme: «بطاقة السعر»
-   The night palette that goes with the price-tag logo.
-   - Charcoal chrome: top bars, covers, dark panels, the TV.
-   - The tag's red: every primary action (open, bid, take), selected states, focus.
-   - Gold: only the big moments (start the auction, the winner, awards, the top bid).
-   - Green: only what is good news: «بيعت», gains, good deals, «مفحوصة». Never a background.
-   The old dark-green token names are kept so every screen follows; they now hold charcoal.
+/* ================================================================ theme: «الكفرات»
+   The whole game is dressed like a tyre: matte rubber black with a fine grain, tread cut into the
+   bars, sidewall-grey type, the tag's red where you act (like a brake caliper behind the rim),
+   rim gold for the big moments, and green only for good news.
+   The old token names are kept so every screen follows; they now hold rubber.
+   Buttons are pushable blocks: a face on a dark deck that sinks when pressed, with a sheen that
+   slides across on the press. The press is ported in plain CSS from Evil Buttons' ThreeDButton
+   (radiumcoders on 21st.dev, Apache-2.0): whole-pixel moves only, the rim as an inset ring.
    Imported last, so it wins over the per-screen sheets. */
 
 :root {
-  /* paper */
-  --bg: #f4f3f0;
-  --bg-2: #ebe9e4;
-  --card: #ffffff;
-  --card-2: #faf9f7;
-  --line: #e6e3dd;
-  --line-2: #d6d2ca;
+  color-scheme: dark;
 
-  /* ink */
-  --ink: #121214;
-  --ink-2: #34353b;
-  --mute: #6b6d74;
-  --dim: #a1a3a9;
+  /* rubber */
+  --rubber-0: #0b0c0d;
+  --rubber-1: #111214;
+  --rubber-2: #17181b;
+  --rubber-3: #1d1e22;
+  --rubber-4: #25272c;
+  --rubber-5: #30323a;
 
-  /* night chrome (these names used to hold the dark greens) */
-  --green-950: #0a0a0c;
-  --green-900: #121216;
-  --green-800: #1c1d22;
+  --bg: var(--rubber-1);
+  --bg-2: var(--rubber-3);
+  --card: var(--rubber-2);
+  --card-2: var(--rubber-3);
+  --line: #26282d;
+  --line-2: #34363d;
 
-  /* the tag's red, for action */
+  /* sidewall type */
+  --ink: #f2f2f4;
+  --ink-2: #c6c8ce;
+  --mute: #8d9098;
+  --dim: #5d6068;
+
+  /* night chrome (the names used to hold the dark greens) */
+  --green-950: #0a0b0c;
+  --green-900: #0f1012;
+  --green-800: #18191c;
+
+  /* caliper red: every primary action */
   --brand: #e5262d;
-  --brand-hi: #ff4b50;
-  --brand-lo: #b8141b;
-  --brand-50: #fdeceb;
-  --brand-100: #f8cfcd;
+  --brand-hi: #ff4a4f;
+  --brand-lo: #a8121a;
+  --brand-50: rgba(229, 38, 45, .13);
+  --brand-100: rgba(229, 38, 45, .3);
   --green: var(--brand);
   --green-500: var(--brand-hi);
 
   /* good news only */
-  --ok: #17924f;
-  --ok-700: #11683a;
-  --ok-50: #e9f6ee;
-  --ok-100: #cfe9da;
+  --ok: #34c47a;
+  --ok-700: #55d892;
+  --ok-50: rgba(52, 196, 122, .12);
+  --ok-100: rgba(52, 196, 122, .3);
   --green-700: var(--ok-700);
   --green-100: var(--ok-100);
   --green-50: var(--ok-50);
 
-  /* gold, for the big moments */
-  --gold: #a87b22;
-  --gold-hi: #e3b24f;
-  --gold-lo: #7c5c17;
-  --gold-50: #fbf3df;
+  /* rim gold: the big moments */
+  --gold: #e8b955;
+  --gold-hi: #f6cf74;
+  --gold-lo: #c4902e;
+  --gold-50: rgba(232, 185, 85, .12);
 
-  --red: #e5262d;
-  --red-50: #fdeceb;
+  --red: #ff4a4f;
+  --red-50: rgba(255, 74, 79, .13);
+  --amber: #f2ad32;
+  --amber-50: rgba(242, 173, 50, .13);
+  --blue: #6aa6ff;
 
-  --sh-1: 0 1px 2px rgba(18, 18, 20, .06), 0 1px 1px rgba(18, 18, 20, .03);
-  --sh-2: 0 2px 6px rgba(18, 18, 20, .06), 0 10px 28px rgba(18, 18, 20, .09);
-  --sh-3: 0 -8px 30px rgba(18, 18, 20, .16);
+  /* real plates and paddles stay paper-white */
+  --plate: #fbfbf8;
+  --plate-ink: #111;
+
+  --sh-1: inset 0 1px 0 rgba(255, 255, 255, .035), 0 1px 2px rgba(0, 0, 0, .5);
+  --sh-2: inset 0 1px 0 rgba(255, 255, 255, .04), 0 12px 30px rgba(0, 0, 0, .5);
+  --sh-3: 0 -12px 36px rgba(0, 0, 0, .6);
+
+  /* textures */
+  --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --tex-tread: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Cpath d='M-2 3 L20 13 L42 3' fill='none' stroke='%23000' stroke-opacity='.55' stroke-width='5.5' stroke-linejoin='miter'/%3E%3Cpath d='M-2 -.6 L20 9.4 L42 -.6' fill='none' stroke='%23fff' stroke-opacity='.05' stroke-width='1.1'/%3E%3C/svg%3E");
+  --tex-tire: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='r' cx='.38' cy='.32' r='.75'%3E%3Cstop offset='0' stop-color='%23e9eaee'/%3E%3Cstop offset='.55' stop-color='%239a9da4'/%3E%3Cstop offset='1' stop-color='%2355585e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22.6' fill='%231a1b1e' stroke='%23050506' stroke-width='1.2'/%3E%3Cg fill='%232d2f35'%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(0 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(20 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(40 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(60 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(80 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(100 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(120 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(140 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(160 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(180 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(200 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(220 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(240 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(260 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(280 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(300 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(320 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(340 24 24)'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='15.4' fill='%230c0d0f'/%3E%3Ccircle cx='24' cy='24' r='12.6' fill='url(%23r)'/%3E%3Cg stroke='%232b2d33' stroke-width='3.4' stroke-linecap='round'%3E%3Cline x1='24.00' y1='20.40' x2='24.00' y2='13.40'/%3E%3Cline x1='27.42' y1='22.89' x2='34.08' y2='20.72'/%3E%3Cline x1='26.12' y1='26.91' x2='30.23' y2='32.58'/%3E%3Cline x1='21.88' y1='26.91' x2='17.77' y2='32.58'/%3E%3Cline x1='20.58' y1='22.89' x2='13.92' y2='20.72'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='12.6' fill='none' stroke='%230c0d0f' stroke-width='1'/%3E%3Ccircle cx='24' cy='24' r='3.4' fill='%23e5262d'/%3E%3C/svg%3E");
+
+  --spring: cubic-bezier(.3, 1.6, .5, 1);
+}
+
+html {
+  background: var(--rubber-1);
+}
+
+body {
+  background: var(--rubber-1) var(--tex-grain);
+  color: var(--ink);
 }
 
 ::selection {
   background: var(--brand-100);
+  color: #fff;
 }
 
-/* ---------------------------------------------------------------- chrome */
+/* ---------------------------------------------------------------- the bars: tread cut into rubber */
 
 .topbar,
 .apphead {
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23ffffff' stroke-opacity='.035' stroke-width='1'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #1c1d22 0%, #121216 58%, #0e0e11 100%);
-  box-shadow: 0 1px 0 rgba(227, 178, 79, .45), 0 10px 24px -10px rgba(0, 0, 0, .55);
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, #24252a 0%, #18191c 55%, #121315 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .05), 0 1px 0 #000, 0 10px 26px -8px rgba(0, 0, 0, .8);
 }
 
-/* ---------------------------------------------------------------- buttons */
+/* ---------------------------------------------------------------- surfaces */
+
+.card,
+.notice,
+.drawer {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border-color: var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 10px 24px -10px rgba(0, 0, 0, .7);
+}
+
+.drawer::before {
+  background: var(--rubber-5);
+}
+
+.notice {
+  border-top-color: var(--brand);
+}
+
+.banner {
+  color: var(--amber);
+  border-color: rgba(242, 173, 50, .3);
+}
+
+/* wells: inputs and steppers sit sunk into the rubber */
+.input,
+.stepper {
+  background: var(--rubber-0);
+  border-color: var(--line-2);
+  color: var(--ink);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6);
+}
+
+.input:focus {
+  border-color: var(--brand);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6), 0 0 0 4px var(--brand-50);
+}
+
+.seg {
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .55);
+}
+
+.seg > button[aria-pressed='true'] {
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000;
+}
+
+.switch {
+  background: var(--rubber-5);
+}
+
+/* chips: tinted rubber, never paper */
+.chip {
+  background: var(--rubber-3);
+  border-color: var(--line-2);
+  color: var(--ink-2);
+}
+
+.chip-gold {
+  border-color: rgba(232, 185, 85, .32);
+  color: var(--gold);
+}
+
+.chip-red {
+  border-color: rgba(255, 74, 79, .32);
+}
+
+.chip-amber {
+  border-color: rgba(242, 173, 50, .32);
+  color: var(--amber);
+}
+
+.chip-green {
+  color: var(--ok-700);
+}
+
+/* ---------------------------------------------------------------- buttons: pushable blocks */
+
+.btn {
+  --face: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  --deck: #050506;
+  --rim: rgba(255, 255, 255, .07);
+  --lift: 5px;
+  color: var(--ink);
+  background: var(--face);
+  border: 0;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    inset 0 -2px 0 rgba(0, 0, 0, .28),
+    0 var(--lift) 0 var(--deck),
+    0 calc(var(--lift) + 7px) 16px -4px rgba(0, 0, 0, .6);
+  transform: translateY(0);
+  transition: transform .16s var(--spring), box-shadow .16s var(--spring), filter .2s, opacity .2s;
+  margin-bottom: var(--lift);
+}
+
+/* the press spot and the sheen live in the face; the label rides above them */
+.btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 4px 30%;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, .22);
+  filter: blur(6px);
+  opacity: 0;
+  transform: scaleX(.3);
+  transition: opacity .16s var(--spring), transform .16s var(--spring);
+  pointer-events: none;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -2px;
+  bottom: -2px;
+  right: 0;
+  width: 46%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .24) 50%, transparent);
+  transform: translateX(120%) skewX(-16deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+  }
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(calc(var(--lift) - 1px));
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .06),
+    inset 0 -1px 0 rgba(0, 0, 0, .28),
+    0 1px 0 var(--deck),
+    0 3px 6px -2px rgba(0, 0, 0, .6);
+  transition-duration: .07s;
+}
+
+.btn:active:not(:disabled)::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.btn:active:not(:disabled)::after {
+  opacity: .9;
+  transform: translateX(-260%) skewX(-16deg);
+  transition: transform .42s var(--ease), opacity .12s;
+}
+
+.btn:disabled {
+  opacity: 1;
+  filter: none;
+  color: var(--dim);
+  --face: var(--rubber-3);
+  --lift: 2px;
+}
 
 .btn-primary {
-  background: linear-gradient(180deg, #f0353b 0%, #dc252c 50%, #bc171e 100%);
-  border-color: #9e1218;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .26),
-    inset 0 -2px 0 rgba(0, 0, 0, .14),
-    0 1px 1px rgba(10, 10, 12, .22),
-    0 8px 18px -8px rgba(229, 38, 45, .6);
+  --face: linear-gradient(180deg, #f2393f 0%, #dd2229 52%, #c3161d 100%);
+  --deck: #6e0a0f;
+  --rim: rgba(255, 255, 255, .12);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+}
+
+.btn-gold {
+  --face: linear-gradient(180deg, #fbe39b 0%, #efc463 38%, #d9a23f 72%, #c68b2d 100%);
+  --deck: #6e4b0e;
+  --rim: rgba(255, 255, 255, .3);
+  color: #2a1b00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
 }
 
 .btn-dark {
-  background: linear-gradient(180deg, #24252b, #0e0e11);
-  border-color: #050506;
+  --face: linear-gradient(180deg, #1d1e22, #0e0f11);
+  --deck: #000;
+  color: #fff;
 }
 
-.btn-quiet {
+.btn-ghost {
+  --face: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
   color: var(--ink);
 }
 
-.btn-quiet:active:not(:disabled) {
-  background: var(--bg-2);
+.btn-danger {
+  --face: linear-gradient(180deg, #3a1517, #2a0f11);
+  --deck: #000;
+  --rim: rgba(255, 74, 79, .3);
+  color: var(--red);
 }
 
-/* ---------------------------------------------------------------- selected states: ink and red, not green */
+/* text buttons stay flat: no deck, no sheen */
+.btn-quiet {
+  color: var(--ink-2);
+  background: none;
+  box-shadow: none;
+  margin-bottom: 0;
+  overflow: visible;
+}
+
+.btn-quiet::before,
+.btn-quiet::after {
+  display: none;
+}
+
+.btn-quiet:active:not(:disabled) {
+  transform: translateY(1px);
+  background: rgba(255, 255, 255, .05);
+  box-shadow: none;
+}
+
+.btn-primary:disabled:not(.bid-main),
+.btn-gold:disabled {
+  --face: var(--rubber-3);
+  --deck: #050506;
+  --rim: rgba(255, 255, 255, .05);
+  color: var(--dim);
+  text-shadow: none;
+}
+
+/* round icon buttons in the bars: little rubber knobs */
+.iconbtn,
+.tb-btn {
+  background: linear-gradient(180deg, #2a2c32, #1c1d21);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
+  transition: transform .12s var(--spring), box-shadow .12s var(--spring);
+}
+
+.iconbtn:active,
+.tb-btn:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 #000;
+}
+
+/* ---------------------------------------------------------------- the wait: a tyre that rolls */
+
+.spinner {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tex-tire) center / contain no-repeat;
+  animation: tire-roll .9s linear infinite;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .6));
+}
+
+.spinner::before,
+.spinner::after {
+  display: none;
+}
+
+@keyframes tire-roll {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+}
+
+/* ---------------------------------------------------------------- paper things stay paper, the rest goes rubber */
+
+.qr,
+.paddle,
+.mplate,
+.kp-face,
+.switch::after {
+  color-scheme: light;
+}
+
+.kp-band {
+  background: var(--plate);
+}
+
+.g-studio,
+.rv-studio,
+.gcar-ph {
+  background: radial-gradient(90% 80% at 50% 30%, #2a2c31, #121315 75%);
+}
+
+.g-slide {
+  background: linear-gradient(100deg, #1a1b1e 30%, #24262b 50%, #1a1b1e 70%);
+}
+
+.bid-chips button {
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 3px 0 #050506, 0 6px 12px -6px rgba(0, 0, 0, .7);
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.bid-chips button:active:not(:disabled) {
+  background: linear-gradient(180deg, var(--rubber-4), var(--rubber-3));
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 1px 0 #050506;
+}
+
+.btn-top {
+  --face: linear-gradient(180deg, #3a2e14, #2a2010);
+  --deck: #000;
+  --rim: rgba(232, 185, 85, .35);
+  color: var(--gold-hi);
+}
+
+.result.first {
+  background: linear-gradient(180deg, rgba(232, 185, 85, .16), rgba(232, 185, 85, .04));
+  border-color: rgba(232, 185, 85, .4);
+}
+
+.vbox.tone-bad,
+.records li.warn,
+.surprise.bad,
+.rm-inline,
+.rx-f.t-bad .rx-pop {
+  border-color: rgba(255, 74, 79, .32);
+}
+
+.vbox.tone-mid,
+.notes li,
+.dc-tag,
+.rx-f.t-gold .rx-pop {
+  border-color: rgba(232, 185, 85, .32);
+}
+
+.rv-stamp {
+  border-color: var(--rubber-2);
+}
+
+.bm-spin {
+  border-top-color: #fff;
+}
+
+.tv-studio {
+  background: radial-gradient(70% 70% at 50% 60%, #2a2c31 0%, #0e0f11 70%);
+}
+
+/* ---------------------------------------------------------------- selected states: rubber and red */
 
 .budget[aria-pressed='true'],
 .market[aria-checked='true'] {
@@ -106,9 +462,8 @@
 }
 
 .budget[aria-pressed='true'] .t-money,
-.seg > button[aria-pressed='true'],
 .tabs button[aria-selected='true'] {
-  color: var(--ink);
+  color: #fff;
 }
 
 .paddle.me {
@@ -120,36 +475,35 @@
 .bid-chips b,
 .news-num,
 .rv-adlink b,
-.rm-ic,
 .rx-fab {
   color: var(--ink);
 }
 
-.bid-chips button:active:not(:disabled) {
-  background: var(--brand-50);
-}
-
 .log li.me {
   background: var(--brand-50);
-  color: var(--brand-lo);
+  color: #ffb3b5;
 }
 
 .rm-ic {
-  background: var(--bg-2);
+  background: var(--rubber-4);
+  color: var(--ink);
 }
 
 .rx-f.mine .rx-n {
-  color: var(--brand-lo);
+  color: #ffb3b5;
 }
 
-/* the clock: calm in ink, red only when it's hot */
+/* the clock: calm in white, red only when it's hot */
+.ring .track {
+  stroke: var(--rubber-4);
+}
+
 .ring .bar {
-  stroke: var(--ink);
+  stroke: #fff;
 }
 
-/* the price estimate panel on the car sheet: quiet paper, not a green box */
 .pricebar {
-  background: var(--card-2);
+  background: var(--rubber-3);
   border-color: var(--line);
 }
 
@@ -157,7 +511,6 @@
   color: var(--mute);
 }
 
-/* dutch: the falling price rail and the estimate */
 .dc-fill {
   background: linear-gradient(270deg, var(--brand-lo), var(--brand));
 }
@@ -166,7 +519,6 @@
   color: var(--ink-2);
 }
 
-/* the TV leader lines read in ink on paper and in gold on the dark board */
 .tv-leader b,
 .tv-feed li.top b,
 .tv-buyer b {
@@ -179,7 +531,7 @@
 .gcar-nums b.gain,
 .aw-row-fig.gain .t-money,
 .cr-best .gain {
-  color: var(--ok);
+  color: var(--ok-700);
 }
 
 .envelopes li.win {
@@ -189,45 +541,46 @@
 }
 
 .tv-voted {
-  color: var(--ok);
+  color: var(--ok-700);
 }
 
-/* ---------------------------------------------------------------- bid button: the tag's red */
+/* ---------------------------------------------------------------- the bid button: caliper red */
 
 .btn-primary.bid-main {
-  background: linear-gradient(180deg, #f0353b 0%, #d9232a 46%, #b5161d 100%);
+  --face: linear-gradient(180deg, #f2393f 0%, #da2229 46%, #b8151c 100%);
+  background: var(--face);
 }
 
 .btn-primary.bid-main.sending:disabled {
-  background: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
+  --face: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
+  background: var(--face);
+  color: #fff;
+}
+
+.btn-primary.bid-main:disabled:not(.sending) {
+  --face: var(--rubber-3);
+  background: var(--face);
+  color: var(--mute);
 }
 
 /* ---------------------------------------------------------------- details */
 
-/* the engraved hero lines: gold and a whisper of ink, never red */
-.fx-paths-b {
-  stroke: rgba(18, 18, 20, .12);
+.fx-paths-a {
+  opacity: .22;
 }
 
-/* the hall opening leads with the logo */
+.fx-paths-b {
+  stroke: rgba(255, 255, 255, .05);
+}
+
 .idn-logo {
   display: block;
   width: 156px;
   height: auto;
   margin: 0 auto 6px;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .55));
 }
 
-/* a primary button that can't be pressed yet goes quiet grey, not washed-out red */
-.btn-primary:disabled:not(.bid-main) {
-  background: var(--bg-2);
-  border-color: var(--line-2);
-  color: var(--mute);
-  box-shadow: none;
-  text-shadow: none;
-  opacity: 1;
-}
-
-/* the news sheet leads with the tag, not a round seal */
 .news-seal.news-tag {
   width: auto;
   height: auto;
@@ -240,4 +593,46 @@
 .news-seal.news-tag .logomark {
   height: 40px;
   width: auto;
+}
+
+/* the idle sheen (fx.css) keeps running on the bid button and the gold «big moment» buttons,
+   and joins the hero CTA on Home */
+.btn-primary.bid-main:not(:disabled)::after,
+.btn-gold:not(:disabled)::after,
+.btn-primary.btn-hero:not(:disabled)::after {
+  opacity: 1;
+}
+
+.btn-primary.btn-hero:not(:disabled)::after {
+  content: '';
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  right: auto;
+  width: 34%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, .3) 50%, rgba(255, 255, 255, 0) 82%, transparent 100%);
+  transform: translateX(320%) skewX(-16deg);
+  animation: fx-sheen 5.6s var(--fx-in-out, ease-in-out) 1.6s infinite;
+}
+
+/* ---------------------------------------------------------------- type that used to sit dark-green on paper */
+
+.code,
+.countdown,
+.result .score .t-money,
+.idn-ledger dd,
+.idn-count-n {
+  color: #fff;
+}
+
+.surprise.good {
+  color: var(--ok-700);
+}
+
+/* paddles and the TV code tiles are paper: keep their ink dark */
+.paddle,
+.bp-bidder .paddle,
+.tv .paddle,
+.tv-code span {
+  color: var(--plate-ink);
 }

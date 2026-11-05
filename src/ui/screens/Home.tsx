@@ -1,34 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { sound } from '../../audio/sound';
 import { loadMarket } from '../../data/market';
-import { SHOWROOM } from '../../data/showroom';
-import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util';
+import { hijriToday, isCode, normalizeCode, store } from '../../lib/util';
 import { go } from '../App';
 import { CareerChip } from '../components/CareerPanel';
-import { Photo } from '../components/Gallery';
 import { WhatsNew, hasNews } from '../components/WhatsNew';
-import { BackgroundPaths } from '../components/fx/BackgroundPaths';
-import { BrandLogo } from '../components/Logo';
+import { LOGO } from '../components/Logo';
 
-/** A few real cars from tonight's market, for the front page. */
-function useShowroom(n = 8) {
-  return useMemo(() => {
-    // the front page shows only ads whose first photo was checked to be the outside of the car
-    // (SHOWROOM is pre-picked that way by scripts/build_showroom.ts, so players never load the market)
-    const pool = [...SHOWROOM].sort(() => Math.random() - 0.5);
-    // a spread of tiers so the strip looks like a real hall
-    const out: typeof pool = [];
-    const seen = new Set<string>();
-    for (const m of pool) {
-      if (out.length >= n) break;
-      if (seen.has(m.tier) && out.length < 5) continue;
-      seen.add(m.tier);
-      out.push(m);
-    }
-    for (const m of pool) if (out.length < n && !out.includes(m)) out.push(m);
-    return out.map((m) => ({ m, img: m.img }));
-  }, [n]);
-}
+// two tyre tracks drifting across the hero, behind the logo (drawn once when Home opens)
+const SKID_A = 'M -40 560 C 60 470, 120 360, 210 300 S 360 170, 450 40';
+const SKID_B = 'M -10 600 C 90 505, 150 395, 240 335 S 390 205, 480 75';
 
 export function Home() {
   const [code, setCode] = useState('');
@@ -36,116 +17,94 @@ export function Home() {
   const last = store.get<{ code: string; at: number; host: boolean } | null>('mzk:last', null);
   const recent = last && Date.now() - last.at < 1000 * 60 * 60 * 10 ? last : null;
   const clean = normalizeCode(code);
-  const show = useShowroom();
-  const star = show[0];
   const [news, setNews] = useState(hasNews);
   return (
     <div className="home">
       <WhatsNew open={news} onClose={() => setNews(false)} />
-      <header className="apphead">
-        <span className="brand">
-          <BrandLogo />
-        </span>
-        <span className="apphead-date">{hijriToday()}</span>
-      </header>
+      <section className="hero" aria-label="مزاد الكراج">
+        <div className="hero-bg" aria-hidden="true">
+          <i className="hero-lamp" />
+          <svg className="hero-skid" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <mask id="skid-reveal" maskUnits="userSpaceOnUse">
+                <path className="hero-skid-draw" d={SKID_A} />
+                <path className="hero-skid-draw" d={SKID_B} />
+              </mask>
+            </defs>
+            <g mask="url(#skid-reveal)">
+              <path className="hero-skid-band" d={SKID_A} />
+              <path className="hero-skid-tread" d={SKID_A} />
+              <path className="hero-skid-band" d={SKID_B} />
+              <path className="hero-skid-tread" d={SKID_B} />
+            </g>
+          </svg>
+          <i className="hero-tread" />
+        </div>
 
-      <section className="cover">
-        {star ? <Photo u={star.img} eager className="cover-img" onDead={() => {}} /> : <div className="cover-blank" />}
-        <div className="cover-shade" />
-        <div className="cover-text">
-          <span className="cover-tag">الليلة في الصالة</span>
-          {star ? (
-            <>
-              <b>
-                {star.m.makeAr} {star.m.modelAr} <span className="ltr">{star.m.year}</span>
-              </b>
-              <small>
-                سعرها بالسوق حول <span className="ltr">{money(star.m.value)}</span> ريال
-              </small>
-            </>
+        <div className="hero-top">
+          <span className="hero-date">{hijriToday()}</span>
+          <button className="hero-how" onClick={() => go('/rules')}>
+            كيف نلعب؟
+          </button>
+        </div>
+
+        <h1 className="hero-title">
+          <img className="hero-logo" src={LOGO.stack} width={300} height={263} alt="مزاد الكراج" draggable={false} />
+        </h1>
+        <p className="hero-line">مزاد سيارات على أصوله</p>
+        <p className="hero-sub">سيارات حقيقية من حراج بصورها وتقرير فحصها ولوحاتها. سُم مع الشباب، وابنِ أقوى كراج قبل ما تنزل المطرقة.</p>
+
+        <div className="hero-cta">
+          <button
+            className="btn btn-primary btn-block btn-hero"
+            onClick={() => {
+              sound.unlock();
+              // the host deals from the full market: start fetching it now
+              loadMarket().catch(() => {});
+              go('/new');
+            }}
+          >
+            افتح مزاد جديد
+          </button>
+          {!joining ? (
+            <button className="btn btn-ghost btn-block" onClick={() => setJoining(true)}>
+              عندي كود صالة
+            </button>
           ) : (
-            <b>سيارات حقيقية من السوق السعودي</b>
+            <form
+              className="joinrow"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (isCode(clean)) {
+                  sound.unlock();
+                  go(`/r/${clean}`);
+                }
+              }}
+            >
+              <input
+                className="input"
+                placeholder="K7Q2PM"
+                value={clean}
+                autoFocus
+                autoCapitalize="characters"
+                onChange={(e) => setCode(e.target.value)}
+                aria-label="كود الصالة"
+              />
+              <button className="btn btn-primary" disabled={!isCode(clean)}>
+                ادخل
+              </button>
+            </form>
           )}
+          {recent && (
+            <button className="btn btn-quiet" onClick={() => go(`/r/${recent.code}`)}>
+              رجوع لصالة {recent.code}
+            </button>
+          )}
+          <CareerChip />
         </div>
       </section>
 
-      <main className="shell narrow stack" style={{ gap: 18, paddingTop: 18 }}>
-        <section className="intro">
-          <BackgroundPaths />
-          <h1>مزاد سيارات على أصوله</h1>
-          <p>سيارات من السوق السعودي بصور إعلاناتها وتقرير فحصها ولوحاتها. سُم عليها مع الشباب، وابنِ أقوى كراج قبل ما تنزل المطرقة.</p>
-          <div className="cta">
-            <button
-              className="btn btn-primary btn-block"
-              onClick={() => {
-                sound.unlock();
-                // the host deals from the full market: start fetching it now
-                loadMarket().catch(() => {});
-                go('/new');
-              }}
-            >
-              افتح مزاد جديد
-            </button>
-            {!joining ? (
-              <button className="btn btn-ghost btn-block" onClick={() => setJoining(true)}>
-                عندي كود صالة
-              </button>
-            ) : (
-              <form
-                className="joinrow"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (isCode(clean)) {
-                    sound.unlock();
-                    go(`/r/${clean}`);
-                  }
-                }}
-              >
-                <input
-                  className="input"
-                  placeholder="K7Q2PM"
-                  value={clean}
-                  autoFocus
-                  autoCapitalize="characters"
-                  onChange={(e) => setCode(e.target.value)}
-                  aria-label="كود الصالة"
-                />
-                <button className="btn btn-primary" disabled={!isCode(clean)}>
-                  ادخل
-                </button>
-              </form>
-            )}
-            {recent && (
-              <button className="btn btn-quiet" onClick={() => go(`/r/${recent.code}`)}>
-                رجوع لصالة {recent.code}
-              </button>
-            )}
-            <CareerChip />
-          </div>
-        </section>
-
-        {show.length > 1 && (
-          <section className="stack" style={{ gap: 10 }}>
-            <div className="row between">
-              <h2 className="t-title" style={{ margin: 0, fontSize: 20 }}>من سوق الليلة</h2>
-              <span className="chip chip-green">صور إعلانات حقيقية</span>
-            </div>
-            <div className="strip">
-              {show.slice(1).map(({ m, img }) => (
-                <figure key={m.id}>
-                  <Photo u={img} className="strip-img" onDead={() => {}} />
-                  <figcaption>
-                    {m.makeAr} {m.modelAr} <span className="ltr">{m.year}</span>
-                    <small>
-                      حول <span className="ltr">{money(m.value)}</span> ريال
-                    </small>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-          </section>
-        )}
-
+      <main className="shell narrow stack home-below" style={{ gap: 18, paddingTop: 8 }}>
         <section className="notice" aria-label="شروط المزاد">
           <header>
             <h2>شروط المزاد</h2>

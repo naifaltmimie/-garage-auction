@@ -15,6 +15,8 @@ import './styles/identity.css';
 import './styles/controls.css';
 import './styles/qa.css';
 import './styles/theme.css';
+import './styles/home.css';
+import './styles/loader.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';
