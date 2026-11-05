@@ -184,19 +184,17 @@ export function Home() {
           </ol>
         </section>
 
-        <p className="foot">
+        <nav className="foot foot-links" aria-label="روابط">
           <button className="btn btn-quiet" onClick={() => go('/rules')}>
             كيف نلعب؟
           </button>
-        </p>
-        <p className="foot">
           <button className="btn btn-quiet" onClick={() => setNews(true)}>
             الجديد
           </button>
           <a className="btn btn-quiet" href="/classic/">
             النسخة القديمة
           </a>
-        </p>
+        </nav>
       </main>
     </div>
   );

@@ -8,7 +8,7 @@ export function Showcase({ room }: { room: RoomView }) {
   const active = core.players.filter((p) => !p.spectator);
   const sold = sales.filter((s) => s.buyer).length;
   return (
-    <main className="shell" style={{ maxWidth: 1180 }}>
+    <main className="shell showcase-page" style={{ maxWidth: 1180 }}>
       <div className="stack" style={{ gap: 16 }}>
         <div style={{ textAlign: 'center' }} className="rise">
           <div className="t-label" style={{ color: 'var(--gold)' }}>نزلت المطرقة على آخر سيارة</div>

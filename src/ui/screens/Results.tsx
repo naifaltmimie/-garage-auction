@@ -28,7 +28,7 @@ export function Results({ room }: { room: RoomView }) {
   const nameOf = (id: string) => core.players.find((p) => p.id === id);
   const visible = rows.slice(rows.length - shown);
   return (
-    <main className="shell" style={{ maxWidth: 900 }}>
+    <main className="shell results-page" style={{ maxWidth: 900 }}>
       <div className="stack" style={{ gap: 16 }}>
         <div style={{ textAlign: 'center' }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>{core.settings.roomName}</div>

@@ -44,7 +44,7 @@ export function Create() {
   };
 
   return (
-    <main className="shell narrow">
+    <main className="shell narrow create">
       <div className="page-head">
         <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
         <span className="chip chip-green">صالة جديدة</span>

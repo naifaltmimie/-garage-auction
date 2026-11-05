@@ -16,7 +16,7 @@ export function Voting({ room }: { room: RoomView }) {
 
   if (!amVoter || done) {
     return (
-      <main className="shell narrow">
+      <main className="shell narrow voting-page">
         <div className="center-screen">
           <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
             <div className="t-display" style={{ fontSize: 44 }}>{done ? 'تقييمك وصل ✓' : 'التقييم السري'}</div>
@@ -43,7 +43,7 @@ export function Voting({ room }: { room: RoomView }) {
   const val = t ? scores[t.id] : undefined;
   const last = i === targets.length - 1;
   return (
-    <main className="shell narrow">
+    <main className="shell narrow voting-page">
       <div className="stack" style={{ gap: 14 }}>
         <div style={{ textAlign: 'center' }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>التقييم السري، محد يشوف تقييمك</div>

@@ -2,6 +2,37 @@ import qrcode from 'qrcode-generator';
 import { useMemo } from 'react';
 import type { Toast } from '../useRoom';
 
+/**
+ * Keeps a focused text field above the on-screen keyboard on the menu screens (home, create, join).
+ * Phones shrink the visual viewport when the keys slide up, and the browser's own scroll can leave
+ * the field under them or under the sticky header. Live auction phases are left alone.
+ */
+const LIVE = new Set(['intro', 'preview', 'bidding', 'sealed', 'dutch', 'sold', 'unsold', 'approval']);
+function guardField(e: FocusEvent) {
+  const el = e.target as HTMLElement | null;
+  if (!el || !el.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea')) return;
+  if (LIVE.has(document.documentElement.dataset.phase || '')) return;
+  const vv = window.visualViewport;
+  let t = 0;
+  const check = () => {
+    window.clearTimeout(t);
+    t = window.setTimeout(() => {
+      if (document.activeElement !== el) return;
+      const r = el.getBoundingClientRect();
+      const top = vv ? vv.offsetTop : 0;
+      const bottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      if (r.bottom > bottom - 12 || r.top < top + 72) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 140);
+  };
+  vv?.addEventListener('resize', check);
+  window.setTimeout(() => vv?.removeEventListener('resize', check), 1400);
+  check();
+}
+if (typeof document !== 'undefined' && !(window as { __mzkField?: boolean }).__mzkField) {
+  (window as { __mzkField?: boolean }).__mzkField = true;
+  document.addEventListener('focusin', guardField);
+}
+
 export function QR({ text, size = 168 }: { text: string; size?: number }) {
   const svg = useMemo(() => {
     const q = qrcode(0, 'M');

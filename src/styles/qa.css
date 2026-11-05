@@ -1,0 +1,35 @@
+/* QA sweep: the screens outside the live auction (home, join, create, how-to, showcase, voting,
+   results, awards, share, career, «الجديد»). Scoped to those screens so the auction is untouched. */
+
+/* ---------------------------------------------------------------- tap targets (44px) */
+
+.home .btn-quiet,
+.create .btn-quiet,
+.howto-page .btn-quiet,
+.results-page .btn-quiet,
+.voting-page .btn-quiet {
+  min-height: 44px;
+}
+
+.create .seg > button {
+  min-height: 44px;
+}
+
+/* ---------------------------------------------------------------- home */
+
+/* the three quiet links sit in one row instead of two loose paragraphs */
+.home .foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 6px;
+  margin: 4px 0 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* fields scroll clear of the sticky header and the keyboard */
+.home .input,
+.create .input,
+.center-screen .input {
+  scroll-margin-block: 88px 24px;
+}

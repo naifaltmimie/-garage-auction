@@ -2,7 +2,7 @@ import { go } from '../App';
 
 export function HowTo() {
   return (
-    <main className="shell narrow">
+    <main className="shell narrow howto-page">
       <div className="row between" style={{ marginBottom: 8 }}>
         <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
         <span className="brandmark">
