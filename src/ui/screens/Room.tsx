@@ -5,6 +5,7 @@ import type { Core, Hist } from '../../engine/types';
 import { money, store } from '../../lib/util';
 import { go } from '../App';
 import { Icon, Toasts } from '../components/Bits';
+import { LogoMark } from '../components/Logo';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
 import { Auction } from './Auction';
 import { Intro } from './Intro';
@@ -195,16 +196,7 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
 
 /** Small gold gavel used as the brand mark. */
 export function GavelMark() {
-  return (
-    <svg className="gavelmark" viewBox="0 0 32 32" aria-hidden="true">
-      <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13.5 6.5l8 8" />
-        <path d="M10.6 9.4l5.7-5.7a1.6 1.6 0 0 1 2.3 0l4.7 4.7a1.6 1.6 0 0 1 0 2.3l-5.7 5.7a1.6 1.6 0 0 1-2.3 0l-4.7-4.7a1.6 1.6 0 0 1 0-2.3z" />
-        <path d="M15.2 15.6L5.4 25.4" />
-        <path d="M17 27h11" />
-      </g>
-    </svg>
-  );
+  return <LogoMark className="gavelmark" />;
 }
 
 function Room({ code, me }: { code: string; me: Me }) {
