@@ -268,10 +268,9 @@ function Room({ code, me }: { code: string; me: Me }) {
   if (!core) {
     const hosting = room.role === 'host';
     const slow = waited > 8;
+    // the host's phone only opens the line once the night's market has loaded, so that's its wait
     const line = hosting
-      ? !room.net.connected
-        ? 'نفتح الخط…'
-        : 'نجهّز سوق الليلة ونصفّ السيارات…'
+      ? 'نجهّز سوق الليلة ونصفّ السيارات…'
       : !room.net.connected
         ? 'نتصل بالمزاد…'
         : slow
