@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { arDigits } from '../../lib/util';
+import { arDigits, vibrate } from '../../lib/util';
 import { GarageCard } from '../components/Garage';
+import { TireLoader } from '../components/TireLoader';
 import type { RoomView } from '../useRoom';
 
 export function Voting({ room }: { room: RoomView }) {
@@ -18,12 +19,22 @@ export function Voting({ room }: { room: RoomView }) {
     return (
       <main className="shell narrow voting-page">
         <div className="center-screen">
-          <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
-            <div className="t-display" style={{ fontSize: 44 }}>{done ? 'تقييمك وصل ✓' : 'التقييم السري'}</div>
-            <p className="mute" style={{ margin: 0 }}>
-              {waiting.length ? `باقي ${arDigits(waiting.length)} يقيّمون: ${waiting.map((p) => p.name).join('، ')}` : 'الكل قيّم، النتيجة جاية'}
-            </p>
-            <div className="progress-dots">
+          <div className="vt-wait">
+            <span className="vt-kicker">{done ? 'تقييمك وصل، ومحد بيدري وش عطيت' : 'التقييم السري'}</span>
+            <TireLoader size={64} label={!waiting.length ? 'الكل قيّم، النتيجة جاية' : done ? 'بانتظار تقييم الباقين' : 'الشباب يقيّمون الكراجات'} />
+            {waiting.length > 0 && (
+              <div className="vt-left">
+                <small>
+                  باقي <span className="ltr">{arDigits(waiting.length)}</span>
+                </small>
+                <ul aria-label="باقي يقيّمون">
+                  {waiting.map((p) => (
+                    <li key={p.id}>{p.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="progress-dots" aria-hidden>
               {active.map((p) => (
                 <i key={p.id} className={core.voted.includes(p.id) ? 'on' : ''} />
               ))}
@@ -57,7 +68,18 @@ export function Voting({ room }: { room: RoomView }) {
         {t && <GarageCard key={t.id} p={t} sales={sales} slots={core.settings.garage} />}
         <div className="rate" role="radiogroup" aria-label="التقييم من 1 إلى 10">
           {Array.from({ length: 10 }, (_, k) => k + 1).map((n) => (
-            <button key={n} role="radio" aria-checked={val === n} aria-pressed={val === n} onClick={() => t && setScores((s) => ({ ...s, [t.id]: n }))}>
+            <button
+              key={n}
+              className={`btn rate-key ${val === n ? 'btn-primary' : 'btn-ghost'}`}
+              role="radio"
+              aria-checked={val === n}
+              aria-pressed={val === n}
+              onClick={() => {
+                if (!t) return;
+                vibrate(8);
+                setScores((s) => ({ ...s, [t.id]: n }));
+              }}
+            >
               {arDigits(n)}
             </button>
           ))}

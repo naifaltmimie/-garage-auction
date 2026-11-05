@@ -29,8 +29,9 @@ export function Showcase({ room }: { room: RoomView }) {
             {active.length > 1 ? 'ابدأ التقييم السري' : 'اعرض النتيجة'}
           </button>
         ) : (
-          <div className="card showcase-wait" style={{ padding: 16, textAlign: 'center', fontWeight: 700 }}>
-            الدلال بيفتح التقييم السري بعد شوي
+          <div className="card showcase-wait" role="status">
+            <i className="spinner sw-tire" aria-hidden />
+            <span>الدلال بيفتح التقييم السري بعد شوي</span>
           </div>
         )}
       </div>

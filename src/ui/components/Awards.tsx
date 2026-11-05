@@ -5,6 +5,7 @@ import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
 import { money, signed } from '../../lib/util';
 import type { RoomView } from '../useRoom';
 import { ShareGarage } from './ShareGarage';
+import { TireLoader } from './TireLoader';
 
 /** One award as the ceremony shows it. Derived on this phone from what the host published. */
 export interface AwardItem {
@@ -179,6 +180,9 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
           <div className="aw-frame" aria-live="polite">
             {cur ? (
               <div className={`aw-card ${cur.grand ? 'grand' : ''}`} key={cur.key}>
+                <span className="aw-env" aria-hidden>
+                  <i className="aw-env-flap" />
+                </span>
                 <span className="aw-count">
                   الجائزة <span className="ltr">{step}</span> من <span className="ltr">{total}</span>
                 </span>
@@ -200,7 +204,7 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
             ) : (
               <div className="aw-card aw-wait" key="wait">
                 <span className="aw-count">الظرف الأول</span>
-                <h3 className="aw-title">لحظة…</h3>
+                <TireLoader size={46} label="نفتح الظرف…" />
               </div>
             )}
           </div>
