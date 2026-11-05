@@ -1,6 +1,62 @@
 import qrcode from 'qrcode-generator';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { Toast } from '../useRoom';
+
+/** Renders a modal at the end of <body>, so no stacking context or transformed ancestor can clip it. */
+export function Portal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body);
+}
+
+const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Bottom-sheet plumbing: Escape closes, focus moves into the sheet and Tab stays inside it,
+ * the page behind doesn't scroll, and focus goes back where it was when the sheet closes.
+ */
+export function useSheet<T extends HTMLElement>(onClose: () => void) {
+  const ref = useRef<T>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null;
+    const el = ref.current;
+    const body = document.body;
+    const was = body.style.overflow;
+    body.style.overflow = 'hidden';
+    el?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeRef.current();
+        return;
+      }
+      if (e.key !== 'Tab' || !el) return;
+      const f = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((x) => x.offsetParent !== null);
+      if (!f.length) return;
+      const a = f[0];
+      const z = f[f.length - 1];
+      const at = document.activeElement;
+      if (at === el || !el.contains(at)) {
+        e.preventDefault();
+        (e.shiftKey ? z : a).focus();
+      } else if (e.shiftKey && at === a) {
+        e.preventDefault();
+        z.focus();
+      } else if (!e.shiftKey && at === z) {
+        e.preventDefault();
+        a.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      body.style.overflow = was;
+      if (back && document.contains(back)) back.focus({ preventScroll: true });
+    };
+  }, []);
+  return ref;
+}
 
 /**
  * Keeps a focused text field above the on-screen keyboard on the menu screens (home, create, join).

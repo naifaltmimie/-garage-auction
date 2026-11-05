@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { money, signed } from '../../lib/util';
 import type { RoomView } from '../useRoom';
+import { Portal, useSheet } from './Bits';
 
 // «شارك كراجك»: the night's garage drawn as a 1080×1350 poster on a canvas.
 // Text only (Haraj photos would taint the canvas), Arabic drawn right-to-left with the page font.
@@ -280,24 +281,31 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
       <button className="btn btn-gold btn-block aw-share" onClick={make} disabled={busy}>
         {busy ? 'نجهز الصورة…' : 'شارك كراجك'}
       </button>
-      {img && (
-        <div className="sg-back" role="dialog" aria-modal="true" aria-label="صورة كراجك" onClick={() => setImg(null)}>
-          <div className="sg-sheet" onClick={(e) => e.stopPropagation()}>
-            <img className="sg-img" src={img.url} alt="صورة كراجك الليلة" width={1080} height={1350} />
-            <div className="sg-btns">
-              <button className="btn btn-primary" onClick={share}>
-                شارك الصورة
-              </button>
-              <button className="btn btn-ghost" onClick={download}>
-                حمّلها
-              </button>
-              <button className="btn btn-quiet" onClick={() => setImg(null)}>
-                سكّر
-              </button>
-            </div>
+      {img && <SharePreview url={img.url} onShare={share} onSave={download} onClose={() => setImg(null)} />}
+    </>
+  );
+}
+
+function SharePreview({ url, onShare, onSave, onClose }: { url: string; onShare: () => void; onSave: () => void; onClose: () => void }) {
+  const ref = useSheet<HTMLDivElement>(onClose);
+  return (
+    <Portal>
+      <div className="sg-back" role="dialog" aria-modal="true" aria-label="صورة كراجك" onClick={onClose}>
+        <div className="sg-sheet" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+          <img className="sg-img" src={url} alt="صورة كراجك الليلة" width={1080} height={1350} />
+          <div className="sg-btns">
+            <button className="btn btn-primary" onClick={onShare}>
+              شارك الصورة
+            </button>
+            <button className="btn btn-ghost" onClick={onSave}>
+              حمّلها
+            </button>
+            <button className="btn btn-quiet" onClick={onClose}>
+              سكّر
+            </button>
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </Portal>
   );
 }

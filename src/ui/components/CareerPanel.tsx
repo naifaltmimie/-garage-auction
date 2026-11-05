@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { BADGES, loadCareer, totals } from '../../lib/career';
-import { money, signed } from '../../lib/util';
+import { carsN, money, signed } from '../../lib/util';
+import { Portal, useSheet } from './Bits';
 
-/** «سجلي»: a small chip on the front page that opens this phone's career. */
 export function CareerChip() {
   const [open, setOpen] = useState(false);
   const [nights, setNights] = useState(() => loadCareer().nights.length);
@@ -31,15 +31,12 @@ export function CareerChip() {
 export function CareerPanel({ onClose }: { onClose: () => void }) {
   const [c] = useState(loadCareer);
   const t = totals(c);
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [onClose]);
+  const ref = useSheet<HTMLDivElement>(onClose);
   const last = [...c.nights].reverse().slice(0, 5);
   return (
+    <Portal>
     <div className="sg-back" role="dialog" aria-modal="true" aria-label="سجلي" onClick={onClose}>
-      <div className="cr-sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="cr-sheet" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <header className="cr-head">
           <div>
             <span className="aw-kicker">على هالجوال</span>
@@ -111,7 +108,7 @@ export function CareerPanel({ onClose }: { onClose: () => void }) {
                     <b>{n.room}</b>
                     <small>
                       {n.players > 1 ? <>المركز <span className="ltr">{n.rank}</span> من <span className="ltr">{n.players}</span>، </> : null}
-                      <span className="ltr">{n.cars}</span> سيارات
+                      {carsN(n.cars)}
                     </small>
                   </span>
                   <span className={`t-money ${n.profit >= 0 ? 'gain' : 'loss'}`}>{signed(n.profit)}</span>
@@ -122,5 +119,6 @@ export function CareerPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
     </div>
+    </Portal>
   );
 }
