@@ -1,0 +1,62 @@
+/* Bidding console on phones: the docked reactions switch, steady numbers and a tactile press.
+   Motion is transform/opacity only. */
+
+/* ------------------------------------------------ reactions switch docked in the panel */
+
+/* Reactions.tsx measures the panel's status row and sets --rx-f; without it (sale sheet on screen)
+   the switch floats just above the sheet as before */
+.rx-fab {
+  bottom: var(--rx-f, calc(var(--rx-b) + 12px));
+}
+
+/* keep the slot opposite the clock free while the switch sits there */
+[data-rxdock] .auction .bidpanel .bp-status,
+[data-rxdock] .auction .bidpanel .dc-head {
+  padding-inline-end: 54px;
+  min-height: 46px;
+}
+
+/* ------------------------------------------------ numbers that never shift the layout */
+
+.bp-num b,
+.ring b,
+.bid-chips b,
+.bid-chips small,
+.bp-foot b,
+.dc-counter {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------ tactile press */
+
+.bid-main {
+  transition: transform .12s var(--ease), filter .12s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.bid-main:active:not(:disabled) {
+  transform: scale(.975);
+  filter: brightness(.94);
+}
+.bid-chips button,
+.dc-take {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* the sent bid settles in place: a short press-down, then it waits in colour for the host */
+.btn-primary.bid-main.sending:disabled {
+  animation: cn-sent .22s var(--ease) both;
+}
+@keyframes cn-sent {
+  0% { transform: scale(.97); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bid-main,
+  .btn-primary.bid-main.sending:disabled {
+    transition: none;
+    animation: none;
+  }
+}

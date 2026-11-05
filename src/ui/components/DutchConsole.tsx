@@ -57,7 +57,7 @@ export function DutchHint({ plan }: { plan: DutchPlan }) {
  * Reads the host's clock at `hz` but only re-renders when the value derived from it changes (a price
  * step, a whole second), so the panel redraws about once per step instead of 24 times a second.
  */
-function useClockValue<T extends string | number>(offset: number, hz: number, read: (now: number) => T, deps: unknown[]): T {
+export function useClockValue<T extends string | number>(offset: number, hz: number, read: (now: number) => T, deps: unknown[]): T {
   const readRef = useRef(read);
   readRef.current = read;
   const [v, setV] = useState(() => read(Date.now() + offset));
