@@ -5,7 +5,7 @@
    dark deck that sinks on the press. The deck never changes the box: a disabled or in-flight button sits
    pressed into its deck instead of growing shorter, so nothing below it moves. */
 
-.bidpanel .btn {
+.bidpanel .btn:not(.btn-quiet) {
   margin-bottom: 5px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -16,7 +16,7 @@
   transition-duration: .04s;
 }
 
-.bidpanel .btn:disabled {
+.bidpanel .btn:not(.btn-quiet):disabled {
   --lift: 2px;
   transform: translateY(3px);
 }
@@ -88,60 +88,97 @@
   color: var(--brand-hi);
 }
 
-/* «أبيها»: the caliper-red block, with the dutch rim that breathes near the floor */
-.dutch-panel .dc-take.btn {
+/* «أبيها»: the caliper-red block, with the dutch rim that breathes near the floor.
+   dutch.css is imported by DutchConsole, so it lands after this file: these rules carry .bidpanel.dutch-panel
+   to win, and restate the block's face and deck. */
+.bidpanel.dutch-panel .dc-take.btn {
   display: grid;
   place-items: center;
   gap: 1px;
   width: 100%;
   min-height: 62px;
+  margin-bottom: 5px;
   padding: 8px 14px;
   border-radius: 16px;
   white-space: normal;
+  background: var(--face);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    inset 0 -2px 0 rgba(0, 0, 0, .28),
+    0 var(--lift) 0 var(--deck),
+    0 calc(var(--lift) + 7px) 16px -4px rgba(0, 0, 0, .6);
+  transition: transform .16s var(--spring), box-shadow .16s var(--spring), filter .2s;
 }
 
-.dutch-panel .dc-take.btn::before {
+.bidpanel.dutch-panel .dc-take.btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .06),
+    inset 0 -1px 0 rgba(0, 0, 0, .28),
+    0 1px 0 var(--deck),
+    0 3px 6px -2px rgba(0, 0, 0, .6);
+  transition-duration: .04s;
+}
+
+/* the rim that breathes near the floor (not the press spot) */
+.bidpanel.dutch-panel .dc-take.btn::before {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
   background: none;
   filter: none;
   transform: none;
-  opacity: 0;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .7), inset 0 0 22px rgba(255, 255, 255, .22);
 }
 
-.dutch-panel .dc-take.btn:active:not(:disabled)::before {
-  opacity: 0;
-}
-
-.dutch-panel .dc-take.btn:active:not(:disabled) {
-  transform: translateY(4px);
-}
-
-.dutch-panel .dc-take.btn:disabled:not(.sending) {
+.bidpanel.dutch-panel .dc-take.btn:disabled:not(.sending) {
   --face: var(--rubber-3);
   --deck: #050506;
   --rim: rgba(255, 255, 255, .05);
-  background: var(--face);
+  --lift: 2px;
+  transform: translateY(3px);
   color: var(--mute);
   text-shadow: none;
 }
 
-.dutch-panel .dc-take.btn.sending:disabled {
+.bidpanel.dutch-panel .dc-take.btn.sending:disabled {
   --face: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
   --deck: #6e0a0f;
   --rim: rgba(255, 255, 255, .12);
-  background: var(--face);
-  color: #fff;
-  transform: translateY(4px);
   --lift: 1px;
+  transform: translateY(4px);
+  color: #fff;
 }
 
-.dutch-panel .dc-take b,
-.dutch-panel .dc-take small {
+.bidpanel.dutch-panel .dc-take b,
+.bidpanel.dutch-panel .dc-take small {
   position: relative;
   z-index: 1;
+}
+
+/* the falling price's rail: red for the drop, never green */
+.bidpanel.dutch-panel .dc-fill {
+  background: linear-gradient(270deg, var(--brand-lo), var(--brand));
+}
+
+.bidpanel.dutch-panel[data-heat='3'] .dc-fill {
+  background: linear-gradient(270deg, var(--gold), var(--red));
+}
+
+.bidpanel.dutch-panel .dc-est {
+  color: var(--ink-2);
+}
+
+/* ================================================================ paddles stay paper; yours has a gold ring */
+
+.auction .paddle.me,
+.overlay .paddle.me,
+.bidpanel .bp-bidder.me .paddle {
+  background: var(--plate);
+  color: var(--plate-ink);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(232, 185, 85, .45), var(--sh-1);
 }
 
 /* ================================================================ waiting inside the auction */
@@ -173,8 +210,9 @@
   padding: 8px 12px;
   border-radius: 14px;
   background:
+    linear-gradient(180deg, rgba(29, 30, 34, .78), rgba(23, 24, 27, .86)),
     var(--tex-tread) center / 30px 18px,
-    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+    var(--rubber-2);
   border: 1px solid var(--line-2);
 }
 
@@ -182,8 +220,20 @@
   min-width: 0;
 }
 
-.env-wait > b {
+.env-mine {
   flex: none;
+  display: grid;
+  justify-items: end;
+  line-height: 1.2;
+}
+
+.env-mine small {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.env-mine b {
   font-size: 17px;
   color: var(--gold-hi);
 }
@@ -196,8 +246,9 @@
   padding: 10px 12px;
   border-radius: 16px;
   background:
+    linear-gradient(180deg, rgba(29, 30, 34, .78), rgba(23, 24, 27, .86)),
     var(--tex-tread) center / 30px 18px,
-    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+    var(--rubber-2);
   border: 1px solid var(--line);
 }
 
@@ -205,7 +256,7 @@
 .reveal.thinking {
   padding-top: 26px;
   background:
-    var(--tex-tread) top center / 30px 18px no-repeat,
+    var(--tex-tread) top center / 30px 18px repeat-x,
     linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
 }
 
@@ -368,4 +419,15 @@
   .bid-chips .btn {
     transition: none;
   }
+}
+
+/* ================================================================ reactions on rubber */
+
+.rx-f.t-good .rx-pop {
+  border-color: var(--ok-100);
+}
+
+.rx-f.t-gold .rx-t,
+.rx-chip.t-gold {
+  color: var(--gold-hi);
 }

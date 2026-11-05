@@ -299,8 +299,11 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
         <div className="envelope">
           {mine != null && (
             <div className="env-wait">
-              <TireLoader className="tl-inline" size={30} label="ظرفك مختوم، ننتظر ظروف الباقين" />
-              <b className="t-money">{money(mine)}</b>
+              <TireLoader className="tl-inline" size={30} label="ننتظر ظروف الباقين" />
+              <div className="env-mine">
+                <small>ظرفك مختوم على</small>
+                <b className="t-money">{money(mine)}</b>
+              </div>
             </div>
           )}
           <input
