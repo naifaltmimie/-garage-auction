@@ -185,9 +185,44 @@
   white-space: normal;
 }
 
-.lot-head .plate,
+/* title and plate share the top rows; the year and spec line get the full width under both,
+   so a 360px phone never squeezes "362 حصان" into a sliver beside the plate */
+.lot-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: start;
+}
+
+.lot-head > .car-title {
+  display: contents;
+}
+
+.lot-head .car-make {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.lot-head .car-name {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.lot-head .car-year {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
 .lot-head > :last-child {
-  flex-shrink: 0;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: start;
+}
+
+/* each spec stays in one piece and only wraps inside itself when it is longer than the line */
+.spec-line > span {
+  display: inline-block;
 }
 
 .car-name {
