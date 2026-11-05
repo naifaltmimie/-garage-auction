@@ -3,13 +3,13 @@ import { sound } from '../../audio/sound';
 import { BidLog, Console } from '../components/Console';
 import { photoSrc } from '../components/Gallery';
 import { LotSheet } from '../components/LotSheet';
+import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
+import { ReactionLayer } from '../components/Reactions';
+import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 // the car sheet (photos, damage map, specs) is the heaviest part of the screen: it only redraws when its
 // own props change, never because a bid or the clock moved
 const LotSheetMemo = memo(LotSheet);
-import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
-import { ReactionLayer } from '../components/Reactions';
-import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 /** Ticks in the last seconds of an open lot. */
 function useClosingTicks(room: RoomView) {
