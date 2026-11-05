@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import { BidLog, Console } from '../components/Console';
 import { photoSrc } from '../components/Gallery';
 import { LotSheet } from '../components/LotSheet';
+
+// the car sheet (photos, damage map, specs) is the heaviest part of the screen: it only redraws when its
+// own props change, never because a bid or the clock moved
+const LotSheetMemo = memo(LotSheet);
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
@@ -23,13 +27,18 @@ function useClosingTicks(room: RoomView) {
   }, [ms, core.phase, core.paused, core.bid]);
 }
 
+/** The closing ticks run on their own 8 Hz clock; kept in a leaf so the clock never redraws the whole screen. */
+function ClosingTicks({ room }: { room: RoomView }) {
+  useClosingTicks(room);
+  return null;
+}
+
 export function Auction({ room }: { room: RoomView }) {
   const core = room.snap.core!;
   const lot = room.snap.lot;
   const hist = room.snap.hist;
   const me = core.players.find((p) => p.id === room.myId);
   const [log, setLog] = useState(false);
-  useClosingTicks(room);
 
   const sale = hist?.sales.length ? hist.sales[hist.sales.length - 1] : null;
   const saleForLot = sale && lot && sale.lotId === lot.id ? sale : null;
@@ -62,8 +71,9 @@ export function Auction({ room }: { room: RoomView }) {
   }
   return (
     <main className="auction">
+      <ClosingTicks room={room} />
       <div>
-        <LotSheet
+        <LotSheetMemo
           lot={lot}
           total={core.lotsTotal}
           reserveMet={core.reserveMet}
