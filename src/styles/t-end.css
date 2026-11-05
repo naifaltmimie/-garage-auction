@@ -1,1 +1,785 @@
-/* end: tyre-theme fixes and polish for this area (imported after theme.css, so these win) */
+/* ================================================================ t-end: the end of the night, in rubber
+   Showcase, voting, the wait for votes, the podium, the awards ceremony, «سجلي», the share sheet and
+   «الجديد». Imported after theme.css, so these win. Rubber surfaces, caliper red for what you pick,
+   rim gold only for the champion and the awards, green only for gains. */
+
+/* ---------------------------------------------------------------- garages (showcase, voting, results) */
+
+.garage {
+  overflow: hidden;
+}
+
+/* the head is a strip of tread across the top of the card */
+.garage-head {
+  margin: -14px -14px 0;
+  padding: 12px 14px;
+  background:
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, #24252a, #191a1d);
+  border-bottom: 1px solid #000;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .04);
+}
+
+.garage-head h3 {
+  color: var(--ink);
+}
+
+/* each car sits in a sunk bay */
+.gcar {
+  background: var(--rubber-1);
+  border-color: var(--line);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .45);
+}
+
+.gcar-nums b.loss {
+  color: var(--red);
+}
+
+/* an empty bay: dashed lines on hatched tarmac */
+.gslot {
+  border-color: var(--line-2);
+  color: var(--mute);
+  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .022) 0 8px, transparent 8px 16px);
+}
+
+.totals > div {
+  background: var(--rubber-1);
+  border-color: var(--line);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .45);
+}
+
+.totals small {
+  color: var(--mute);
+}
+
+.totals b {
+  color: var(--ink);
+}
+
+.totals b.gain {
+  color: var(--ok-700);
+}
+
+.totals b.loss {
+  color: var(--red);
+}
+
+/* ---------------------------------------------------------------- showcase: the player's wait */
+
+.showcase-page .showcase-wait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 60px;
+  font-weight: 700;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--rubber-4), var(--rubber-3));
+  border-color: var(--line-2);
+}
+
+.sw-tire {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- voting */
+
+.progress-dots i {
+  background: var(--rubber-5);
+}
+
+.progress-dots i.on {
+  background: var(--brand);
+}
+
+/* 1–10: pushable rubber keys from the button system; the one you pick turns caliper red */
+.rate {
+  gap: 6px 8px;
+}
+
+.rate .rate-key {
+  min-height: 52px;
+  padding: 0;
+  border-radius: 14px;
+  font-size: 22px;
+  font-weight: 800;
+  --lift: 4px;
+}
+
+.rate .rate-key.btn-primary {
+  animation: rate-pick .24s var(--spring) both;
+}
+
+@keyframes rate-pick {
+  from {
+    scale: .88;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+/* after you vote: the tyre rolls while the others make up their minds */
+.vt-wait {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  width: min(100%, 420px);
+}
+
+.vt-kicker {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.vt-wait .tl-label {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.vt-left {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.vt-left small {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.vt-left ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.vt-left li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 14px;
+  border-radius: 99px;
+  background: var(--rubber-3);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* a small red «live» light on each name still thinking */
+.vt-left li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand);
+  animation: vt-live 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes vt-live {
+  from {
+    opacity: .35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- results: the podium as a race finish */
+
+.results-page .result {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border: 1px solid var(--line);
+  /* each row drives in from the right, the way we read, and settles on the line */
+  animation: rs-in .55s var(--spring) both;
+}
+
+.results-page .result .rank {
+  color: var(--mute);
+}
+
+.results-page .result .score .t-money {
+  font-variant-numeric: tabular-nums;
+}
+
+.results-page .result.first {
+  padding-inline-start: 24px;
+  border: 2px solid var(--gold);
+  background:
+    linear-gradient(180deg, rgba(232, 185, 85, .17), rgba(232, 185, 85, .03) 70%),
+    var(--rubber-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 16px 34px -14px rgba(0, 0, 0, .9);
+  animation: rs-champ .8s var(--spring) both;
+}
+
+.results-page .result.first .rank,
+.results-page .result.first .score .t-money {
+  color: var(--gold-hi);
+}
+
+/* the champion's chequered flag, in rim gold, down the leading edge */
+.rs-flag {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 12px;
+  background: repeating-conic-gradient(var(--gold) 0 25%, #17130a 0 50%) 0 0 / 12px 12px;
+  opacity: .9;
+}
+
+/* one pass of light across the champion's card as it lands */
+.results-page .result.first::after {
+  content: '';
+  position: absolute;
+  inset: -2px auto -2px 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(246, 207, 116, .22) 50%, transparent);
+  transform: translateX(300%) skewX(-16deg);
+  opacity: 0;
+  animation: rs-sheen 1.1s .45s var(--ease) both;
+  pointer-events: none;
+}
+
+.rs-champ {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+/* the line above the podium while the places are called */
+.rs-next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 4px 6px 4px 12px;
+  border-radius: var(--r);
+  background: var(--rubber-0);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .55);
+  color: var(--ink-2);
+  font-weight: 700;
+  font-size: 14.5px;
+}
+
+.rs-tire {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.rs-skip {
+  margin-inline-start: auto;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--ink);
+}
+
+@keyframes rs-in {
+  from {
+    opacity: 0;
+    transform: translateX(44px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rs-champ {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rs-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(300%) skewX(-16deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-280%) skewX(-16deg);
+  }
+}
+
+/* ---------------------------------------------------------------- the awards ceremony (awards.css, on the tyre tokens) */
+
+.aw-head h2 {
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 30px;
+  color: var(--ink);
+}
+
+.aw-kicker {
+  color: var(--gold);
+}
+
+/* the stage: a lit rubber box with a rim-gold hairline and a tread floor */
+.aw-frame {
+  min-height: 320px;
+  padding: 26px 18px 52px;
+  color: var(--ink);
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(232, 185, 85, .1), transparent 62%),
+    radial-gradient(120% 80% at 50% 0%, #2a2c31 0%, var(--rubber-0) 66%);
+  box-shadow:
+    inset 0 0 0 1px rgba(232, 185, 85, .45),
+    inset 0 0 0 7px var(--rubber-0),
+    inset 0 0 0 8px rgba(232, 185, 85, .15),
+    var(--sh-2);
+}
+
+.aw-frame::after {
+  content: '';
+  position: absolute;
+  inset: auto 8px 8px;
+  height: 30px;
+  border-radius: 0 0 calc(var(--r-lg) - 8px) calc(var(--r-lg) - 8px);
+  background:
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, #1d1e22, #111214);
+  border-top: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  pointer-events: none;
+}
+
+.aw-count,
+.aw-goes,
+.aw-fig small {
+  color: var(--mute);
+}
+
+.aw-title {
+  color: var(--gold-hi);
+}
+
+.aw-rule {
+  background: var(--gold);
+}
+
+.aw-fig .t-money {
+  color: var(--ink);
+}
+
+.aw-fig.gain .t-money {
+  color: var(--ok-700);
+}
+
+.aw-fig.loss .t-money {
+  color: var(--red);
+}
+
+.aw-line {
+  color: var(--ink-2);
+}
+
+.aw-name {
+  color: var(--ink);
+}
+
+.aw-name em,
+.aw-row-name em {
+  background: var(--gold);
+  color: #2a1b00;
+}
+
+.aw-wait .tl-label {
+  color: var(--mute);
+  font-size: 14px;
+}
+
+/* the envelope: it punches in, the flap flips open, it drops away and the award stands up out of it */
+.aw-card {
+  animation: none;
+}
+
+.aw-env {
+  position: absolute;
+  inset: 0 0 38px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  perspective: 800px;
+  pointer-events: none;
+  animation: aw-env 1s var(--ease) both;
+}
+
+.aw-env::before,
+.aw-env-flap {
+  grid-area: 1 / 1;
+  width: min(74%, 300px);
+  aspect-ratio: 16 / 10;
+}
+
+.aw-env::before {
+  content: '';
+  border-radius: 10px;
+  background:
+    linear-gradient(155deg, transparent 49.4%, rgba(0, 0, 0, .35) 50%, transparent 50.6%) ,
+    linear-gradient(25deg, transparent 49.4%, rgba(0, 0, 0, .35) 50%, transparent 50.6%),
+    linear-gradient(180deg, #2c2e34, #1b1c20);
+  box-shadow: inset 0 0 0 1.5px rgba(232, 185, 85, .6), 0 22px 34px -12px rgba(0, 0, 0, .85);
+}
+
+.aw-env-flap {
+  display: block;
+  transform-origin: 50% 0;
+  clip-path: polygon(0 0, 100% 0, 50% 60%);
+  background:
+    radial-gradient(circle at 50% 49%, var(--brand) 0 12px, var(--brand-lo) 12.5px 14px, transparent 14.5px),
+    linear-gradient(180deg, #3a3c44, #26282d);
+  animation: aw-flap .34s .2s cubic-bezier(.5, 0, .3, 1) both;
+}
+
+.aw-card.grand .aw-env::before {
+  background:
+    linear-gradient(155deg, transparent 49.4%, rgba(110, 75, 14, .45) 50%, transparent 50.6%),
+    linear-gradient(25deg, transparent 49.4%, rgba(110, 75, 14, .45) 50%, transparent 50.6%),
+    linear-gradient(180deg, #fbe39b, #efc463 42%, #c68b2d);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35), 0 22px 34px -12px rgba(0, 0, 0, .85);
+}
+
+.aw-card.grand .aw-env-flap {
+  background:
+    radial-gradient(circle at 50% 49%, var(--brand) 0 12px, var(--brand-lo) 12.5px 14px, transparent 14.5px),
+    linear-gradient(180deg, #f6d585, #d9a23f);
+}
+
+/* the award's words come out after the envelope */
+.aw-card:not(.aw-wait) .aw-count {
+  animation: aw-fade .3s .55s both;
+}
+
+.aw-card:not(.aw-wait) .aw-title {
+  animation: aw-stamp .5s .6s var(--spring) both;
+}
+
+.aw-card:not(.aw-wait) .aw-rule {
+  animation: aw-rule .4s .82s var(--ease) both;
+}
+
+.aw-card:not(.aw-wait) .aw-goes {
+  animation: aw-fade .3s .9s both;
+}
+
+.aw-card:not(.aw-wait) .aw-name {
+  animation: aw-in .45s 1s var(--spring) both;
+}
+
+.aw-card:not(.aw-wait) .aw-fig {
+  animation: aw-in .4s 1.18s var(--ease) both;
+}
+
+.aw-card:not(.aw-wait) .aw-line {
+  animation: aw-fade .4s 1.3s both;
+}
+
+.aw-card.aw-wait {
+  animation: aw-fade .3s both;
+}
+
+@keyframes aw-env {
+  0% {
+    opacity: 0;
+    transform: scale(.7);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  24% {
+    transform: scale(1);
+  }
+  56% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(70px) scale(.94);
+  }
+}
+
+@keyframes aw-flap {
+  from {
+    transform: rotateX(0);
+  }
+  to {
+    transform: rotateX(180deg);
+  }
+}
+
+@keyframes aw-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* the list that stays */
+.aw-row {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border-color: var(--line);
+}
+
+.aw-row.mine {
+  background:
+    linear-gradient(180deg, rgba(232, 185, 85, .1), rgba(232, 185, 85, .02)),
+    var(--rubber-2);
+  border-color: rgba(232, 185, 85, .32);
+}
+
+.aw-row.grand {
+  border: 2px solid var(--gold);
+  background:
+    linear-gradient(180deg, rgba(232, 185, 85, .16), rgba(232, 185, 85, .03)),
+    var(--rubber-2);
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .85);
+}
+
+.aw-n {
+  color: var(--mute);
+}
+
+.aw-row-name {
+  color: var(--ink);
+}
+
+.aw-row-fig {
+  color: var(--ink-2);
+}
+
+.aw-row-fig.loss .t-money {
+  color: var(--red);
+}
+
+/* your night */
+.aw-badge {
+  border-color: rgba(232, 185, 85, .36);
+  background: var(--gold-50);
+  color: var(--gold-hi);
+}
+
+.aw-badge.new {
+  border-color: transparent;
+  background: linear-gradient(180deg, #fbe39b, #efc463 40%, #d9a23f);
+  color: #2a1b00;
+}
+
+.aw-saved {
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- sheets: share, «سجلي» */
+
+.sg-back {
+  background: rgba(5, 5, 6, .72);
+}
+
+.sg-sheet,
+.cr-sheet {
+  background:
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-1) 160px),
+    var(--rubber-1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), var(--sh-3);
+  color: var(--ink);
+}
+
+.sg-img {
+  background: var(--rubber-0);
+  box-shadow: 0 0 0 1px var(--line), 0 16px 30px -14px rgba(0, 0, 0, .9);
+}
+
+/* «سجلي»: a rubber knob, not a paper pill */
+.cr-chip {
+  border: 0;
+  background: linear-gradient(180deg, #2a2c32, #1c1d21);
+  color: var(--ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 3px 0 #000, 0 6px 12px -6px rgba(0, 0, 0, .7);
+  transition: transform .12s var(--spring), box-shadow .12s var(--spring);
+}
+
+.cr-chip:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 #000;
+}
+
+.cr-head h2 {
+  font-family: var(--f-display);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.cr-empty {
+  color: var(--ink-2);
+}
+
+.cr-grid > div {
+  background: var(--rubber-0);
+  border-color: var(--line);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .5);
+}
+
+.cr-grid dt {
+  color: var(--mute);
+}
+
+.cr-grid dd {
+  color: var(--ink);
+}
+
+.cr-grid dd.gain {
+  color: var(--ok-700);
+}
+
+.cr-grid dd.loss {
+  color: var(--red);
+}
+
+.cr-best {
+  background:
+    linear-gradient(180deg, rgba(232, 185, 85, .11), rgba(232, 185, 85, .02)),
+    var(--rubber-2);
+  border: 1px solid rgba(232, 185, 85, .3);
+  color: var(--ink);
+}
+
+.cr-best small {
+  color: var(--ink-2);
+}
+
+.cr-sub {
+  color: var(--ink);
+}
+
+.cr-badges li {
+  border-color: var(--line-2);
+  color: var(--mute);
+}
+
+.cr-badges li b {
+  color: var(--ink-2);
+}
+
+.cr-badges li.got {
+  border: 1px solid rgba(232, 185, 85, .4);
+  background: var(--gold-50);
+  color: var(--gold);
+}
+
+.cr-badges li.got b {
+  color: var(--gold-hi);
+}
+
+.cr-nights li {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border-color: var(--line);
+}
+
+.cr-nights small {
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- «الجديد في الصالة» */
+
+.news-scrim {
+  background: rgba(5, 5, 6, .7);
+}
+
+.news-card {
+  background:
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-2) 140px),
+    var(--rubber-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 -18px 50px rgba(0, 0, 0, .6);
+}
+
+.news-grip {
+  background: var(--rubber-5);
+}
+
+.news-head {
+  border-bottom-color: var(--line-2);
+}
+
+.news-num {
+  color: var(--brand-hi);
+}
+
+.news-list li {
+  border-bottom-color: var(--line);
+}
+
+.news-classic {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- still, when asked */
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-env {
+    display: none;
+  }
+
+  .aw-card:not(.aw-wait) .aw-count,
+  .aw-card:not(.aw-wait) .aw-title,
+  .aw-card:not(.aw-wait) .aw-rule,
+  .aw-card:not(.aw-wait) .aw-goes,
+  .aw-card:not(.aw-wait) .aw-name,
+  .aw-card:not(.aw-wait) .aw-fig,
+  .aw-card:not(.aw-wait) .aw-line {
+    animation: aw-fade .3s both !important;
+  }
+
+  .results-page .result,
+  .results-page .result.first {
+    animation: aw-fade .3s both;
+  }
+
+  .results-page .result.first::after,
+  .vt-left li::before,
+  .rate .rate-key.btn-primary {
+    animation: none;
+  }
+}

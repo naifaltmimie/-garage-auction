@@ -3008,21 +3008,12 @@
   gap: 8px;
 }
 
+/* the keys are .btn blocks (ghost, primary when picked); this only sizes them */
 .rate button {
   min-height: 52px;
-  border-radius: var(--r);
-  background: var(--card);
-  border: 1px solid var(--line-2);
-  font-weight: 900;
+  padding: 0;
+  font-weight: 800;
   font-size: 22px;
-  transition: transform .12s, background-color .15s;
-}
-
-.rate button[aria-pressed='true'] {
-  background: var(--green);
-  border-color: var(--green);
-  color: #fff;
-  transform: scale(1.04);
 }
 
 .progress-dots {
