@@ -22,13 +22,75 @@
     <link rel="preconnect" href="https://mimg6cdn.haraj.com.sa" />
     <link rel="dns-prefetch" href="https://broker.emqx.io" />
     <link rel="dns-prefetch" href="https://broker.hivemq.com" />
+    <!-- home-screen app: opens without browser chrome, named and coloured like the top bar -->
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="application-name" content="مزاد الكراج" />
+    <meta name="apple-mobile-web-app-title" content="مزاد الكراج" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <!-- boot splash: painted from this file alone while the bundle downloads; React's first render
+         replaces everything inside #root. Colours are the base.css tokens (--bg, --green-900, --gold).
+         The logo is plain text in one block marked LOGO below, so a new logo is a one-block swap. -->
+    <style>
+      html, body { background: #f1f2ee; }
+      html.boot-tv, html.boot-tv body { background: #04211a; }
+      #boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #f1f2ee; color: #062f22; font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
+      #boot .boot-bar { position: absolute; top: 0; left: 0; right: 0; height: calc(58px + env(safe-area-inset-top, 0px)); background: linear-gradient(180deg, #073626 0%, #062f22 60%, #052a1e 100%); box-shadow: 0 1px 0 rgba(214, 173, 82, .6); }
+      #boot .boot-core { display: grid; justify-items: center; padding-top: calc(58px + env(safe-area-inset-top, 0px)); }
+      #boot .boot-logo { opacity: 0; transform: translateY(6px); transition: opacity .45s cubic-bezier(.2, .8, .2, 1), transform .45s cubic-bezier(.2, .8, .2, 1); }
+      #boot.is-ready .boot-logo { opacity: 1; transform: none; }
+      /* LOGO */
+      .boot-logo { display: grid; justify-items: center; font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; font-size: 56px; font-weight: 700; line-height: 1.05; color: #062f22; }
+      .boot-logo-bottom { font-size: .6em; color: #a37b25; }
+      .boot-tv .boot-logo { font-size: 104px; color: #f3f4ef; }
+      .boot-tv .boot-logo-bottom { color: #d6ad52; }
+      /* end LOGO */
+      #boot .boot-load { display: block; width: 76px; height: 3px; margin-top: 28px; border-radius: 99px; overflow: hidden; background: rgba(6, 47, 34, .12); opacity: 0; animation: boot-in .4s .45s both; }
+      #boot .boot-load i { display: block; width: 26px; height: 100%; border-radius: 99px; background: #a37b25; animation: boot-sweep 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
+      #boot noscript p { margin: 22px 0 0; font-size: 15px; color: #66746b; }
+      .boot-tv #boot { background: #04211a; }
+      .boot-tv #boot .boot-bar { display: none; }
+      .boot-tv #boot .boot-core { padding-top: 0; }
+      .boot-tv #boot .boot-load { width: 120px; background: rgba(243, 244, 239, .1); }
+      .boot-tv #boot .boot-load i { width: 40px; background: #d6ad52; }
+      @keyframes boot-in { to { opacity: 1; } }
+      @keyframes boot-sweep { from { transform: translateX(110%); } to { transform: translateX(-300%); } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .boot-logo { transition: opacity .3s linear; transform: none; }
+        #boot .boot-load i { animation: none; transform: translateX(-100%); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot" role="status" aria-label="مزاد الكراج، نفتح الصالة">
+        <div class="boot-bar"></div>
+        <div class="boot-core">
+          <div class="boot-logo" aria-hidden="true"><span class="boot-logo-top">مزاد</span><span class="boot-logo-bottom">الكراج</span></div>
+          <span class="boot-load" aria-hidden="true"><i></i></span>
+          <noscript><p>شغّل الجافاسكربت في المتصفح عشان تدخل المزاد</p></noscript>
+        </div>
+      </div>
+    </div>
+    <script>
+      // show the logo once its font is in (capped, so a slow font never holds the splash blank);
+      // the big screen («شاشة العرض», #/tv/…) boots on its own dark green
+      (function () {
+        var b = document.getElementById('boot');
+        if (!b) return;
+        if (/^#\/?tv\//.test(location.hash)) document.documentElement.classList.add('boot-tv');
+        var done = function () { b.classList.add('is-ready'); };
+        setTimeout(done, 600);
+        try {
+          var l = b.querySelector('.boot-logo'), cs = getComputedStyle(l);
+          document.fonts.load(cs.fontWeight + ' 56px ' + cs.fontFamily, 'مزاد الكراج').then(done, done);
+        } catch (e) { done(); }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
