@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import { depthOf } from '../../data/depth';
 import { loadMarket } from '../../data/market';
@@ -26,6 +26,8 @@ export function Create() {
   const [name, setName] = useState(() => store.get('mzk:name', ''));
   const [s, setS] = useState<Settings>({ ...DEFAULT_SETTINGS });
   const [custom, setCustom] = useState('');
+  const [tried, setTried] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((x) => ({ ...x, [k]: v }));
   const preset = BUDGETS.find((b) => b.amount === s.budget);
   const ok = name.trim().length >= 2 && s.budget >= 50_000;
@@ -40,7 +42,12 @@ export function Create() {
   }, []);
 
   const submit = () => {
-    if (!ok) return;
+    if (!ok) {
+      // the button stays live: a tap on it says what's missing instead of sitting there greyed out
+      setTried(true);
+      nameRef.current?.focus();
+      return;
+    }
     sound.unlock();
     const code = roomCode();
     createHostRoom(code, name.trim(), { ...s, roomName: s.roomName.trim() || `مزاد ${name.trim()}` });
@@ -48,7 +55,7 @@ export function Create() {
   };
 
   return (
-    <main className="shell narrow">
+    <main className="shell narrow create">
       <div className="page-head">
         <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
         <span className="chip chip-green">صالة جديدة</span>
@@ -69,7 +76,23 @@ export function Create() {
         <section className="card form-card">
         <label className="field">
           <span>اسمك</span>
-          <input className="input" value={name} maxLength={18} onChange={(e) => setName(e.target.value)} placeholder="نايف" autoComplete="nickname" />
+          <input
+            ref={nameRef}
+            className="input"
+            value={name}
+            maxLength={18}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="نايف"
+            autoComplete="nickname"
+            enterKeyHint="next"
+            aria-invalid={tried && name.trim().length < 2}
+            aria-describedby={tried && name.trim().length < 2 ? 'create-name-hint' : undefined}
+          />
+          {tried && name.trim().length < 2 && (
+            <small id="create-name-hint" className="field-hint" role="alert">
+              اكتب اسمك أول، حرفين على الأقل
+            </small>
+          )}
         </label>
         <label className="field">
           <span>اسم الصالة</span>
@@ -116,7 +139,7 @@ export function Create() {
           <input
             className="input"
             inputMode="numeric"
-            placeholder="مبلغ ثاني"
+            placeholder="أو اكتب مبلغ ثاني"
             value={custom}
             onChange={(e) => {
               const v = e.target.value.replace(/[^\d٠-٩]/g, '');
@@ -197,7 +220,7 @@ export function Create() {
         </div>
         </div>
 
-        <button className="btn btn-gold btn-block" style={{ minHeight: 58, fontSize: 19 }} disabled={!ok}>
+        <button className="btn btn-gold btn-block create-go" style={{ minHeight: 58, fontSize: 19 }}>
           افتح الصالة
         </button>
       </form>

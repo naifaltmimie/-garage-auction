@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useSheet } from './Bits';
 import { store } from '../../lib/util';
 
 /** Bumped with each release that has something worth announcing; a phone sees each one once. */
@@ -20,24 +21,24 @@ export function hasNews() {
 }
 
 export function WhatsNew({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [closing, setClosing] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    setClosing(false);
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
   if (!open) return null;
-  function close() {
+  return <NewsSheet onClose={onClose} />;
+}
+
+function NewsSheet({ onClose }: { onClose: () => void }) {
+  const [closing, setClosing] = useState(false);
+  const close = () => {
+    if (closing) return;
     store.set(SEEN_KEY, RELEASE);
     setClosing(true);
     window.setTimeout(onClose, 220);
-  }
+  };
+  const ref = useSheet<HTMLElement>(close);
   return (
     <div className={`news-scrim ${closing ? 'out' : ''}`} onClick={close}>
       <section
+        ref={ref}
+        tabIndex={-1}
         className="news-card"
         role="dialog"
         aria-modal="true"

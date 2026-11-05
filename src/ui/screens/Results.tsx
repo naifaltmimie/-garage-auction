@@ -28,7 +28,7 @@ export function Results({ room }: { room: RoomView }) {
   const nameOf = (id: string) => core.players.find((p) => p.id === id);
   const visible = rows.slice(rows.length - shown);
   return (
-    <main className="shell" style={{ maxWidth: 900 }}>
+    <main className="shell results-page" style={{ maxWidth: 900 }}>
       <div className="stack" style={{ gap: 16 }}>
         <div style={{ textAlign: 'center' }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>{core.settings.roomName}</div>
@@ -51,9 +51,11 @@ export function Results({ room }: { room: RoomView }) {
                   </div>
                   <div className="meta">
                     <span>{carsN(r.cars)}</span>
-                    <span>دفع {money(r.paid)}</span>
-                    <span className={r.profit >= 0 ? 'gain' : 'loss'}>ربح <span className="ltr">{signed(r.profit)}</span></span>
-                    <span>تقييم {r.ratingAvg == null ? '—' : arDigits(r.ratingAvg.toFixed(1))} من 10</span>
+                    <span>دفع <span className="ltr">{money(r.paid)}</span></span>
+                    <span className={r.profit >= 0 ? 'gain' : 'loss'}>
+                      {r.profit >= 0 ? 'ربح' : 'خسر'} <span className="ltr">{r.profit >= 0 ? signed(r.profit) : money(-r.profit)}</span>
+                    </span>
+                    <span>{r.ratingAvg == null ? 'بدون تقييم' : <>تقييم <span className="ltr">{arDigits(r.ratingAvg.toFixed(1))}</span> من 10</>}</span>
                   </div>
                   {r.awards.length > 0 && (
                     <div className="row wrap" style={{ gap: 6, marginTop: 6 }}>

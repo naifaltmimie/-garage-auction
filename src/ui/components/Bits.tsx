@@ -1,6 +1,93 @@
 import qrcode from 'qrcode-generator';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { Toast } from '../useRoom';
+
+/** Renders a modal at the end of <body>, so no stacking context or transformed ancestor can clip it. */
+export function Portal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body);
+}
+
+const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Bottom-sheet plumbing: Escape closes, focus moves into the sheet and Tab stays inside it,
+ * the page behind doesn't scroll, and focus goes back where it was when the sheet closes.
+ */
+export function useSheet<T extends HTMLElement>(onClose: () => void) {
+  const ref = useRef<T>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null;
+    const el = ref.current;
+    const body = document.body;
+    const was = body.style.overflow;
+    body.style.overflow = 'hidden';
+    el?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeRef.current();
+        return;
+      }
+      if (e.key !== 'Tab' || !el) return;
+      const f = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((x) => x.offsetParent !== null);
+      if (!f.length) return;
+      const a = f[0];
+      const z = f[f.length - 1];
+      const at = document.activeElement;
+      if (at === el || !el.contains(at)) {
+        e.preventDefault();
+        (e.shiftKey ? z : a).focus();
+      } else if (e.shiftKey && at === a) {
+        e.preventDefault();
+        z.focus();
+      } else if (!e.shiftKey && at === z) {
+        e.preventDefault();
+        a.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      body.style.overflow = was;
+      if (back && document.contains(back)) back.focus({ preventScroll: true });
+    };
+  }, []);
+  return ref;
+}
+
+/**
+ * Keeps a focused text field above the on-screen keyboard on the menu screens (home, create, join).
+ * Phones shrink the visual viewport when the keys slide up, and the browser's own scroll can leave
+ * the field under them or under the sticky header. Live auction phases are left alone.
+ */
+const LIVE = new Set(['intro', 'preview', 'bidding', 'sealed', 'dutch', 'sold', 'unsold', 'approval']);
+function guardField(e: FocusEvent) {
+  const el = e.target as HTMLElement | null;
+  if (!el || !el.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea')) return;
+  if (LIVE.has(document.documentElement.dataset.phase || '')) return;
+  const vv = window.visualViewport;
+  let t = 0;
+  const check = () => {
+    window.clearTimeout(t);
+    t = window.setTimeout(() => {
+      if (document.activeElement !== el) return;
+      const r = el.getBoundingClientRect();
+      const top = vv ? vv.offsetTop : 0;
+      const bottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      if (r.bottom > bottom - 12 || r.top < top + 72) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 140);
+  };
+  vv?.addEventListener('resize', check);
+  window.setTimeout(() => vv?.removeEventListener('resize', check), 1400);
+  check();
+}
+if (typeof document !== 'undefined' && !(window as { __mzkField?: boolean }).__mzkField) {
+  (window as { __mzkField?: boolean }).__mzkField = true;
+  document.addEventListener('focusin', guardField);
+}
 
 export function QR({ text, size = 168 }: { text: string; size?: number }) {
   const svg = useMemo(() => {

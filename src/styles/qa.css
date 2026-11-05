@@ -1,0 +1,90 @@
+/* QA sweep: the screens outside the live auction (home, join, create, how-to, showcase, voting,
+   results, awards, share, career, «الجديد»). Scoped to those screens so the auction is untouched. */
+
+/* ---------------------------------------------------------------- tap targets (44px) */
+
+.home .btn-quiet,
+.create .btn-quiet,
+.howto-page .btn-quiet,
+.results-page .btn-quiet,
+.voting-page .btn-quiet {
+  min-height: 44px;
+}
+
+.create .seg > button {
+  min-height: 44px;
+}
+
+/* ---------------------------------------------------------------- home */
+
+/* the three quiet links sit in one row instead of two loose paragraphs */
+.home .foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 6px;
+  margin: 4px 0 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* fields scroll clear of the sticky header and the keyboard */
+.home .input,
+.create .input,
+.center-screen .input {
+  scroll-margin-block: 88px 24px;
+}
+
+/* ---------------------------------------------------------------- sheets */
+
+/* the sheet itself takes focus when it opens (so Tab starts inside it); no ring on the panel */
+.cr-sheet:focus,
+.sg-sheet:focus,
+.news-card:focus {
+  outline: none;
+}
+
+/* ---------------------------------------------------------------- create */
+
+/* the custom budget is a field, not a greyed-out button: quieter placeholder, dashed edge */
+.create .budgets + .input {
+  border-style: dashed;
+}
+
+.create .budgets + .input::placeholder {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mute);
+  opacity: 1;
+}
+
+.create .budgets + .input:focus {
+  border-style: solid;
+}
+
+.create .field-hint {
+  color: var(--red, #b3261e);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.create .input[aria-invalid='true'] {
+  border-color: var(--red, #b3261e);
+}
+
+/* ---------------------------------------------------------------- showcase */
+
+/* the host's «ابدأ التقييم السري» rides along the bottom while the garages scroll by,
+   instead of waiting under the last card */
+.showcase-page .showcase-go,
+.showcase-page .showcase-wait {
+  position: sticky;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 5;
+  box-shadow: var(--sh-3);
+}
+
+/* the sheets live at the end of <body> now, so their quiet buttons need their own 44px */
+.sg-sheet .btn-quiet,
+.cr-sheet .btn-quiet {
+  min-height: 44px;
+}
