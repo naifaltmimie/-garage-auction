@@ -431,3 +431,11 @@
 .rx-chip.t-gold {
   color: var(--gold-hi);
 }
+
+/* ================================================================ gallery arrows (hover devices): rubber knobs, not paper */
+
+.g-nav {
+  background: linear-gradient(180deg, #2a2c32, #1c1d21);
+  color: var(--ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
+}
