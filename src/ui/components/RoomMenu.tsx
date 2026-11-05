@@ -166,6 +166,17 @@ function Confirm({ title, text, children }: { title: string; text: string; child
 export function RoomStatus({ room }: { room: RoomView }) {
   const core = room.snap.core;
   const [, tick] = useState(0);
+  // the phone itself knows first when the network is gone; the socket can take a while to notice
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false);
+  useEffect(() => {
+    const f = () => setOnline(navigator.onLine !== false);
+    window.addEventListener('online', f);
+    window.addEventListener('offline', f);
+    return () => {
+      window.removeEventListener('online', f);
+      window.removeEventListener('offline', f);
+    };
+  }, []);
   useEffect(() => {
     if (room.role !== 'player') return;
     const iv = setInterval(() => tick((n) => n + 1), 1000);
@@ -178,7 +189,7 @@ export function RoomStatus({ room }: { room: RoomView }) {
   let tone: 'net' | 'pause' = 'pause';
   let text = '';
   let action: React.ReactNode = null;
-  if (!room.net.connected) {
+  if (!room.net.connected || !online) {
     tone = 'net';
     text = 'الاتصال انقطع، نرجع نتصل…';
   } else if (player && (room.net.hostGone || stale)) {
