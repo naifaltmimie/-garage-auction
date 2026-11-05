@@ -408,6 +408,7 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
   return (
     <>
       <button className="btn btn-gold btn-block aw-share" onClick={make} disabled={busy}>
+        {busy && <i className="spinner sg-spin" aria-hidden />}
         {busy ? 'نجهز الصورة…' : 'شارك كراجك'}
       </button>
       {img && <SharePreview url={img.url} onShare={share} onSave={download} onClose={() => setImg(null)} />}

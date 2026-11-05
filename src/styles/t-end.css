@@ -784,3 +784,10 @@
     animation: none;
   }
 }
+
+/* the share button while the poster is drawn: a small tyre rolls in the gold */
+.aw-share .sg-spin {
+  width: 22px;
+  height: 22px;
+  filter: none;
+}

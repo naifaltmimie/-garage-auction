@@ -21,7 +21,7 @@ export function Voting({ room }: { room: RoomView }) {
         <div className="center-screen">
           <div className="vt-wait">
             <span className="vt-kicker">{done ? 'تقييمك وصل، ومحد بيدري وش عطيت' : 'التقييم السري'}</span>
-            <TireLoader size={64} label={waiting.length ? 'بانتظار تقييم الباقين' : 'الكل قيّم، النتيجة جاية'} />
+            <TireLoader size={64} label={!waiting.length ? 'الكل قيّم، النتيجة جاية' : done ? 'بانتظار تقييم الباقين' : 'الشباب يقيّمون الكراجات'} />
             {waiting.length > 0 && (
               <div className="vt-left">
                 <small>
