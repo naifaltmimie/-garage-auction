@@ -23,11 +23,10 @@
 
 .rx-f {
   position: absolute;
-  bottom: 0;
+  bottom: var(--y0, 0px);
   inset-inline-end: var(--x, 0px);
   display: block;
-  will-change: transform, opacity;
-  animation: rx-rise var(--dur, 2800ms) cubic-bezier(.22, .68, .32, 1) both;
+  animation: rx-rise var(--dur, 2800ms) cubic-bezier(.42, .08, .74, .92) both;
 }
 
 .rx-sway {
@@ -95,20 +94,20 @@
 }
 .rx-f.emo.mine .rx-n { border-color: var(--green); }
 
-/* buoyant rise: quick launch, drag slows it, fades near the top */
+/* buoyant rise: it pops in place first, picks up speed, cruises up the lane (one eased segment) */
 @keyframes rx-rise {
-  0% { transform: translate3d(0, 10px, 0); opacity: 0; }
-  6% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { transform: translate3d(0, calc(var(--lane) * var(--rise, .9) * -1), 0); opacity: 0; }
+  0% { transform: translate3d(0, 10px, 0); }
+  100% { transform: translate3d(0, calc((var(--lane) - 52px - var(--y0, 0px)) * var(--rise, .9) * -1), 0); }
 }
 
 /* drift: leans one way, swings back past centre, settles on its own random heading */
 @keyframes rx-sway {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  5% { opacity: 1; }
   28% { transform: translate3d(calc(var(--dx) * .6), 0, 0) rotate(calc(var(--rot) * .7)); }
   62% { transform: translate3d(calc(var(--dx) * -.3), 0, 0) rotate(calc(var(--rot) * -.45)); }
-  100% { transform: translate3d(var(--dx), 0, 0) rotate(var(--rot)); }
+  74% { opacity: 1; }
+  100% { transform: translate3d(var(--dx), 0, 0) rotate(var(--rot)); opacity: 0; }
 }
 
 /* a damped spring: pops past full size, undershoots once, rests */

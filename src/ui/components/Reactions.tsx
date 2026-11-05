@@ -86,39 +86,64 @@ export function ReactionLayer({ room }: { room: RoomView }) {
   const myId = room.myId;
   const myName = core.players.find((p) => p.id === myId)?.name ?? '';
 
+  const spawnAt = useRef(0);
+  const trayRef = useRef<HTMLDivElement>(null);
+  const laneRef = useRef(geo.lane);
+  laneRef.current = geo.lane;
+
   const add = useCallback(
     (ev: ReactEvent) => {
       const r = REACT_BY_KEY.get(ev.k);
       if (!r) return;
-      const n = ++seq.current;
-      const dur = Math.round(rand(2500, 3100));
-      const side = Math.random() < 0.5 ? -1 : 1;
-      const f: Floater = {
-        id: `${ev.i}#${n}`,
-        label: r.label,
-        tone: r.tone ?? 'plain',
-        emoji: !!r.emoji,
-        name: ev.p === myId ? 'أنت' : ev.n,
-        mine: ev.p === myId,
-        dur,
-        style: {
-          ['--x' as string]: `${Math.round(rand(0, 46))}px`,
-          ['--dx' as string]: `${Math.round(side * rand(12, 30))}px`,
-          ['--rot' as string]: `${(side * rand(2, 7)).toFixed(1)}deg`,
-          ['--rise' as string]: rand(0.78, 1).toFixed(2),
-          ['--dur' as string]: `${dur}ms`,
-          ['--slot' as string]: n % 6,
-        },
-      };
-      setItems((list) => [...list.slice(-(MAX_ON_SCREEN - 1)), f]);
-      const t = setTimeout(() => {
-        timers.current.delete(t);
-        setItems((list) => list.filter((x) => x.id !== f.id));
-      }, dur + 60);
-      timers.current.add(t);
+      // a burst comes out one after another (240 ms apart) instead of on top of each other
+      const t0 = performance.now();
+      const wait = Math.max(0, spawnAt.current - t0);
+      if (wait > 1200) return; // a flood: drop it rather than queue forever
+      spawnAt.current = t0 + wait + 240;
+      if (wait > 0) {
+        const t = setTimeout(() => {
+          timers.current.delete(t);
+          spawn(ev, r);
+        }, wait);
+        timers.current.add(t);
+      } else spawn(ev, r);
     },
+    // spawn only reads refs and myId
     [myId],
   );
+
+  function spawn(ev: ReactEvent, r: NonNullable<ReturnType<typeof REACT_BY_KEY.get>>) {
+    const n = ++seq.current;
+    const dur = Math.round(rand(2500, 3100));
+    const side = Math.random() < 0.5 ? -1 : 1;
+    // two loose columns so neighbours don't land on each other; with the tray open, start above it
+    const tray = trayRef.current?.offsetHeight ?? 0;
+    const y0 = tray ? Math.max(0, Math.min(tray + 8, laneRef.current - 112)) : 0;
+    const f: Floater = {
+      id: `${ev.i}#${n}`,
+      label: r.label,
+      tone: r.tone ?? 'plain',
+      emoji: !!r.emoji,
+      name: ev.p === myId ? 'أنت' : ev.n,
+      mine: ev.p === myId,
+      dur,
+      style: {
+        ['--x' as string]: `${(n % 2) * 58 + Math.round(rand(0, 14))}px`,
+        ['--y0' as string]: `${y0}px`,
+        ['--dx' as string]: `${Math.round(side * rand(12, 30))}px`,
+        ['--rot' as string]: `${(side * rand(2, 7)).toFixed(1)}deg`,
+        ['--rise' as string]: rand(0.78, 1).toFixed(2),
+        ['--dur' as string]: `${dur}ms`,
+        ['--slot' as string]: n % 6,
+      },
+    };
+    setItems((list) => [...list.slice(-(MAX_ON_SCREEN - 1)), f]);
+    const t = setTimeout(() => {
+      timers.current.delete(t);
+      setItems((list) => list.filter((x) => x.id !== f.id));
+    }, dur + 60);
+    timers.current.add(t);
+  }
 
   useEffect(
     () =>
@@ -148,7 +173,6 @@ export function ReactionLayer({ room }: { room: RoomView }) {
   }, [on]);
 
   // the tray closes on its own, on a tap elsewhere, on Escape, and when the lot is over
-  const trayRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   const [poke, setPoke] = useState(0);
   useEffect(() => {
