@@ -1,0 +1,134 @@
+/* مزاد الكراج — brand layer
+   The mark is a gavel whose head is a Saudi plate (src/ui/components/Logo.tsx).
+   Rules: the mark is gold on green or green on plate-white, never outlined, never recoloured per screen;
+   the name is IBM Plex Sans Arabic Bold, never letter-spaced (the Arabic must stay joined);
+   the Latin twin sits under the Arabic the way the plate prints it, tracked wide, in small caps size. */
+
+:root {
+  --brand-gold: var(--gold-hi);
+  --brand-ink: var(--green-900);
+  --brand-plate: var(--plate);
+}
+
+/* ---------------------------------------------------------------- header lockup */
+
+.brand {
+  gap: 10px;
+}
+
+.brand-seal {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--brand-gold);
+  background:
+    linear-gradient(160deg, rgba(214, 173, 82, .2), rgba(214, 173, 82, .04) 70%),
+    rgba(4, 33, 26, .35);
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 173, 82, .5),
+    inset 0 0 0 3px rgba(4, 33, 26, .55),
+    inset 0 0 0 4px rgba(214, 173, 82, .16),
+    0 1px 0 rgba(255, 255, 255, .06);
+}
+
+.brand-seal .gavelmark,
+.brand-seal .logomark {
+  width: 30px;
+  height: 30px;
+  color: var(--brand-gold);
+}
+
+.brand-name {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1;
+  word-spacing: -.02em;
+  letter-spacing: 0;
+}
+
+.brand-name b {
+  font-weight: 700;
+}
+
+/* Latin twin under the name, only where the header has room (Home) */
+.apphead .brand-name::after {
+  content: 'MAZAD AL-KARAJ';
+  display: block;
+  margin-top: 5px;
+  direction: ltr;
+  text-align: right;
+  font-family: var(--f-ui);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  margin-right: -.2em;
+  line-height: 1;
+  color: rgba(214, 173, 82, .72);
+  white-space: nowrap;
+}
+
+@media (max-width: 370px) {
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-seal {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-seal .gavelmark,
+  .brand-seal .logomark {
+    width: 27px;
+    height: 27px;
+  }
+
+  .brand-name {
+    font-size: 18px;
+  }
+}
+
+/* ---------------------------------------------------------------- standalone wordmark */
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: .4em;
+  color: inherit;
+}
+
+.wordmark-mark {
+  flex: none;
+  color: var(--brand-gold);
+}
+
+.wordmark-text {
+  display: grid;
+  gap: .22em;
+  line-height: 1;
+}
+
+.wordmark-name {
+  font-family: var(--f-display);
+  font-weight: 700;
+  white-space: nowrap;
+  word-spacing: -.02em;
+}
+
+.wordmark-name b {
+  color: var(--brand-gold);
+  font-weight: 700;
+}
+
+.wordmark-twin {
+  direction: ltr;
+  justify-self: start;
+  font-size: .42em;
+  font-weight: 700;
+  letter-spacing: .26em;
+  color: var(--brand-gold);
+  opacity: .75;
+  white-space: nowrap;
+}
