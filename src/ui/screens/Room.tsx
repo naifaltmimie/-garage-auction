@@ -154,7 +154,9 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
       )}
       <div className="grow" />
       {off && <span className="tb-off" role="status"><i />مقطوع</span>}
-      {me && !me.spectator && core.phase !== 'lobby' && (
+      {/* the wallet rides along during the lots; outside them the bar carries the logo instead (both
+          don't fit beside three knobs on a 360px phone) */}
+      {me && !me.spectator && inGame && (
         <div
           className={`wallet ${me.cash < core.settings.budget * 0.15 ? 'low' : ''}`}
           aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}
