@@ -432,13 +432,13 @@
   place-items: center;
   perspective: 800px;
   pointer-events: none;
-  animation: aw-env 1s var(--ease) both;
+  animation: aw-env .82s var(--ease) both;
 }
 
 .aw-env::before,
 .aw-env-flap {
   grid-area: 1 / 1;
-  width: min(74%, 300px);
+  width: min(64%, 260px);
   aspect-ratio: 16 / 10;
 }
 
@@ -456,10 +456,11 @@
   display: block;
   transform-origin: 50% 0;
   clip-path: polygon(0 0, 100% 0, 50% 60%);
+  backface-visibility: hidden;
   background:
     radial-gradient(circle at 50% 49%, var(--brand) 0 12px, var(--brand-lo) 12.5px 14px, transparent 14.5px),
     linear-gradient(180deg, #3a3c44, #26282d);
-  animation: aw-flap .34s .2s cubic-bezier(.5, 0, .3, 1) both;
+  animation: aw-flap .3s .16s cubic-bezier(.5, 0, .3, 1) both;
 }
 
 .aw-card.grand .aw-env::before {
@@ -521,13 +522,13 @@
   24% {
     transform: scale(1);
   }
-  56% {
+  54% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(70px) scale(.94);
+    transform: translateY(120px) scale(.9);
   }
 }
 
