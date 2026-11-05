@@ -89,8 +89,15 @@ const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offs
   const { ms } = timeLeft(core, now);
   const [total] = useState(() => Math.max(400, ms));
   const sec = Math.max(1, Math.ceil(ms / 1000));
+  // the start lamps: one lights each second over the last five, like the grid before a race
+  const lit = Math.max(0, Math.min(5, 6 - sec));
   return (
-    <div className="idn-count idn-step" style={{ ['--d' as string]: 5.5 }} role="timer" aria-label={`أول سيارة بعد ${sec} ثواني`}>
+    <div className={`idn-count idn-step ${sec <= 1 ? 'final' : ''}`} style={{ ['--d' as string]: 5.5 }} role="timer" aria-label={`أول سيارة بعد ${sec} ثواني`}>
+      <span className="idn-lights" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <i key={i} className={i < lit ? 'on' : undefined} />
+        ))}
+      </span>
       <small>أول سيارة بعد</small>
       <span key={sec} className="idn-count-n fx-count ltr">
         {sec}

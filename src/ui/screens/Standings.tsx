@@ -68,7 +68,7 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
                     {carsN(cars)}، رصيد {money(p.cash)}
                   </div>
                 </div>
-                <span className={`t-money ltr ${profit >= 0 ? 'gain' : 'loss'}`}>{signed(profit)}</span>
+                <span className={`t-money ltr ${profit > 0 ? 'gain' : profit < 0 ? 'loss' : 'even'}`}>{signed(profit)}</span>
               </button>
             ))}
             {core.players.filter((p) => p.spectator).length > 0 && (

@@ -11,6 +11,16 @@ import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 import { useBack } from '../App';
 import { useEffect } from 'react';
+import { TireLoader } from '../components/TireLoader';
+
+/** The room code on a rubber plate: a sunk well with tread cut in and two bolts, the letters in white. */
+export function CodePlate({ code, className }: { code: string; className?: string }) {
+  return (
+    <div className={['code-plate', className].filter(Boolean).join(' ')}>
+      <span className="code">{code}</span>
+    </div>
+  );
+}
 
 const SPEED_AR: Record<Speed, string> = { fast: 'سريع', normal: 'عادي', calm: 'هادي' };
 const MIX_AR = Object.fromEntries(MARKETS.map((x) => [x.id, x.label])) as Record<Mix, string>;
@@ -57,16 +67,33 @@ export function Lobby({ room }: { room: RoomView }) {
     <main className="shell" style={{ maxWidth: 980 }}>
       <div className="stack" style={{ gap: 14 }}>
         <div className="rise" style={{ textAlign: 'center', paddingTop: 4 }}>
-          <span className="chip chip-green">
+          <span className="chip chip-live">
             <i className="dot" /> الصالة مفتوحة
           </span>
           <h1 className="section-title" style={{ fontSize: 'clamp(32px, 9vw, 46px)', marginTop: 8 }}>{s.roomName || 'مزاد الكراج'}</h1>
         </div>
 
+        {!room.host && (
+          <section className="card lobby-wait" aria-label="بانتظار الدلال">
+            <TireLoader size={60} label="بانتظار الدلال يبدأ…" />
+            <p className="lw-sub">
+              {host ? <><b>{host.name}</b> يفتح المزاد بأي لحظة، </> : null}جهّز نفسك
+            </p>
+            <div className="lw-rack" aria-label={`بالصالة ${active.length}`}>
+              {active.map((p) => (
+                <span className="lw-seat" key={p.id}>
+                  <Paddle n={p.paddle} me={p.id === room.myId} />
+                  <small>{p.id === room.myId ? 'أنت' : p.name}</small>
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="lobby-grid">
           <section className="card codebox">
             <div className="t-label">كود الصالة</div>
-            <div className="code">{room.code}</div>
+            <CodePlate code={room.code} />
             <QR text={link} />
             <div className="share-row">
               <button className="btn btn-primary" onClick={share}>
@@ -126,7 +153,15 @@ export function Lobby({ room }: { room: RoomView }) {
                     )}
                   </div>
                 ))}
-                {active.length < 2 && <div className="empty-slot">بانتظار الشباب يدخلون…</div>}
+                {active.length < 2 && (
+                  <div className="empty-slot" role="status">
+                    <span className="es-tire" aria-hidden="true" />
+                    <span className="es-tx">
+                      <b>بانتظار الشباب يدخلون…</b>
+                      <small>أرسل لهم الرابط، أو خلهم يصوّرون الكود</small>
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -210,12 +245,7 @@ export function Lobby({ room }: { room: RoomView }) {
             </button>
             <small className="mute" style={{ textAlign: 'center' }}>خل جوالك مفتوح على الصفحة، المزاد يمشي من عندك</small>
           </div>
-        ) : (
-          <div className="card card-pad" style={{ textAlign: 'center' }}>
-            <div className="t-display" style={{ fontSize: 24 }}>بانتظار {host?.name ?? 'المضيف'} يبدأ المزاد</div>
-            <small className="mute">جهّز نفسك، أول سيارة بتطلع أول ما يضغط ابدأ</small>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {edit && room.host && <SettingsDrawer room={room} onClose={() => setEdit(false)} />}

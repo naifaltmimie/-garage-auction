@@ -1,1 +1,715 @@
-/* room: tyre-theme fixes and polish for this area (imported after theme.css, so these win) */
+/* room: tyre-theme fixes and polish for this area (imported after theme.css, so these win)
+   The room around the auction: the top bar, the status pills, joining and the waits, the lobby,
+   creating a room, the hall opening, how-to and the standings sheet. */
+
+/* ================================================================ top bar: a dashboard in tread */
+
+.topbar {
+  gap: 6px;
+  padding-inline: 10px;
+}
+
+/* the knobs: 44px to the thumb */
+.topbar .tb-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ink-2);
+}
+
+.topbar .tb-btn svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* a switch that's on: white glyph and a small red pilot lamp, never a gold ring */
+.topbar .tb-btn[aria-pressed='true'] {
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
+}
+
+.topbar .tb-btn[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  inset-inline-start: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--brand-hi);
+  box-shadow: 0 0 0 1.5px #000;
+}
+
+.topbar .tb-btn[aria-pressed='true']:active,
+.topbar .tb-btn:active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 #000;
+}
+
+/* instrument wells: the lot counter and the wallet sit sunk into the bar like gauges */
+.tb-lot,
+.wallet {
+  position: relative;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #08090a, #0f1012);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, .85),
+    inset 0 0 0 1px rgba(255, 255, 255, .06),
+    0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.tb-lot {
+  justify-items: center;
+  gap: 2px;
+  min-width: 50px;
+  padding: 6px 9px 6px;
+}
+
+.tb-lot small {
+  font-size: 10px;
+  color: var(--mute);
+  letter-spacing: .02em;
+}
+
+.tb-lot-n b {
+  font-size: 18px;
+  color: #fff;
+}
+
+.tb-lot-n span {
+  color: var(--mute);
+}
+
+.tb-lot.is-live {
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, .85),
+    inset 0 0 0 1px rgba(229, 38, 45, .35),
+    0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.topbar .live {
+  color: #ff9a9d;
+}
+
+.topbar .live i {
+  background: var(--brand-hi);
+  box-shadow: 0 0 0 2.5px rgba(229, 38, 45, .25);
+}
+
+.wallet {
+  gap: 2px;
+  padding: 6px 10px 9px;
+}
+
+.wallet small {
+  color: var(--mute);
+  font-size: 10px;
+}
+
+.wallet .wg {
+  color: var(--ink-2);
+}
+
+.wallet b {
+  color: #fff;
+  font-size: 17px;
+}
+
+.wallet.low b {
+  color: #ffb3b5;
+}
+
+/* a fuel gauge under the cash: how much of the night's budget is left */
+.w-gauge {
+  position: absolute;
+  inset-inline: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .08);
+  overflow: hidden;
+}
+
+.w-gauge > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-2);
+  transform-origin: right center;
+  transform: scaleX(var(--f, 1));
+  transition: transform .7s var(--ease);
+}
+
+.wallet.low .w-gauge > i {
+  background: var(--brand-hi);
+}
+
+/* the night's progress along the bar's lower edge: caliper red, no glow */
+.tb-progress {
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-lo), var(--brand));
+  box-shadow: none;
+}
+
+.tb-off {
+  height: 28px;
+  background: #1a0d0e;
+  box-shadow: inset 0 0 0 1px rgba(255, 74, 79, .35);
+  color: #ffb3b5;
+}
+
+.tb-off i {
+  background: var(--brand-hi);
+}
+
+/* small phones: the knobs look 40px but still take a 44px touch */
+@media (max-width: 380px) {
+  .topbar {
+    gap: 4px;
+    padding-inline: 8px;
+  }
+
+  .topbar .tb-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+
+  .topbar .tb-btn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+  }
+
+  .tb-lot {
+    min-width: 46px;
+    padding-inline: 7px;
+  }
+
+  .wallet {
+    padding-inline: 8px;
+  }
+
+  .wallet b {
+    font-size: 15.5px;
+  }
+}
+
+/* ================================================================ the room code on a rubber plate */
+
+.code-plate {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 330px);
+  padding: 16px 30px 15px;
+  border-radius: 14px;
+  background:
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, #0b0c0d, #16171a);
+  box-shadow:
+    inset 0 3px 10px rgba(0, 0, 0, .9),
+    inset 0 0 0 1px rgba(255, 255, 255, .06),
+    0 0 0 4px #1e1f23,
+    0 0 0 5px rgba(255, 255, 255, .07),
+    0 12px 22px -10px rgba(0, 0, 0, .8);
+  margin: 5px 0;
+}
+
+/* two bolts holding the plate */
+.code-plate::before,
+.code-plate::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 99px;
+  background: radial-gradient(circle at 35% 30%, #b9bcc3, #4a4d54 60%, #26282d);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .7), inset 0 0 0 .5px rgba(0, 0, 0, .5);
+}
+
+.code-plate::before {
+  left: 11px;
+}
+
+.code-plate::after {
+  right: 11px;
+}
+
+.code-plate .code {
+  font-family: var(--f-num);
+  font-size: clamp(38px, 11.6vw, 50px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .16em;
+  margin-right: -.16em;
+  color: #fff;
+  text-shadow: 0 2px 0 #000, 0 -1px 0 rgba(255, 255, 255, .06);
+}
+
+/* the codebox's code may show in the menu sheet too: keep that one quiet */
+.rm-code {
+  color: var(--ink-2);
+}
+
+/* ================================================================ joining and the waits */
+
+.join-logo {
+  justify-self: center;
+}
+
+.join-line {
+  margin: 0;
+  text-align: center;
+}
+
+.wait-screen {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.ws-title {
+  font-size: clamp(28px, 8.4vw, 34px);
+  color: #fff;
+  line-height: 1.15;
+}
+
+.ws-loader {
+  margin-top: 6px;
+}
+
+.ws-loader .tl-label {
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.ws-help {
+  margin: -6px 0 0;
+  max-width: 30ch;
+  color: var(--mute);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* the player in the lobby, waiting on the host */
+.lobby-wait {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 16px 16px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    var(--tex-tread) center top / 30px 18px no-repeat,
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+}
+
+.lobby-wait .tl-label {
+  max-width: none;
+  font-family: var(--f-display);
+  font-size: clamp(22px, 6.6vw, 27px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.lobby-wait .tire-loader {
+  gap: 12px;
+}
+
+.lw-sub {
+  margin: -2px 0 0;
+  color: var(--ink-2);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.lw-sub b {
+  color: #fff;
+  font-weight: 800;
+}
+
+.lw-rack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 14px;
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-2);
+}
+
+.lw-seat {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 48px;
+  animation: room-pop .55s var(--spring) both;
+}
+
+.lw-seat small {
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mute);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* paddles pop up as people walk in (each row mounts once, so nothing replays) */
+.player-row > .paddle {
+  animation: room-pop .55s var(--spring) .06s both;
+}
+
+@keyframes room-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.55) rotate(-10deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the host, waiting on the players */
+.empty-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-color: var(--line-2);
+  background: rgba(0, 0, 0, .18);
+}
+
+.es-tire {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  background: var(--tex-tire) center / contain no-repeat;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .6));
+  animation: tire-roll 1.1s linear infinite;
+}
+
+.es-tx {
+  display: grid;
+  gap: 2px;
+  text-align: start;
+}
+
+.es-tx b {
+  color: var(--ink-2);
+  font-size: 14.5px;
+}
+
+.es-tx small {
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ================================================================ status chips and pills */
+
+/* «open»: live, so caliper red with a breathing lamp (green stays for good news) */
+.chip-live {
+  background: rgba(229, 38, 45, .1);
+  border-color: rgba(229, 38, 45, .38);
+  color: #ffc9cb;
+}
+
+.chip-live .dot {
+  background: var(--brand-hi);
+  box-shadow: 0 0 0 2.5px rgba(229, 38, 45, .22);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+/* the room's status line: a rubber pill under the bar */
+.rs-pill {
+  min-height: 44px;
+  padding-inline: 14px 8px;
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-3));
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    inset 0 0 0 1px rgba(255, 255, 255, .06),
+    0 2px 0 #000,
+    0 12px 26px -8px rgba(0, 0, 0, .85);
+}
+
+.room-status:not(.net) .rs-pill {
+  padding-inline-end: 6px;
+}
+
+/* paused: a pause mark in amber */
+.room-status .rs-pill i {
+  width: 10px;
+  height: 12px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--amber) 0 34%, transparent 34% 66%, var(--amber) 66%);
+}
+
+/* reconnecting, host away: a small tyre that keeps rolling */
+.room-status.net .rs-pill i {
+  width: 22px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--tex-tire) center / contain no-repeat;
+  animation: tire-roll .9s linear infinite;
+}
+
+.room-status.net .rs-pill {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    inset 0 0 0 1px rgba(242, 173, 50, .3),
+    0 2px 0 #000,
+    0 12px 26px -8px rgba(0, 0, 0, .85);
+}
+
+.rs-act {
+  min-height: 34px;
+  background: linear-gradient(180deg, #f2393f, #c3161d);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 2px 0 #6e0a0f;
+  transition: transform .12s var(--spring), box-shadow .12s var(--spring);
+}
+
+.rs-act:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 0 0 #6e0a0f;
+}
+
+/* ================================================================ create: tactile controls */
+
+.create .page-head .chip-live .dot {
+  animation: none;
+}
+
+/* markets and budgets: rubber keys on a deck; pressed they sink, chosen they rise with a red rim */
+.market,
+.budget {
+  border-color: var(--line);
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .045),
+    0 3px 0 #050506,
+    0 8px 14px -8px rgba(0, 0, 0, .8);
+}
+
+/* the spotlight under the finger: neutral, never a brown wash */
+.market::before {
+  background: radial-gradient(150px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 70%);
+}
+
+.market[aria-checked='true']::before {
+  opacity: 0;
+}
+
+.market[aria-checked='true'],
+.budget[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: linear-gradient(180deg, var(--rubber-4), var(--rubber-3));
+  box-shadow:
+    inset 0 0 0 1px var(--brand),
+    inset 0 1px 0 rgba(255, 255, 255, .07),
+    0 4px 0 #050506,
+    0 12px 18px -8px rgba(0, 0, 0, .9);
+  transform: translateY(-2px);
+}
+
+.market:active,
+.budget:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .03),
+    0 1px 0 #050506;
+}
+
+.market[aria-checked='true']:active,
+.budget[aria-pressed='true']:active {
+  box-shadow:
+    inset 0 0 0 1px var(--brand),
+    0 1px 0 #050506;
+}
+
+.market[aria-checked='true'] b,
+.budget[aria-pressed='true'] b {
+  color: #fff;
+}
+
+.market-count {
+  background: rgba(0, 0, 0, .35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+.market[aria-checked='true'] .market-count {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* segmented keys: the chosen key stands up out of the well with a red strip at its foot */
+.seg > button {
+  border-radius: 10px;
+}
+
+.seg > button[aria-pressed='true'] {
+  background: linear-gradient(180deg, #3b3e46, var(--rubber-4));
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .12),
+    inset 0 -3px 0 var(--brand),
+    0 3px 0 #000,
+    0 6px 10px -4px rgba(0, 0, 0, .8);
+  transform: translateY(-1px);
+}
+
+.seg > button[aria-pressed='true']:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 0 -3px 0 var(--brand), 0 1px 0 #000;
+}
+
+/* steppers: two knobs either side of a sunk readout */
+.stepper button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2a2c32, #1c1d21);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
+}
+
+.stepper button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 #000;
+}
+
+.stepper output {
+  color: #fff;
+}
+
+/* toggles: rubber rows; the switch thumb is a little knob */
+.toggle {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border-color: var(--line);
+}
+
+/* ================================================================ the hall opening: a race start */
+
+/* five start lamps light one a second over the last five; the number slams in under them */
+.idn-lights {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #0a0b0c, #141518);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .85), inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+.idn-lights > i {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 99px;
+  background: radial-gradient(circle at 40% 35%, #2b2d33, #121316 70%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .9), 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.idn-lights > i::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 38% 32%, #ff9a9d, var(--brand-hi) 38%, var(--brand) 62%, var(--brand-lo));
+  opacity: 0;
+  transform: scale(.6);
+  transition: opacity .1s linear, transform .3s var(--spring);
+}
+
+.idn-lights > i.on::after {
+  opacity: 1;
+  transform: none;
+}
+
+.idn-count .idn-count-n {
+  font-family: var(--f-num);
+  font-size: 92px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 0 #000;
+}
+
+.idn-count .idn-count-n.fx-count {
+  animation: room-slam .48s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+
+.idn-count.final .idn-count-n {
+  color: var(--gold-hi);
+}
+
+@keyframes room-slam {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ================================================================ standings and how-to */
+
+.standing .t-money.even {
+  color: var(--ink-2);
+}
+
+.howto li::before {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 2px 0 #6e0a0f;
+}
+
+/* ================================================================ reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .lw-seat,
+  .player-row > .paddle,
+  .idn-count .idn-count-n.fx-count {
+    animation: none;
+  }
+
+  .chip-live .dot {
+    animation: none;
+  }
+
+  .es-tire,
+  .room-status.net .rs-pill i {
+    animation: tire-roll 3s linear infinite;
+  }
+
+  .idn-lights > i::after,
+  .w-gauge > i {
+    transition: none;
+  }
+
+  .market[aria-checked='true'],
+  .budget[aria-pressed='true'],
+  .seg > button[aria-pressed='true'] {
+    transform: none;
+  }
+}
