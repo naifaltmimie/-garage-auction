@@ -151,7 +151,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
         </div>
         <div className="dc-meta">
           <span>
-            ينزل <b className="t-money">{money(plan.step)}</b> كل {(plan.every / 1000).toLocaleString('ar-SA', { maximumFractionDigits: 2 })} ث
+            ينزل <b className="t-money">{money(plan.step)}</b> كل {String(plan.every / 1000)} ث
           </span>
           {!spectator && <span>عليك مع السعي <b className="t-money">{money(total)}</b></span>}
         </div>

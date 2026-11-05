@@ -248,7 +248,7 @@ function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void
             <button aria-pressed={s.estimate} onClick={() => set({ estimate: !s.estimate })}>التقدير {s.estimate ? 'يظهر' : 'مخفي'}</button>
             <button aria-pressed={s.covered} onClick={() => set({ covered: !s.covered })}>تحت الغطا</button>
             <button aria-pressed={s.sealed} onClick={() => set({ sealed: !s.sealed })}>ظرف مختوم</button>
-            <button aria-pressed={s.dutch !== false} onClick={() => set({ dutch: s.dutch === false })}>المزاد الهولندي (ينزل السعر)</button>
+            <button aria-pressed={s.dutch !== false} aria-label="المزاد الهولندي (ينزل السعر)" title="المزاد الهولندي (ينزل السعر)" onClick={() => set({ dutch: s.dutch === false })}>هولندي</button>
             <button aria-pressed={s.fee > 0} onClick={() => set({ fee: s.fee > 0 ? 0 : 2.5 })}>السعي</button>
           </div>
           <button className="btn btn-primary btn-block" onClick={onClose}>تمام</button>

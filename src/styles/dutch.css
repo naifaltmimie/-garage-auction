@@ -4,6 +4,7 @@
   --dc-ink: #f4efe0;
   --dc-hot: var(--gold-hi);
   --dc-board: var(--green-950);
+  grid-template-columns: minmax(0, 1fr);
   gap: 9px;
 }
 .dutch-panel[data-heat='1'] { --dc-ink: #f6e7bd; }
@@ -44,10 +45,8 @@
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--ink-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   animation: dc-fade .35s var(--ease) both;
 }
 .dutch-panel[data-heat='3'] .dc-call { color: var(--red); }
