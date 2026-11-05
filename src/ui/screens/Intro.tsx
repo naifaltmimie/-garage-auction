@@ -1,6 +1,7 @@
 import { marketOf } from '../../engine/markets';
 import { arDigits, carsN, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
+import { BackgroundPaths } from '../components/fx/BackgroundPaths';
 
 export function Intro({ room }: { room: RoomView }) {
   const core = room.snap.core!;
@@ -9,7 +10,8 @@ export function Intro({ room }: { room: RoomView }) {
   const s = core.settings;
   return (
     <main className="shell narrow">
-      <div className="intro-screen">
+      <div className="intro-screen fx-host">
+        <BackgroundPaths />
         <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>{s.roomName}</div>
           <div className="market-banner">
@@ -18,7 +20,12 @@ export function Intro({ room }: { room: RoomView }) {
             <span>{marketOf(s.mix).note}</span>
           </div>
           <div className="t-display">{core.callout?.text ?? 'حيّاكم في مزاد الكراج'}</div>
-          <div className="countdown">{arDigits(Math.max(1, Math.ceil(ms / 1000)))}</div>
+          <div className="countdown">
+            {/* keyed per second, so each number lands like a dial clicking over */}
+            <span key={Math.max(1, Math.ceil(ms / 1000))} className="fx-count">
+              {arDigits(Math.max(1, Math.ceil(ms / 1000)))}
+            </span>
+          </div>
           <div className="row wrap" style={{ justifyContent: 'center' }}>
             <span className="chip chip-gold">كل واحد معه {money(s.budget)}</span>
             <span className="chip">الكراج يشيل {carsN(s.garage)}</span>

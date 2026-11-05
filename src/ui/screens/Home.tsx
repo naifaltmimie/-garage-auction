@@ -6,6 +6,7 @@ import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util'
 import { go } from '../App';
 import { Photo } from '../components/Gallery';
 import { WhatsNew, hasNews } from '../components/WhatsNew';
+import { BackgroundPaths } from '../components/fx/BackgroundPaths';
 import { GavelMark } from './Room';
 
 /** A few real cars from tonight's market, for the front page. */
@@ -75,6 +76,7 @@ export function Home() {
 
       <main className="shell narrow stack" style={{ gap: 18, paddingTop: 18 }}>
         <section className="intro">
+          <BackgroundPaths />
           <h1>مزاد سيارات على أصوله</h1>
           <p>سيارات من السوق السعودي بصور إعلاناتها وتقرير فحصها ولوحاتها. سُم عليها مع الشباب، وابنِ أقوى كراج قبل ما تنزل المطرقة.</p>
           <div className="cta">
