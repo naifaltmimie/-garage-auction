@@ -588,7 +588,7 @@ html.tv-mode body {
   height: 10px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.4);
-  transition: transform 0.3s var(--ease), background-color 0.3s;
+  transition: transform 0.3s var(--ease);
 }
 
 .tv-dots i.on {
@@ -763,7 +763,6 @@ html.tv-mode body {
   font-weight: 700;
   line-height: 1;
   color: var(--ink);
-  transition: color 0.2s;
 }
 
 .tv-clock-n small {
@@ -784,7 +783,7 @@ html.tv-mode body {
   border-radius: inherit;
   background: var(--green);
   transform-origin: 100% 50%;
-  transition: transform 0.1s linear, background-color 0.2s;
+  transition: transform 0.1s linear;
 }
 
 .tv-clock.hot .tv-clock-n b {
@@ -988,8 +987,6 @@ html.tv-mode body {
   padding: 14px 20px;
   border-radius: 18px;
   background: var(--tv-tile);
-  box-shadow: inset 0 0 0 2px transparent;
-  transition: background-color 0.35s, box-shadow 0.35s;
 }
 
 .tv-ticker li.lead {
