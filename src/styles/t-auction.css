@@ -1,1 +1,371 @@
 /* auction: tyre-theme fixes and polish for this area (imported after theme.css, so these win) */
+
+/* ================================================================ pushable bid buttons
+   The bid button, the quick-bid chips and «أبيها» are the theme's pushable blocks (.btn): a face on a
+   dark deck that sinks on the press. The deck never changes the box: a disabled or in-flight button sits
+   pressed into its deck instead of growing shorter, so nothing below it moves. */
+
+.bidpanel .btn {
+  margin-bottom: 5px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* the press lands at once; the release springs back */
+.bidpanel .btn:active:not(:disabled) {
+  transition-duration: .04s;
+}
+
+.bidpanel .btn:disabled {
+  --lift: 2px;
+  transform: translateY(3px);
+}
+
+/* a bid in flight: the button stays held down in red, waiting for the host's word */
+.bidpanel .btn-primary.bid-main.sending:disabled {
+  animation: none;
+  transform: translateY(4px);
+  --lift: 1px;
+}
+
+/* the chips: small blocks on the same deck, two lines each */
+.bid-chips .btn {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-height: 54px;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: 13px;
+  white-space: nowrap;
+  background: var(--face);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    inset 0 -2px 0 rgba(0, 0, 0, .28),
+    0 var(--lift) 0 var(--deck),
+    0 calc(var(--lift) + 6px) 12px -4px rgba(0, 0, 0, .6);
+  transition: transform .16s var(--spring), box-shadow .16s var(--spring), filter .2s;
+}
+
+.bid-chips .btn:active:not(:disabled) {
+  background: var(--face);
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .06),
+    inset 0 -1px 0 rgba(0, 0, 0, .28),
+    0 1px 0 var(--deck),
+    0 3px 6px -2px rgba(0, 0, 0, .6);
+  transition-duration: .04s;
+}
+
+.bid-chips .btn:disabled {
+  opacity: 1;
+  --face: var(--rubber-3);
+  --rim: rgba(255, 255, 255, .04);
+}
+
+.bid-chips .btn:disabled b,
+.bid-chips .btn:disabled small {
+  color: var(--dim);
+}
+
+.bid-chips .btn b {
+  color: var(--ink);
+}
+
+.bid-chips .btn small {
+  color: var(--mute);
+}
+
+.bid-chips .chip-free b {
+  color: var(--ink-2);
+}
+
+.bp-foot button {
+  color: var(--brand-hi);
+}
+
+/* «أبيها»: the caliper-red block, with the dutch rim that breathes near the floor */
+.dutch-panel .dc-take.btn {
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  width: 100%;
+  min-height: 62px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  white-space: normal;
+}
+
+.dutch-panel .dc-take.btn::before {
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: none;
+  filter: none;
+  transform: none;
+  opacity: 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .7), inset 0 0 22px rgba(255, 255, 255, .22);
+}
+
+.dutch-panel .dc-take.btn:active:not(:disabled)::before {
+  opacity: 0;
+}
+
+.dutch-panel .dc-take.btn:active:not(:disabled) {
+  transform: translateY(4px);
+}
+
+.dutch-panel .dc-take.btn:disabled:not(.sending) {
+  --face: var(--rubber-3);
+  --deck: #050506;
+  --rim: rgba(255, 255, 255, .05);
+  background: var(--face);
+  color: var(--mute);
+  text-shadow: none;
+}
+
+.dutch-panel .dc-take.btn.sending:disabled {
+  --face: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
+  --deck: #6e0a0f;
+  --rim: rgba(255, 255, 255, .12);
+  background: var(--face);
+  color: #fff;
+  transform: translateY(4px);
+  --lift: 1px;
+}
+
+.dutch-panel .dc-take b,
+.dutch-panel .dc-take small {
+  position: relative;
+  z-index: 1;
+}
+
+/* ================================================================ waiting inside the auction */
+
+/* a tyre on a short road beside the line, in one row */
+.tire-loader.tl-inline {
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
+  gap: 12px;
+  text-align: start;
+}
+
+.tire-loader.tl-inline .tl-stage {
+  width: calc(var(--tl) * 2.2);
+}
+
+.tire-loader.tl-inline .tl-label {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* the envelope is in: a strip with the tyre, the line and the sealed amount */
+.env-wait {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background:
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border: 1px solid var(--line-2);
+}
+
+.env-wait .tire-loader {
+  min-width: 0;
+}
+
+.env-wait > b {
+  flex: none;
+  font-size: 17px;
+  color: var(--gold-hi);
+}
+
+/* between lots: where the bid buttons were, the next car is on its way */
+.bp-next {
+  display: grid;
+  place-items: center;
+  min-height: 74px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background:
+    var(--tex-tread) center / 30px 18px,
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  border: 1px solid var(--line);
+}
+
+/* the seller thinks it over */
+.reveal.thinking {
+  padding-top: 26px;
+  background:
+    var(--tex-tread) top center / 30px 18px no-repeat,
+    linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+}
+
+.reveal.thinking .rv-think {
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.reveal.thinking .rv-think .tl-label {
+  font-family: var(--f-display);
+  font-weight: 900;
+  font-size: 26px;
+  color: var(--ink);
+  max-width: none;
+}
+
+.reveal.thinking .rv-line b {
+  color: var(--gold-hi);
+}
+
+/* ================================================================ the hammer: stamps that hit on dark
+   Sold: a black rubber stamp with a white rule. Yours: rim gold. Unsold: caliper red, set down quietly. */
+
+.rv-stamp {
+  background: linear-gradient(180deg, #1f2024, #0d0e10);
+  border: 4px solid #f4f4f6;
+  color: #fff;
+  box-shadow: 0 0 0 3px #0b0c0d, 0 18px 40px rgba(0, 0, 0, .6);
+}
+
+.rv-stamp small {
+  opacity: .7;
+}
+
+.fx-mine .rv-stamp {
+  background: linear-gradient(180deg, #fbe39b 0%, #efc463 40%, #d9a23f 75%, #c68b2d 100%);
+  border-color: #2a1b00;
+  color: #2a1b00;
+  box-shadow: 0 0 0 3px var(--gold-hi), 0 18px 40px rgba(0, 0, 0, .6);
+}
+
+.fx-mine .rv-stamp small {
+  opacity: .8;
+}
+
+.rv-hero.grey .rv-stamp {
+  background: linear-gradient(180deg, #f2393f 0%, #d92229 55%, #b8151c 100%);
+  border-color: #fff;
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--brand-lo), 0 18px 40px rgba(0, 0, 0, .6);
+}
+
+.rv-hero.grey > img {
+  filter: grayscale(1) brightness(.6);
+}
+
+/* the buyer's row: gold when it's yours */
+.fx-mine .rv-buyer {
+  border-color: rgba(232, 185, 85, .45);
+  background: linear-gradient(180deg, rgba(232, 185, 85, .14), rgba(232, 185, 85, .04)), var(--card);
+}
+
+.fx-mine .rv-buyer b,
+.fx-mine .rv-hammer b {
+  color: var(--gold-hi);
+}
+
+.rv-hammer small {
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* reveal copy that used to sit dark on paper */
+.surprise.good {
+  color: var(--ok-700);
+}
+
+.surprise.bad {
+  border-color: rgba(255, 74, 79, .32);
+  color: #ffc2c4;
+}
+
+.surprise.bad small,
+.surprise.bad b {
+  color: var(--red);
+}
+
+.envelopes li.win {
+  border-color: var(--ok-100);
+}
+
+/* ================================================================ the car sheet on dark */
+
+/* the report tabs: a rubber strip, never paper */
+.tabs {
+  background: rgba(23, 24, 27, .97);
+  border-bottom-color: var(--line);
+}
+
+.tabs button[aria-selected='true']::after {
+  background: var(--brand);
+}
+
+/* mechanics: green dot for sound, amber for a note, red for trouble */
+.mitem i {
+  background: var(--ok);
+}
+
+.mitem.minor i {
+  background: var(--amber);
+}
+
+.mitem.major i {
+  background: var(--red);
+}
+
+.mitem.unknown i {
+  background: var(--dim);
+}
+
+/* the inspector's notes: amber on rubber, readable */
+.notes li {
+  background: rgba(242, 173, 50, .08);
+  border-color: rgba(242, 173, 50, .3);
+  color: #f6dba3;
+}
+
+.vbox.tone-mid {
+  border-color: rgba(242, 173, 50, .3);
+}
+
+.vbox.tone-mid b {
+  color: var(--amber);
+}
+
+.vbox.tone-bad {
+  border-color: rgba(255, 74, 79, .32);
+}
+
+.records li.warn {
+  border-color: rgba(255, 74, 79, .32);
+}
+
+.legend i {
+  border-color: rgba(255, 255, 255, .14);
+}
+
+/* the paint map sits on a sunk well so the panels read */
+.damage svg {
+  padding: 6px 4px;
+  border-radius: 14px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6);
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bidpanel .btn,
+  .bid-chips .btn {
+    transition: none;
+  }
+}

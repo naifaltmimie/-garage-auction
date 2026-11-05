@@ -27,14 +27,15 @@ const GEOM2: Partial<Record<PanelId, string>> = {
   rrq: 'M98 154 L112 154 Q114 188 112 222 L98 222 Z',
 };
 
+// on dark rubber: clean panels in a quiet steel grey, the faults in rising heat, unknown sunk into the rubber
 export const STATUS_FILL: Record<PanelStatus, string> = {
-  ok: '#e9f4ed',
-  spot: '#f3e09a',
-  paint: '#e7b443',
-  dent: '#df8a3a',
-  replaced: '#d2463c',
-  damaged: '#8a1d16',
-  unknown: '#cdd2cc',
+  ok: '#5b5f68',
+  spot: '#f1d77c',
+  paint: '#e7a83a',
+  dent: '#df7f32',
+  replaced: '#ef4148',
+  damaged: '#a3141a',
+  unknown: '#26282d',
 };
 
 export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: PanelId) => void; picked?: PanelId | null }) {
@@ -49,12 +50,12 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
         </pattern>
       </defs>
       {/* glass and wheels for context */}
-      <rect x="2" y="40" width="6" height="30" rx="2" fill="#26302b" />
-      <rect x="112" y="40" width="6" height="30" rx="2" fill="#26302b" />
-      <rect x="2" y="186" width="6" height="30" rx="2" fill="#26302b" />
-      <rect x="112" y="186" width="6" height="30" rx="2" fill="#26302b" />
-      <path d="M28 87 L92 87 L88 105 L32 105 Z" fill="#5d6b74" opacity=".55" />
-      <path d="M32 171 L88 171 L92 187 L28 187 Z" fill="#5d6b74" opacity=".55" />
+      <rect x="2" y="40" width="6" height="30" rx="2" fill="#050506" stroke="#3a3d45" strokeWidth=".8" />
+      <rect x="112" y="40" width="6" height="30" rx="2" fill="#050506" stroke="#3a3d45" strokeWidth=".8" />
+      <rect x="2" y="186" width="6" height="30" rx="2" fill="#050506" stroke="#3a3d45" strokeWidth=".8" />
+      <rect x="112" y="186" width="6" height="30" rx="2" fill="#050506" stroke="#3a3d45" strokeWidth=".8" />
+      <path d="M28 87 L92 87 L88 105 L32 105 Z" fill="#8fa3b3" opacity=".35" />
+      <path d="M32 171 L88 171 L92 187 L28 187 Z" fill="#8fa3b3" opacity=".35" />
       {list.map((p) => {
         const st = car.panels[p] ?? 'ok';
         const d = (car.doors === 2 && GEOM2[p]) || GEOM[p];
@@ -64,7 +65,7 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
             key={p}
             d={d}
             fill={fill}
-            stroke={picked === p ? '#0e1c15' : 'rgba(14,28,21,.45)'}
+            stroke={picked === p ? '#ffffff' : 'rgba(0,0,0,.7)'}
             strokeWidth={picked === p ? 2.2 : 1}
             onClick={onPick ? () => onPick(p) : undefined}
             style={onPick ? { cursor: 'pointer' } : undefined}
@@ -80,7 +81,7 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
           const pos: Record<string, [number, number]> = { fb: [60, 20], hood: [60, 60], roof: [60, 142], trunk: [60, 210], rb: [60, 236], lff: [15, 60], rff: [105, 60], lfd: [15, 112], rfd: [105, 112], lrd: [15, 158], rrd: [105, 158], lrq: [15, 204], rrq: [105, 204] };
           const [x, y] = pos[p];
           return (
-            <text key={`q${p}`} x={x} y={y} textAnchor="middle" fontSize="11" fontWeight="900" fill="#66746b">
+            <text key={`q${p}`} x={x} y={y} textAnchor="middle" fontSize="11" fontWeight="900" fill="#8d9098">
               ؟
             </text>
           );
@@ -97,7 +98,7 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
             </g>
           );
         })}
-      <text x="60" y="5" textAnchor="middle" fontSize="6" fill="#66746b" fontWeight="700">
+      <text x="60" y="5" textAnchor="middle" fontSize="6" fill="#8d9098" fontWeight="700">
         قدام
       </text>
     </svg>

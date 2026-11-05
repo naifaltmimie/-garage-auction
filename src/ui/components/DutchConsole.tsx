@@ -211,7 +211,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
       </div>
 
       <button
-        className={`dc-take ${sending ? 'sending' : ''}`}
+        className={`btn btn-primary dc-take ${sending ? 'sending' : ''}`}
         disabled={!!reason || sending}
         onClick={take}
         aria-label={reason || `أبيها بـ ${money(price)} ريال`}
