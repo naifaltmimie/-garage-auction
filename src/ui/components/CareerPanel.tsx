@@ -5,12 +5,25 @@ import { money, signed } from '../../lib/util';
 /** «سجلي»: a small chip on the front page that opens this phone's career. */
 export function CareerChip() {
   const [open, setOpen] = useState(false);
+  const [nights, setNights] = useState(() => loadCareer().nights.length);
   return (
     <>
-      <button className="btn btn-quiet cr-chip" onClick={() => setOpen(true)}>
-        سجلي
+      <button className="cr-chip" onClick={() => setOpen(true)}>
+        <span>سجلي</span>
+        {nights > 0 && (
+          <small>
+            <span className="ltr">{nights}</span> {nights === 1 ? 'ليلة' : nights === 2 ? 'ليلتين' : 'ليالي'}
+          </small>
+        )}
       </button>
-      {open && <CareerPanel onClose={() => setOpen(false)} />}
+      {open && (
+        <CareerPanel
+          onClose={() => {
+            setOpen(false);
+            setNights(loadCareer().nights.length);
+          }}
+        />
+      )}
     </>
   );
 }

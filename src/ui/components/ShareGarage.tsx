@@ -104,7 +104,7 @@ export async function drawPoster(d: PosterData): Promise<HTMLCanvasElement> {
   txt(ctx, 'كراج الليلة', R, 250, { size: 30, weight: 600, color: C.gold });
   const ns = fit(ctx, d.player, 700, 112, W - PAD * 2, 56);
   txt(ctx, d.player, R, 250 + ns + 6, { size: ns, weight: 700, color: C.cream });
-  let y = 250 + ns + 70;
+  let y = 250 + ns + 88;
   const where = d.players > 1 ? `${d.room}  ·  المركز ${d.rank} من ${d.players}` : d.room;
   ctx.font = `500 30px ${FONT}`;
   txt(ctx, clip(ctx, where, W - PAD * 2), R, y, { size: 30, weight: 500, color: C.mute });
@@ -128,7 +128,7 @@ export async function drawPoster(d: PosterData): Promise<HTMLCanvasElement> {
     const profit = c.value - c.paid;
     const l2 = mid + small + 12;
     // number of the car in the garage, a quiet gold index
-    txt(ctx, String(i + 1).padStart(2, '0'), R, y0 + 34, { size: 20, weight: 600, color: C.goldLine, dir: 'ltr' });
+    txt(ctx, String(i + 1).padStart(2, '0'), R, mid, { size: 22, weight: 600, color: C.goldLine, dir: 'ltr' });
     // left block: paid, then value and the gain/loss
     txt(ctx, money(c.paid), PAD, mid, { size: big, weight: 700, color: C.cream, align: 'left', dir: 'ltr' });
     const lineB = signed(profit);
