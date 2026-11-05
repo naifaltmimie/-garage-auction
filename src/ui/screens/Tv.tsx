@@ -644,7 +644,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
     <div className="tv-board">
       <div className="tv-board-h">
         <div>
-          <div className="tv-kicker">{voting ? 'كل واحد يقيّم كراجات الباقين من جواله' : 'خلص المزاد، هذي الكراجات'}</div>
+          <div className={`tv-kicker ${voting ? '' : 'calm'}`}>{voting ? 'كل واحد يقيّم كراجات الباقين من جواله' : 'خلص المزاد، هذي الكراجات'}</div>
           <h1>{voting ? 'التصويت على الكراجات' : 'ترتيب الصالة'}</h1>
           {voting && (
             <p className="tv-board-sub">

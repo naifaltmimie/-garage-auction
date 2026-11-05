@@ -96,6 +96,7 @@ html .tv {
 
 .tv .tv-phase.tone-seal {
   color: var(--ink);
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
   box-shadow:
     inset 0 0 0 2px var(--brand),
     inset 0 2px 0 rgba(255, 255, 255, .09),
@@ -273,7 +274,8 @@ html .tv {
 
 /* a big tyre turning slowly in the corner of the attract screens (transform only; stilled under reduced motion) */
 .tv .tv-wait::before,
-.tv .tv-lobby::before {
+.tv .tv-lobby::before,
+.tv .tv-intro::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -451,6 +453,11 @@ html .tv .paddle {
 
 /* ------------------------------------------------------------------ intro: the start is a big moment */
 
+.tv .tv-intro {
+  position: relative;
+  isolation: isolate;
+}
+
 .tv .tv-intro .tv-kicker {
   color: var(--gold-hi);
 }
@@ -492,6 +499,11 @@ html .tv .paddle {
   border-radius: inherit;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), inset 0 -120px 120px -60px rgba(0, 0, 0, .55);
   pointer-events: none;
+}
+
+/* theme.css darkens the studio, but tv.css loads after it and puts the light one back */
+.tv .tv-studio {
+  background: radial-gradient(70% 70% at 50% 60%, #2a2c31 0%, #0e0f11 70%);
 }
 
 .tv .tv-covered-tag {
@@ -780,6 +792,23 @@ html .tv .paddle {
 }
 
 /* ------------------------------------------------------------------ standings and results */
+
+.tv .tv-kicker.calm {
+  color: var(--ink-2);
+}
+
+.tv .tv-kicker.calm::before {
+  background: var(--tv-mute);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, .06);
+}
+
+.tv .tv-results .tv-kicker {
+  color: var(--gold-hi);
+}
+
+.tv .tv-results .tv-kicker::before {
+  box-shadow: 0 0 0 5px var(--gold-50);
+}
 
 .tv .tv-board-h h1 {
   font-size: 80px;
