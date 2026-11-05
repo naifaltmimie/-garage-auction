@@ -32,7 +32,7 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /** Room left between the top bar and whatever is anchored to the bottom (bid panel, sale sheet). */
 function useLane(phase: string, lotId: string | undefined) {
-  const [geo, setGeo] = useState({ b: 300, lane: 240 });
+  const [geo, setGeo] = useState({ b: 300, lane: 240, f: -1 });
   useEffect(() => {
     let raf = 0;
     const measure = () => {
@@ -40,14 +40,30 @@ function useLane(phase: string, lotId: string | undefined) {
       raf = requestAnimationFrame(() => {
         const H = window.innerHeight;
         let b = 0;
+        let anchor: Element | null = null;
         document.querySelectorAll('.bidpanel, .overlay > *').forEach((el) => {
           const r = el.getBoundingClientRect();
           // only bottom-anchored blocks count; a tall sheet just shortens the lane
-          if (r.height > 0 && r.top > H * 0.3 && r.bottom >= H - 40) b = Math.max(b, H - r.top);
+          if (r.height > 0 && r.top > H * 0.3 && r.bottom >= H - 40 && H - r.top > b) {
+            b = H - r.top;
+            anchor = el;
+          }
         });
+        // the switch docks inside the bid panel's status row (opposite the clock), so it never sits on
+        // the car's title or on the bid buttons; above a sale sheet it floats just over the sheet
+        // f: -1 float above the anchor, -2 bottom corner over a full sale sheet, else the docked offset
+        let f = -1;
+        const row = anchor && (anchor as Element).matches('.bidpanel') ? (anchor as Element).querySelector('.bp-status, .dc-head') : null;
+        if (document.querySelector('.overlay')) f = -2;
+        else if (row) {
+          const s = row.getBoundingClientRect();
+          f = Math.round(H - s.bottom + (s.height - 46) / 2);
+        }
         const top = document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 58;
         const lane = Math.max(120, Math.min(460, H - b - 62 - top - 18));
-        setGeo((g) => (Math.abs(g.b - b) < 2 && Math.abs(g.lane - lane) < 2 ? g : { b: Math.round(b), lane: Math.round(lane) }));
+        setGeo((g) =>
+          Math.abs(g.b - b) < 2 && Math.abs(g.lane - lane) < 2 && Math.abs(g.f - f) < 2 ? g : { b: Math.round(b), lane: Math.round(lane), f },
+        );
       });
     };
     measure();
@@ -218,7 +234,22 @@ export function ReactionLayer({ room }: { room: RoomView }) {
     room.act({ t: 'react', k, c });
   };
 
-  const style = { ['--rx-b' as string]: `${geo.b}px`, ['--lane' as string]: `${geo.lane}px` } as CSSProperties;
+  const style = {
+    ['--rx-b' as string]: `${geo.b}px`,
+    ['--lane' as string]: `${geo.lane}px`,
+    ...(geo.f >= 0 ? { ['--rx-f' as string]: `${geo.f}px` } : geo.f === -2 ? { ['--rx-f' as string]: 'calc(12px + var(--safe-b))' } : null),
+  } as CSSProperties;
+
+  // the bid panel (or the sale sheet) keeps a slot free for the switch only while the switch is there
+  const docked = on && live && geo.f !== -1 ? (geo.f === -2 ? 'sheet' : 'panel') : '';
+  useEffect(() => {
+    const el = document.documentElement;
+    if (docked) el.dataset.rxdock = docked;
+    else delete el.dataset.rxdock;
+    return () => {
+      delete el.dataset.rxdock;
+    };
+  }, [docked]);
 
   return (
     <div className="rx" style={style}>

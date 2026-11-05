@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { VERDICT_LABEL } from '../../engine/rules';
 import type { Comp, Core, Sale } from '../../engine/types';
 import { km, money, signed } from '../../lib/util';
-import { useNow } from '../useRoom';
+import { countRender } from './Console';
+import { useClockValue } from './DutchConsole';
 import { photoSrc } from './Gallery';
 import { CarTitle } from './LotSheet';
 import { CarPlate, Paddle } from './Plate';
@@ -30,6 +31,11 @@ function useCount(target: number, run: boolean, ms = 1100) {
   return v;
 }
 
+/** The counting number is its own leaf, so the count-up redraws one number per frame, not the sheet. */
+function CountUp({ target, run }: { target: number; run: boolean }) {
+  return <>{money(useCount(target, run))}</>;
+}
+
 function Hero({ sale, stamp, grey }: { sale: Sale; stamp: string; grey?: boolean }) {
   const photo = sale.car.photos?.[0];
   return (
@@ -46,18 +52,25 @@ function Hero({ sale, stamp, grey }: { sale: Sale; stamp: string; grey?: boolean
 const VERDICT_TONE: Record<Sale['verdict'], string> = { steal: 'good', good: 'good', fair: 'flat', over: 'bad', robbed: 'bad' };
 
 export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sale; myId: string; offset: number }) {
-  const now = useNow(offset, 10);
+  countRender('sold');
   const t = core.timer;
-  const start = t ? t.endsAt - t.total : now;
-  const el = core.paused ? 99_999 : Math.max(0, now - start);
   const sealed = !!sale.sealedBids?.length;
   const shift = sealed ? 2400 : 0;
-  const stage = el < shift ? -1 : el < shift + 1300 ? 0 : el < shift + 2700 ? 1 : el < shift + 5200 ? 2 : 3;
+  // the sheet only redraws when its stage changes (4 times a lot), never on the clock's ticks
+  const stage = useClockValue(
+    offset,
+    10,
+    (now) => {
+      const start = t ? t.endsAt - t.total : now;
+      const el = core.paused ? 99_999 : Math.max(0, now - start);
+      return el < shift ? -1 : el < shift + 1300 ? 0 : el < shift + 2700 ? 1 : el < shift + 5200 ? 2 : 3;
+    },
+    [t, core.paused, shift],
+  );
   const buyer = core.players.find((p) => p.id === sale.buyer);
   const mine = sale.buyer === myId;
   const before = sale.value - (sale.surprise?.delta ?? 0);
   const shownValue = stage >= 3 || !sale.surprise ? sale.value : before;
-  const counted = useCount(shownValue, stage >= 2);
   const profitShown = shownValue - sale.paid;
   const tone = stage >= 3 || !sale.surprise ? VERDICT_TONE[sale.verdict] : profitShown >= 0 ? 'good' : 'bad';
   const [hidden, setHidden] = useState(false);
@@ -152,7 +165,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
         {stage >= 2 && (
           <div className={`rv-truth tone-${tone}`}>
             <small>القيمة الحقيقية بالسوق</small>
-            <b className="t-money">{money(counted)}</b>
+            <b className="t-money"><CountUp target={shownValue} run={stage >= 2} /></b>
             {plateVal > 0 && <span className="mute small">منها اللوحة {money(plateVal)}</span>}
             <span className={`verdict tone-${tone}`}>
               {stage >= 3 || !sale.surprise ? VERDICT_LABEL[sale.verdict] : profitShown >= 0 ? 'ربح' : 'خسارة'}
@@ -218,6 +231,14 @@ export function UnsoldReveal({ core, sale }: { core: Core; sale: Sale }) {
         : sale.outcome === 'nobody'
           ? 'ما أحد يقدر عليها، ترجع للمعرض'
           : 'ما أحد سام عليها';
+  const [hidden, setHidden] = useState(false);
+  if (hidden) {
+    return (
+      <button className="btn btn-dark rv-back" onClick={() => setHidden(false)}>
+        رجّع النتيجة
+      </button>
+    );
+  }
   return (
     <div className="overlay" role="dialog" aria-label="ما بيعت">
       <div className="reveal">
@@ -228,6 +249,9 @@ export function UnsoldReveal({ core, sale }: { core: Core; sale: Sale }) {
             القيمة كانت حول <b className="ltr">{money(sale.base)}</b>، ورجعت لصاحبها
           </p>
         </div>
+        <button className="btn btn-ghost btn-block" onClick={() => setHidden(true)}>
+          رجوع للتقرير
+        </button>
       </div>
     </div>
   );
