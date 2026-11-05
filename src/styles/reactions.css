@@ -253,9 +253,11 @@
 
 /* ---------------------------------------------------------------- reduced motion */
 
+/* base.css shortens every animation to .01ms here, so nothing may end on opacity 0:
+   reactions simply appear in a stacked slot and leave when their time is up (JS removes them) */
 @media (prefers-reduced-motion: reduce) {
   .rx-f {
-    animation: rx-fade var(--dur, 2800ms) linear both;
+    animation: none;
     transform: translate3d(0, calc(var(--slot, 0) * -50px), 0);
   }
   .rx-sway,
@@ -265,10 +267,4 @@
   .rx-cool.run { animation: none; }
   .rx-fab,
   .rx-chip { transition: none; }
-}
-@keyframes rx-fade {
-  0% { opacity: 0; }
-  8% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
 }
