@@ -31,6 +31,11 @@ function useCount(target: number, run: boolean, ms = 1100) {
   return v;
 }
 
+/** The counting number is its own leaf, so the count-up redraws one number per frame, not the sheet. */
+function CountUp({ target, run }: { target: number; run: boolean }) {
+  return <>{money(useCount(target, run))}</>;
+}
+
 function Hero({ sale, stamp, grey }: { sale: Sale; stamp: string; grey?: boolean }) {
   const photo = sale.car.photos?.[0];
   return (
@@ -66,7 +71,6 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
   const mine = sale.buyer === myId;
   const before = sale.value - (sale.surprise?.delta ?? 0);
   const shownValue = stage >= 3 || !sale.surprise ? sale.value : before;
-  const counted = useCount(shownValue, stage >= 2);
   const profitShown = shownValue - sale.paid;
   const tone = stage >= 3 || !sale.surprise ? VERDICT_TONE[sale.verdict] : profitShown >= 0 ? 'good' : 'bad';
   const [hidden, setHidden] = useState(false);
@@ -161,7 +165,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
         {stage >= 2 && (
           <div className={`rv-truth tone-${tone}`}>
             <small>القيمة الحقيقية بالسوق</small>
-            <b className="t-money">{money(counted)}</b>
+            <b className="t-money"><CountUp target={shownValue} run={stage >= 2} /></b>
             {plateVal > 0 && <span className="mute small">منها اللوحة {money(plateVal)}</span>}
             <span className={`verdict tone-${tone}`}>
               {stage >= 3 || !sale.surprise ? VERDICT_LABEL[sale.verdict] : profitShown >= 0 ? 'ربح' : 'خسارة'}
