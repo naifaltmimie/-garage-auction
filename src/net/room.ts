@@ -252,6 +252,9 @@ export class HostRoom {
       return;
     }
     if (!e.seen(env.pid, env.sec, now)) {
+      // a clock ping or a reaction that beats the player's hello across the broker isn't a refused
+      // request: stay quiet, the hello lands a moment later (answering it put a false «ما وصل طلبك» up)
+      if (a.t === 'ping' || a.t === 'react') return;
       void this.reply(env.pid, { t: 'nack', mid: env.mid, reason: 'unknown' });
       return;
     }
