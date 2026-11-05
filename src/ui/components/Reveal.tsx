@@ -7,6 +7,7 @@ import { photoSrc } from './Gallery';
 import { CarTitle } from './LotSheet';
 import { CarPlate, Paddle } from './Plate';
 import { Silhouette } from './Silhouette';
+import { GoldLeaf } from './fx/GoldLeaf';
 
 function useCount(target: number, run: boolean, ms = 1100) {
   const [v, setV] = useState(0);
@@ -70,7 +71,8 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
     );
   }
   return (
-    <div className="overlay" role="dialog" aria-label="نتيجة اللوت">
+    <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة اللوت">
+      {mine && stage >= 0 && <GoldLeaf />}
       <div className="reveal">
         {sealed && (
           <div className="rv-sec">

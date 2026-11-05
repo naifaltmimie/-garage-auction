@@ -5,6 +5,8 @@ import { money, vibrate } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 import { Icon } from './Bits';
 import { Paddle } from './Plate';
+import { BorderBeam } from './fx/BorderBeam';
+import { NumberTicker } from './fx/NumberTicker';
 
 export function maxBidFor(cash: number, lot: LotPub | null): number {
   if (!lot) return cash;
@@ -174,10 +176,11 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
 
       {!compact && core.phase !== 'sealed' && (
         <div className="bp-price">
+          {bidding && <BorderBeam />}
           <div className="bp-amount">
             <small>{top ? 'السوم الحالي' : 'يفتح على'}</small>
             <div key={top ? `${top.amount}-${top.by}` : 'open'} className="bp-num">
-              <b className="t-money">{money(top?.amount ?? core.opening)}</b>
+              <b className="t-money"><NumberTicker id={`bp-${lot?.id ?? ''}`} value={top?.amount ?? core.opening} /></b>
               <span>ريال</span>
             </div>
           </div>
@@ -270,7 +273,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
                   {showOutbid ? 'زاود عليه' : top ? 'زاود' : 'افتح السوم'}
                 </span>
                 <span className="bm-amt">
-                  <b>{money(min)}</b>
+                  <b><NumberTicker id={`bm-${lot?.id ?? ''}`} value={min} /></b>
                   <small>ريال</small>
                 </span>
               </>

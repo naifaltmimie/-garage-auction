@@ -1,6 +1,7 @@
 import { marketOf } from '../../engine/markets';
 import { arDigits, carsN, money } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
+import { BackgroundPaths } from '../components/fx/BackgroundPaths';
 
 export function Intro({ room }: { room: RoomView }) {
   const core = room.snap.core!;
@@ -9,7 +10,8 @@ export function Intro({ room }: { room: RoomView }) {
   const s = core.settings;
   return (
     <main className="shell narrow">
-      <div className="intro-screen">
+      <div className="intro-screen fx-host">
+        <BackgroundPaths />
         <div className="stack" style={{ justifyItems: 'center', gap: 14 }}>
           <div className="t-label" style={{ color: 'var(--gold)' }}>{s.roomName}</div>
           <div className="market-banner">
