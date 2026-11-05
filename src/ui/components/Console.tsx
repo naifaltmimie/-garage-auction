@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { sound } from '../../audio/sound';
 import { feesOf, increment, minNextBid } from '../../engine/rules';
 import type { Core, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
@@ -40,8 +41,18 @@ function phaseText(core: Core, msLeft: number, lot: LotPub | null): string {
   }
 }
 
-/** Countdown ring: shrinks with the clock, turns red in the last seconds. */
-function Ring({ pct, secs, hot, paused }: { pct: number; secs: number | null; hot: boolean; paused: boolean }) {
+/**
+ * Countdown ring. It is the only piece of the console that redraws on the clock (12 Hz): it shrinks
+ * with the host's timer and turns red in the last seconds. The panel itself only hears when it goes
+ * hot or cools down, so the body never redraws on a tick.
+ */
+const ClockRing = memo(function ClockRing({ core, offset, live, onHot }: { core: Core; offset: number; live: boolean; onHot: (h: boolean) => void }) {
+  const now = useNow(offset, 12);
+  const { ms, pct } = timeLeft(core, now);
+  const secs = Math.max(0, Math.ceil(ms / 1000));
+  const hot = live && ms < 4000;
+  useEffect(() => onHot(hot), [hot, onHot]);
+  useEffect(() => () => onHot(false), [onHot]);
   const r = 20;
   const c = 2 * Math.PI * r;
   return (
@@ -50,17 +61,41 @@ function Ring({ pct, secs, hot, paused }: { pct: number; secs: number | null; ho
         <circle cx="24" cy="24" r={r} className="track" />
         <circle cx="24" cy="24" r={r} className="bar" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} />
       </svg>
-      <b>{paused ? '❚❚' : secs == null ? '' : secs}</b>
+      <b>{core.paused ? '❚❚' : secs}</b>
     </div>
   );
+});
+
+/** The preview line counts seconds, so it is the one status line that subscribes to the clock. */
+function PreviewLine({ core, lot, offset }: { core: Core; lot: LotPub | null; offset: number }) {
+  const now = useNow(offset, 8);
+  return <b>{phaseText(core, timeLeft(core, now).ms, lot)}</b>;
 }
+
+function PhaseLine({ core, lot, offset }: { core: Core; lot: LotPub | null; offset: number }) {
+  if (core.paused) return <b>{core.away ? 'المضيف طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف'}</b>;
+  if (core.phase === 'preview') return <PreviewLine core={core} lot={lot} offset={offset} />;
+  return <b>{phaseText(core, 0, lot)}</b>;
+}
+
+/** Dev-only render counter, read by the perf script (window.__rc). Stripped from production builds. */
+export function countRender(name: string) {
+  if (!import.meta.env.DEV) return;
+  const w = window as unknown as { __rc?: Record<string, number> };
+  w.__rc = w.__rc || {};
+  w.__rc[name] = (w.__rc[name] || 0) + 1;
+}
+
+/** A second tap inside this window is treated as the same tap (no accidental double bids). */
+const TAP_GAP = 450;
+/** How long a sent bid waits for the host's word before the button frees itself. */
+const SEND_WAIT = 2500;
 
 export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | undefined; onLog: () => void }) {
   const { snap, offset, act, host, spectator, sealedMine } = room;
   const core = snap.core!;
   const lot = snap.lot;
-  const now = useNow(offset, 12);
-  const { ms, pct } = timeLeft(core, now);
+  countRender('console');
   const players = core.players;
   const playerOf = (id: string | null) => players.find((p) => p.id === id);
 
@@ -74,28 +109,47 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
   const garageFull = !!me && me.garage.length >= core.settings.garage;
   const mine = lot ? sealedMine[lot.id] : undefined;
 
-  const reason = spectator ? 'أنت متفرج بهالجولة' : garageFull ? 'كراجك فل' : min > maxBid ? 'رصيدك ما يغطي السوم' : iAmTop ? 'السوم عندك' : '';
+  const reason = spectator ? 'أنت متفرج بهالجولة' : garageFull ? 'كراجك فل' : iAmTop ? 'السوم عندك' : min > maxBid ? 'رصيدك ما يغطي السوم' : '';
+  // why the big button is grey right now, in words (the same button, never a different one)
+  const why = reason ? (iAmTop ? 'السوم عندك، انتظر' : reason) : core.phase === 'bidding' && core.paused ? 'المزاد واقف' : '';
 
-  // outbid flash
+  // outbid flash: shown for 2.6 s by a timer, so it needs no clock
   const prevTop = useRef<string | null>(null);
-  const [outbid, setOutbid] = useState(0);
+  const outT = useRef<number>();
+  const [outbid, setOutbid] = useState(false);
   useEffect(() => {
     const was = prevTop.current;
     prevTop.current = top?.by ?? null;
     if (was === room.myId && top && top.by !== room.myId) {
-      setOutbid(Date.now());
+      setOutbid(true);
       vibrate([60, 40, 60]);
+      window.clearTimeout(outT.current);
+      outT.current = window.setTimeout(() => setOutbid(false), 2600);
     }
   }, [top?.by, top?.amount, room.myId, top]);
-  const showOutbid = !!outbid && Date.now() - outbid < 2600 && !iAmTop;
-
-  // extension pill
-  const lastExt = useRef(core.ext);
-  const [extAt, setExtAt] = useState(0);
   useEffect(() => {
-    if (core.ext > lastExt.current) setExtAt(Date.now());
+    setOutbid(false);
+    return () => window.clearTimeout(outT.current);
+  }, [lot?.id]);
+  const showOutbid = outbid && !iAmTop;
+
+  // extension pill: 1.6 s after the clock was pushed back
+  const lastExt = useRef(core.ext);
+  const [ext, setExt] = useState(0);
+  useEffect(() => {
+    const grew = core.ext > lastExt.current;
     lastExt.current = core.ext;
+    if (!grew) {
+      setExt(0);
+      return;
+    }
+    setExt(core.ext);
+    const t = window.setTimeout(() => setExt(0), 1600);
+    return () => window.clearTimeout(t);
   }, [core.ext]);
+
+  // the ring tells us when the last seconds start; the panel redraws twice a lot for it, not 12 times a second
+  const [hotClock, setHot] = useState(false);
 
   const [custom, setCustom] = useState(false);
   const [val, setVal] = useState('');
@@ -107,22 +161,42 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
     return [2, 5, 10].map((n) => ({ n, amount: mk(n) }));
   }, [top, core.opening, step]);
 
-  // the tap shows at once; the button waits for the host's word (a new top bid, or a refusal toast)
-  const [sent, setSent] = useState<{ amount: number; at: number; lot: string } | null>(null);
+  // the tap shows at once (press, buzz, click, «في الطريق»); the button then waits for the host's word:
+  // a new top bid at or above ours, a refusal toast, or SEND_WAIT. One bid in flight at a time.
+  const [sent, setSent] = useState<{ amount: number; lot: string } | null>(null);
+  const flight = useRef<{ amount: number; lot: string; at: number } | null>(null);
+  const lastTap = useRef(0);
+  const confirmed = !!sent && !!top && top.amount >= sent.amount;
   useEffect(() => {
-    if (sent && top && top.amount >= sent.amount) setSent(null);
-  }, [top, sent]);
-  const sending = !!sent && sent.lot === lot?.id && now - offset - sent.at < 2500 && !(top && top.amount >= sent.amount);
+    if (!sent) return;
+    if (confirmed) {
+      flight.current = null;
+      setSent(null);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      flight.current = null;
+      setSent(null);
+    }, SEND_WAIT);
+    return () => window.clearTimeout(t);
+  }, [sent, confirmed]);
+  const sending = !!sent && sent.lot === lot?.id && !confirmed;
   const bid = (amount: number) => {
-    if (!lot || sending) return;
+    if (!lot || !bidding) return;
+    const t = performance.now();
+    const f = flight.current;
+    if (f && f.lot === lot.id && t - f.at < SEND_WAIT && !(top && top.amount >= f.amount)) return;
+    if (t - lastTap.current < TAP_GAP) return;
+    lastTap.current = t;
+    flight.current = { amount, lot: lot.id, at: t };
     vibrate(18);
-    setSent({ amount, at: Date.now(), lot: lot.id });
+    sound.tock();
+    setSent({ amount, lot: lot.id });
     act({ t: 'bid', lot: lot.id, amount });
   };
 
-  const hot = bidding && !!top && ms < 4000;
+  const hot = hotClock && bidding && !!top;
   const going = !!core.callout && core.callout.key.startsWith('going') && bidding;
-  const secs = Math.ceil(ms / 1000);
   const showSecs = ['preview', 'bidding', 'sealed', 'intro'].includes(core.phase);
   const total = lot ? feesOf(min, lot.fee).total : min;
   // while the report is being read the panel shrinks to a strip; people who can't bid just watch
@@ -130,7 +204,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
   const watching = spectator || garageFull;
   const topP = playerOf(top?.by ?? null);
 
-  if (core.phase === 'dutch' && lot?.dutch) return <DutchConsole room={room} me={me} lot={lot} plan={lot.dutch} />;
+  if (core.phase === 'dutch' && lot?.dutch) return <DutchConsole key={lot.id} room={room} me={me} lot={lot} plan={lot.dutch} />;
 
   return (
     <section className={`bidpanel ${compact ? 'compact' : ''} ${hot ? 'hot' : ''} ${showOutbid ? 'outbid' : ''}`} aria-label="لوحة المزايدة">
@@ -157,16 +231,16 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
       )}
 
       <div className="bp-status" aria-live="off">
-        {showSecs && <Ring pct={showSecs ? pct : 0} secs={Math.max(0, secs)} hot={hot} paused={core.paused} />}
+        {showSecs && <ClockRing core={core} offset={offset} live={bidding && !!top} onHot={setHot} />}
         <div className="bp-state">
-          <b>{core.paused ? (core.away ? 'المضيف طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف') : phaseText(core, ms, lot)}</b>
+          <PhaseLine core={core} lot={lot} offset={offset} />
           {core.callout && (
             <span key={core.callout.id} className={`bp-call ${going ? 'going' : ''}`} aria-live="polite">
               {core.callout.text}
             </span>
           )}
         </div>
-        {extAt > 0 && Date.now() - extAt < 1600 && <span className="chip chip-gold ext-pill">تمدد الوقت</span>}
+        {ext > 0 && <span key={ext} className="chip chip-gold ext-pill">تمدد الوقت</span>}
         {core.reserveMet && lot?.reserve && <span className="chip chip-green">انفك الحد</span>}
       </div>
 
@@ -269,8 +343,8 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
                   <small>ريال</small>
                 </span>
               </>
-            ) : reason ? (
-              <span className="bm-reason">{iAmTop ? 'السوم عندك، انتظر' : reason}</span>
+            ) : why ? (
+              <span className="bm-reason">{why}</span>
             ) : (
               <>
                 <span className="bm-label">
@@ -291,7 +365,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
                 <small className="ltr">{money(c.amount)}</small>
               </button>
             ))}
-            <button className="chip-free" disabled={!bidding || !!reason} onClick={() => setCustom(true)}>
+            <button className="chip-free" disabled={!bidding || !!reason || sending} onClick={() => setCustom(true)}>
               <b>سوم حر</b>
               <small>اكتب مبلغك</small>
             </button>

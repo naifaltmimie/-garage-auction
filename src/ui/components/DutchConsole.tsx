@@ -7,8 +7,8 @@ import { feesOf } from '../../engine/rules';
 import type { DutchPlan, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
 import { sound } from '../../audio/sound';
-import { timeLeft, useNow, type RoomView } from '../useRoom';
-import { maxBidFor } from './Console';
+import { timeLeft, type RoomView } from '../useRoom';
+import { countRender, maxBidFor } from './Console';
 import '../../styles/dutch.css';
 
 /** One wheel of the counter: when its digit changes the old one drops out and the new one falls in. */
@@ -53,14 +53,43 @@ export function DutchHint({ plan }: { plan: DutchPlan }) {
   );
 }
 
+/**
+ * Reads the host's clock at `hz` but only re-renders when the value derived from it changes (a price
+ * step, a whole second), so the panel redraws about once per step instead of 24 times a second.
+ */
+function useClockValue<T extends string | number>(offset: number, hz: number, read: (now: number) => T, deps: unknown[]): T {
+  const readRef = useRef(read);
+  readRef.current = read;
+  const [v, setV] = useState(() => read(Date.now() + offset));
+  useEffect(() => {
+    const tick = () => setV(readRef.current(Date.now() + offset));
+    tick();
+    const iv = setInterval(tick, 1000 / hz);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offset, hz, ...deps]);
+  return v;
+}
+
 export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: PlayerPub | undefined; lot: LotPub; plan: DutchPlan }) {
   const { snap, offset, act, host, spectator } = room;
   const core = snap.core!;
-  const now = useNow(offset, 24);
-  const { ms } = timeLeft(core, now);
-  const elapsed = dutchElapsed(core.timer, ms);
-  const price = dutchPriceAt(plan, elapsed);
-  const step = Math.min(dutchSteps(plan), Math.floor(elapsed / plan.every));
+  countRender('dutch');
+  // step index, plus the hold seconds once the price sits on the floor; derived from the host's timer
+  const tickKey = useClockValue(
+    offset,
+    24,
+    (now) => {
+      const { ms } = timeLeft(core, now);
+      const el = dutchElapsed(core.timer, ms);
+      const st = Math.min(dutchSteps(plan), Math.floor(el / plan.every));
+      return dutchPriceAt(plan, el) <= plan.floor ? `${st}|${Math.max(0, Math.ceil(ms / 1000))}` : `${st}`;
+    },
+    [core.timer, core.paused, plan],
+  );
+  const [stepStr, holdStr] = tickKey.split('|');
+  const step = Number(stepStr);
+  const price = Math.max(plan.floor, plan.start - step * plan.step);
   const prog = dutchProgress(plan, price);
   const onFloor = price <= plan.floor;
   // tension: calm, warmer past halfway, gold close to the floor, red for the last steps and the floor
@@ -104,8 +133,13 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
             : 'رصيدك ما يغطيها حتى على الأرضية'
           : '';
 
+  // a second tap before the re-render (or within 2.5 s of the first) is the same tap
+  const lastTake = useRef(0);
   const take = () => {
     if (reason || sending) return;
+    const t = performance.now();
+    if (t - lastTake.current < 2500) return;
+    lastTake.current = t;
     vibrate([28, 30, 50]);
     sound.tock();
     setPressAt(Date.now());
@@ -117,7 +151,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const pos = (v: number) => Math.max(0, Math.min(1, (plan.start - v) / Math.max(1, plan.start - plan.floor)));
   const est = lot.estimate;
   const myMark = !spectator && !garageFull && maxBid < plan.start && maxBid >= plan.floor ? pos(maxBid) : null;
-  const holdSecs = Math.max(0, Math.ceil(ms / 1000));
+  const holdSecs = holdStr ? Number(holdStr) : 0;
 
   return (
     <section className="bidpanel dutch-panel" data-heat={heat} aria-label="المزاد الهولندي">
