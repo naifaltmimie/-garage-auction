@@ -260,6 +260,12 @@ export class HostRoom {
         this.apply(r.changes);
         return;
       }
+      case 'take': {
+        const r = e.take(env.pid, a.lot, now);
+        void this.reply(env.pid, r.ok ? { t: 'ack', mid: env.mid, kind: 'take' } : { t: 'nack', mid: env.mid, reason: r.reason as Nack });
+        this.apply(r.changes);
+        return;
+      }
       case 'vote': {
         const r = e.vote(env.pid, a.scores, now);
         void this.reply(env.pid, r.ok ? { t: 'ack', mid: env.mid, kind: 'vote' } : { t: 'nack', mid: env.mid, reason: r.reason as Nack });
@@ -298,6 +304,7 @@ export class HostRoom {
     if (a.t === 'bid') r = e.bid(id, a.lot, a.amount, now);
     else if (a.t === 'seal') r = e.seal(id, a.lot, a.amount, now);
     else if (a.t === 'vote') r = e.vote(id, a.scores, now);
+    else if (a.t === 'take') r = e.take(id, a.lot, now);
     this.apply(r.changes);
     return { ok: r.ok, reason: r.reason };
   }

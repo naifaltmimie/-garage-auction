@@ -130,7 +130,7 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
   }, []);
   const inGame = !['lobby', 'results', 'showcase', 'voting'].includes(core.phase);
   const off = !room.net.connected || room.net.hostGone;
-  const live = core.phase === 'bidding' || core.phase === 'sealed';
+  const live = core.phase === 'bidding' || core.phase === 'sealed' || core.phase === 'dutch';
   const progress = core.lotsTotal > 0 ? Math.min(1, Math.max(0, core.lotNo / core.lotsTotal)) : 0;
   return (
     <header className={`topbar ${inGame ? 'ingame' : ''}`}>

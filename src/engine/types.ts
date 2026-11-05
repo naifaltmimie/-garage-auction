@@ -64,7 +64,15 @@ export interface Mech {
 
 export type SaleMode = 'inspected' | 'asis';
 export type Seller = 'owner' | 'showroom' | 'rental' | 'company' | 'gov' | 'insurance';
-export type LotKind = 'open' | 'covered' | 'sealed';
+export type LotKind = 'open' | 'covered' | 'sealed' | 'dutch';
+
+/** Dutch lot (المزاد الهولندي): the price falls from `start` by `step` every `every` ms down to `floor`. */
+export interface DutchPlan {
+  start: number;
+  floor: number;
+  step: number;
+  every: number;
+}
 
 /** A Saudi private plate: Arabic letters/digits over Latin. Some are special and worth real money. */
 export interface PlatePub {
@@ -159,6 +167,8 @@ export interface LotPub {
   notes: string[];
   estimate: [number, number] | null;
   opening: number;
+  /** dutch lots only: the falling-price schedule every phone derives the live price from */
+  dutch?: DutchPlan;
   /** the next lots' first photos, so phones fetch them while this one is on the block */
   ahead?: string[];
 }
@@ -237,13 +247,15 @@ export interface Settings {
   mix: Mix;
   covered: boolean;
   sealed: boolean;
+  /** المزاد الهولندي (the price falls); missing means on */
+  dutch?: boolean;
   estimate: boolean;
   fee: number;
   ratingWeight: number;
 }
 
 export type Phase =
-  | 'lobby' | 'intro' | 'preview' | 'bidding' | 'sealed' | 'approval'
+  | 'lobby' | 'intro' | 'preview' | 'bidding' | 'sealed' | 'approval' | 'dutch'
   | 'sold' | 'unsold' | 'showcase' | 'voting' | 'results';
 
 export interface Timer {
@@ -272,7 +284,8 @@ export type CalloutKey =
   | 'hall_open' | 'lot_intro' | 'open_bid' | 'who_more' | 'war' | 'going_1' | 'going_2' | 'going_3'
   | 'sold' | 'no_bid' | 'unsold' | 'covered' | 'sealed' | 'envelopes' | 'bargain' | 'robbed'
   | 'surprise' | 'last_lot' | 'auction_end' | 'winner' | 'jump' | 'nobody_can'
-  | 'reserve_met' | 'approval' | 'accept' | 'decline' | 'relist' | 'last_chance' | 'silence';
+  | 'reserve_met' | 'approval' | 'accept' | 'decline' | 'relist' | 'last_chance' | 'silence'
+  | 'dutch' | 'dutch_low' | 'dutch_sold';
 
 export interface Callout {
   id: number;
@@ -353,6 +366,8 @@ export type Action =
   | { t: 'ping'; c: number }
   | { t: 'bid'; lot: string; amount: number }
   | { t: 'seal'; lot: string; amount: number }
+  /** dutch lot: buy at whatever the falling price is when the host gets this */
+  | { t: 'take'; lot: string }
   | { t: 'vote'; scores: Record<string, number> }
   /** ads this phone saw on earlier nights; the host keeps them out of the next deck */
   | { t: 'seen'; keys: string[] }
@@ -372,5 +387,5 @@ export interface Envelope {
 export type Private =
   | { t: 'pong'; c: number; h: number }
   | { t: 'nack'; mid: string; reason: string }
-  | { t: 'ack'; mid: string; kind: 'seal' | 'vote' | 'bid' }
+  | { t: 'ack'; mid: string; kind: 'seal' | 'vote' | 'bid' | 'take' }
   | { t: 'welcome'; spectator: boolean; full?: boolean };

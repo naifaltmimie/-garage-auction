@@ -7,6 +7,7 @@ import { SELLER_LINES } from './realism_lines';
 import { historyFor, micronsFor, rollSurprise, scanFor } from './realism';
 import { TRANSFER_FEE, increment, roundToStep } from './rules';
 import { marketOf } from './markets';
+import { dutchPlan } from './dutch';
 import { PHOTOS, type AdSet } from '../data/photos';
 import type {
   Body, CarModel, CarPub, Cond, FeeRule, LotFull, LotKind, Mech, PanelId, PanelStatus, PlatePub, SaleMode, Seller, Settings,
@@ -1003,6 +1004,13 @@ export function buildDeck(
   let k = 0;
   if (settings.covered) for (let i = 0; i < Math.max(1, Math.round(count * 0.1)) && k < slots.length; i++) kinds[slots[k++]] = 'covered';
   if (settings.sealed) for (let i = 0; i < Math.max(1, Math.round(count * 0.09)) && k < slots.length; i++) kinds[slots[k++]] = 'sealed';
+  // المزاد الهولندي: about one lot in ten, never one of the first two
+  if (settings.dutch !== false) {
+    const want = Math.max(1, Math.round(count * 0.1));
+    for (let i = k, n = 0; i < slots.length && n < want; i++) if (slots[i] >= 2) { kinds[slots[i]] = 'dutch'; n++; }
+  }
+  // test hook: ?dutch=force on the host's page puts dutch lots at #2 and #3
+  if (typeof location !== 'undefined' && /[?&]dutch=force/.test(location.search)) for (const i of [1, 2]) if (i < count) kinds[i] = 'dutch';
 
   const famCount = new Map<string, number>();
   const usedKey = new Set<string>();
@@ -1098,6 +1106,9 @@ export function makeLot(
   }
   opening = Math.max(500, opening);
   const estimate = settings.estimate && kind !== 'covered' ? estimateFor(rng, v, b.mode) : null;
+  // dutch: the price falls from above the estimate to well under it
+  const dutch = kind === 'dutch' ? dutchPlan(estimate ?? [roundToStep(v * 0.88), roundToStep(v * 1.12)], settings.speed) : undefined;
+  if (dutch) opening = dutch.start;
   // hidden reserve (الحد): roughly half the open lots carry one, set below true value
   const reservePrice = kind === 'open' && rng.chance(0.52) ? roundToStep(v * rng.range(0.72, 0.92)) : null;
   const notes = sellerNotes(rng, m, b, rolled.cover).map((t) => fill(t, { city: b.car.city }));
@@ -1129,6 +1140,7 @@ export function makeLot(
     notes: kind === 'covered' ? ['الغطا ما ينشال إلا بعد البيع'] : notes,
     estimate,
     opening,
+    ...(dutch ? { dutch } : {}),
     carFull: b.truth,
     base: v,
     reservePrice,

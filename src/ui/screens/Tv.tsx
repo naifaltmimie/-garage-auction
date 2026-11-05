@@ -25,6 +25,7 @@ const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'gold' 
   bidding: { t: 'المزاد مفتوح', tone: 'live' },
   sealed: { t: 'الظرف المختوم', tone: 'seal' },
   approval: { t: 'بانتظار البايع', tone: 'seal' },
+  dutch: { t: 'المزاد الهولندي', tone: 'live' },
   sold: { t: 'بيعت', tone: 'gold' },
   unsold: { t: 'ما انباعت', tone: 'red' },
   showcase: { t: 'الكراجات', tone: 'calm' },

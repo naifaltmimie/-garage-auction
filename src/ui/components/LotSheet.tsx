@@ -148,6 +148,7 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
     <>
       {lot.kind === 'covered' && <span className="g-kind">تحت الغطا</span>}
       {lot.kind === 'sealed' && <span className="g-kind">ظرف مختوم</span>}
+      {lot.kind === 'dutch' && <span className="g-kind gold">مزاد هولندي</span>}
       {lot.relist > 0 && <span className="g-kind gold">إعادة عرض</span>}
     </>
   );
