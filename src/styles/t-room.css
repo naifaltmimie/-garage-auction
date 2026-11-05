@@ -162,6 +162,22 @@
   background: var(--brand-hi);
 }
 
+/* «مقطوع» in the bar is just the lamp: the status pill under the bar says it in words, and the
+   words would squeeze the wallet off a 390px bar */
+.topbar .tb-off {
+  flex: none;
+  justify-content: center;
+  width: 28px;
+  padding: 0;
+  gap: 0;
+  font-size: 0;
+}
+
+.topbar .tb-off i {
+  width: 8px;
+  height: 8px;
+}
+
 /* small phones: the knobs look 40px but still take a 44px touch */
 @media (max-width: 380px) {
   .topbar {
@@ -265,6 +281,24 @@
   text-align: center;
 }
 
+/* the connecting screen: centred on the whole phone, with the tread floor fading up like Home */
+.ws-center {
+  min-height: calc(100dvh - 60px);
+}
+
+.ws-center::after {
+  content: '';
+  position: fixed;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 160px;
+  background: var(--tex-tread) center / 36px 22px;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 45%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, .5) 45%, transparent 100%);
+  opacity: .9;
+  pointer-events: none;
+}
+
 .wait-screen {
   display: grid;
   justify-items: center;
@@ -306,7 +340,7 @@
   text-align: center;
   overflow: hidden;
   background:
-    var(--tex-tread) center top / 30px 18px no-repeat,
+    var(--tex-tread) center top / 30px 18px repeat-x,
     linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
 }
 
@@ -488,6 +522,44 @@
 .rs-act:active {
   transform: translateY(2px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 0 0 #6e0a0f;
+}
+
+/* the menu sheet: rows are rubber keys */
+.rm-row {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 2px 0 #050506;
+}
+
+.rm-row:active {
+  background: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03), 0 0 0 #050506;
+}
+
+.rm-row.on .rm-ic {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* the red «yes, do it» buttons keep the pushable block (controls.css had flattened them) */
+.btn.btn-primary.rm-danger-solid {
+  background: var(--face);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    inset 0 -2px 0 rgba(0, 0, 0, .28),
+    0 var(--lift) 0 var(--deck),
+    0 calc(var(--lift) + 7px) 16px -4px rgba(0, 0, 0, .6);
+}
+
+.btn.btn-primary.rm-danger-solid:active:not(:disabled) {
+  background: var(--face);
+  box-shadow:
+    inset 0 0 0 1px var(--rim),
+    inset 0 2px 0 rgba(255, 255, 255, .06),
+    inset 0 -1px 0 rgba(0, 0, 0, .28),
+    0 1px 0 var(--deck),
+    0 3px 6px -2px rgba(0, 0, 0, .6);
 }
 
 /* ================================================================ create: tactile controls */
@@ -674,6 +746,52 @@
   }
 }
 
+/* the market on the opening: it was dark type on black; now white on a sunk well with a gold rim */
+.idn-market {
+  color: #fff;
+  background: linear-gradient(180deg, #0b0c0d, #141518);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, .8),
+    inset 0 0 0 1px rgba(232, 185, 85, .4),
+    0 10px 22px -10px rgba(0, 0, 0, .8);
+}
+
+.idn-market b {
+  color: #fff;
+}
+
+.idn-market span {
+  color: var(--ink-2);
+}
+
+/* phones: tighten the opening so the start lamps are on screen without scrolling */
+@media (max-width: 480px) {
+  .intro-screen {
+    padding: 10px 0 16px;
+  }
+
+  .idn-intro .idn-seq {
+    gap: 10px;
+  }
+
+  .idn-intro .idn-logo {
+    width: 108px;
+    margin-bottom: 0;
+  }
+
+  .idn-intro .idn-call {
+    font-size: clamp(25px, 7.2vw, 32px);
+  }
+
+  .idn-intro .idn-ledger > div {
+    padding-block: 9px 8px;
+  }
+
+  .idn-count .idn-count-n {
+    font-size: 80px;
+  }
+}
+
 /* ================================================================ standings and how-to */
 
 .standing .t-money.even {
@@ -709,7 +827,8 @@
 
   .market[aria-checked='true'],
   .budget[aria-pressed='true'],
-  .seg > button[aria-pressed='true'] {
+  .seg > button[aria-pressed='true'],
+  .rm-row:active {
     transform: none;
   }
 }

@@ -279,11 +279,11 @@ function Room({ code, me }: { code: string; me: Me }) {
           : 'لقينا الخط، ننتظر المضيف يرد…';
     return (
       <main className="shell narrow">
-        <div className="center-screen">
+        <div className="center-screen ws-center">
           <div className="wait-screen">
             <div className="t-display ws-title">{hosting ? 'نفتح الصالة' : 'ندوّر على الصالة'}</div>
             <CodePlate code={code} />
-            <TireLoader label={line} size={66} className="ws-loader" />
+            <TireLoader label={line} size={76} className="ws-loader" />
             {!hosting && slow && <p className="ws-help">تأكد من الكود، أو خلّ المضيف يفتح الصفحة عنده.</p>}
             <button className="btn btn-quiet" onClick={goHome}>رجوع</button>
           </div>
