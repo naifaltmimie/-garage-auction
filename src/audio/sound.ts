@@ -3,6 +3,10 @@
 import type { CalloutKey } from '../engine/types';
 import { store } from '../lib/util';
 
+// Bumped whenever the clips are re-recorded, so phones that cached the old voice (the files are
+// served with a week-long cache) fetch the new one.
+const VOICE_REV = 'raed-2026-11';
+
 // Recorded lines (ElevenLabs, Saudi auctioneer). A key lists clips in preference order;
 // lines that were never recorded fall back to the closest one we have, or stay silent.
 const VOICE_FILES: Partial<Record<CalloutKey, string[]>> = {
@@ -94,7 +98,7 @@ class Sound {
   private preload() {
     const all = new Set(Object.values(VOICE_FILES).flat() as string[]);
     // index.json (written at build time) lists the clips that actually exist — no 404 noise
-    fetch('/voice/index.json')
+    fetch(`/voice/index.json?v=${VOICE_REV}`)
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
       .then((have: unknown) => {
@@ -107,7 +111,7 @@ class Sound {
     if (!this.ctx || this.buffers.has(name) || this.loading.has(name)) return;
     this.loading.add(name);
     try {
-      const r = await fetch(`/voice/${name}.mp3`);
+      const r = await fetch(`/voice/${name}.mp3?v=${VOICE_REV}`);
       if (!r.ok || !/audio|mpeg|octet/i.test(r.headers.get('content-type') ?? '')) return;
       const data = await r.arrayBuffer();
       const buf = await this.ctx.decodeAudioData(data);
