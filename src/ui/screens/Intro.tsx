@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useLayoutEffect, useState } from 'react';
 import { marketOf } from '../../engine/markets';
 import type { Core } from '../../engine/types';
 import { carsN, money } from '../../lib/util';
@@ -20,6 +20,10 @@ export function Intro({ room }: { room: RoomView }) {
   const s = core.settings;
   const market = marketOf(s.mix);
   const bidders = core.players.filter((p) => !p.spectator).length;
+  // the host taps «ابدأ» at the foot of the lobby: open the title sequence from its first line
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <main className="shell narrow">
       <div className="intro-screen fx-host idn-intro">
