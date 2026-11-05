@@ -4,6 +4,7 @@ import { CATALOGUE } from '../../data/catalogue';
 import { PHOTOS } from '../../data/photos';
 import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util';
 import { go } from '../App';
+import { CareerChip } from '../components/CareerPanel';
 import { Photo } from '../components/Gallery';
 import { WhatsNew, hasNews } from '../components/WhatsNew';
 import { BackgroundPaths } from '../components/fx/BackgroundPaths';
@@ -123,6 +124,7 @@ export function Home() {
                 رجوع لصالة {recent.code}
               </button>
             )}
+            <CareerChip />
           </div>
         </section>
 

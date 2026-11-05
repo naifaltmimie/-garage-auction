@@ -7,6 +7,7 @@ import './styles/app.css';
 import './styles/fx.css';
 import './styles/news.css';
 import './styles/reactions.css';
+import './styles/awards.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';
