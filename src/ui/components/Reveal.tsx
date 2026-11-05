@@ -93,7 +93,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
               {buyer && <Paddle n={buyer.paddle} me={mine} />}
               <div>
                 <b>{mine ? 'مبروك، صارت لك' : `على ${buyer?.name ?? ''}`}</b>
-                <small>{sale.approved ? 'صاحبها قال على البركة' : `${sale.bids} سوم`}</small>
+                <small>{sale.approved ? 'صاحبها قال على البركة' : sale.kind === 'dutch' ? 'قال أبيها قبل الكل' : `${sale.bids} سوم`}</small>
               </div>
               <div className="rv-hammer">
                 <small>سعر الرسو</small>

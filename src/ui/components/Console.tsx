@@ -5,6 +5,7 @@ import { money, vibrate } from '../../lib/util';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 import { Icon } from './Bits';
 import { Paddle } from './Plate';
+import { DutchConsole, DutchHint } from './DutchConsole';
 
 export function maxBidFor(cash: number, lot: LotPub | null): number {
   if (!lot) return cash;
@@ -15,6 +16,7 @@ export function maxBidFor(cash: number, lot: LotPub | null): number {
 
 function phaseText(core: Core, msLeft: number, lot: LotPub | null): string {
   const s = Math.ceil(msLeft / 1000);
+  if (core.phase === 'preview' && lot?.kind === 'dutch') return `معاينة، السعر يبدأ ينزل بعد ${s} ث`;
   switch (core.phase) {
     case 'intro':
       return 'الصالة تتجهز';
@@ -126,6 +128,8 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
   const watching = spectator || garageFull;
   const topP = playerOf(top?.by ?? null);
 
+  if (core.phase === 'dutch' && lot?.dutch) return <DutchConsole room={room} me={me} lot={lot} plan={lot.dutch} />;
+
   return (
     <section className={`bidpanel ${compact ? 'compact' : ''} ${hot ? 'hot' : ''} ${showOutbid ? 'outbid' : ''}`} aria-label="لوحة المزايدة">
       {host && (
@@ -171,6 +175,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
           <small>ريال</small>
         </div>
       )}
+      {compact && lot?.kind === 'dutch' && lot.dutch && <DutchHint plan={lot.dutch} />}
 
       {!compact && core.phase !== 'sealed' && (
         <div className="bp-price">

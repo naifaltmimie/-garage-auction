@@ -23,6 +23,7 @@ export function Intro({ room }: { room: RoomView }) {
             <span className="chip chip-gold">كل واحد معه {money(s.budget)}</span>
             <span className="chip">الكراج يشيل {carsN(s.garage)}</span>
             <span className="chip">{carsN(core.lotsTotal)} بالمزاد</span>
+            {s.dutch !== false && <span className="chip">فيه مزاد هولندي، السعر ينزل</span>}
           </div>
           <p className="mute" style={{ maxWidth: '36ch', margin: 0 }}>
             اقرأ تقرير الفحص زين وقت المعاينة. القيمة الحقيقية تنكشف بعد ما تنزل المطرقة، ومرات تطلع مفاجأة.

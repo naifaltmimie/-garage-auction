@@ -23,6 +23,7 @@ const VOICE_FILES: Partial<Record<CalloutKey, string[]>> = {
   nobody_can: ['unsold'],
   covered: ['covered'],
   sealed: ['sealed'],
+  dutch_sold: ['sold_1', 'sold_2'],
   envelopes: ['envelopes'],
   bargain: ['bargain'],
   robbed: ['robbed'],

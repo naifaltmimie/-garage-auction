@@ -4,6 +4,7 @@ import { Rng } from '../lib/rng';
 import { money } from '../lib/util';
 import { AUCTIONEER, ROASTS, fill } from './lines';
 import { buildDeck } from './lotgen';
+import { dutchDuration, dutchPriceAt, dutchProgress } from './dutch';
 import {
   CLOSE_GRACE_MS, DROP_FACTOR, MAX_DROPS, SPEEDS, dealScore, extensionFor, feesOf, increment, lotsFor,
   minNextBid, roundToStep, verdictOf,
@@ -309,6 +310,7 @@ export class HostEngine {
     else if (last) this.say('last_lot', now);
     else if (lot.kind === 'covered') this.say('covered', now);
     else if (lot.kind === 'sealed') this.say('sealed', now);
+    else if (lot.kind === 'dutch') this.say('dutch', now);
     else this.say('lot_intro', now, { city: lot.carFull.city });
     return { core: true, lot: true };
   }
@@ -316,6 +318,7 @@ export class HostEngine {
   private openBidding(now: number): Changes {
     const lot = this.lot;
     if (!lot) return {};
+    if (lot.kind === 'dutch' && lot.dutch) return this.openDutch(now, lot.dutch);
     if (!this.eligible(this.st.opening).length) {
       this.say('nobody_can', now);
       return this.closeUnsold(now, 'nobody');
@@ -331,6 +334,52 @@ export class HostEngine {
       this.say('open_bid', now, { price: money(this.st.opening) });
     }
     return { core: true };
+  }
+
+  /** Dutch lot: the price starts falling now; anyone who can afford the floor may say «أبيها». */
+  private openDutch(now: number, plan: NonNullable<LotFull['dutch']>): Changes {
+    if (!this.eligible(plan.floor).length) {
+      this.say('nobody_can', now);
+      return this.closeUnsold(now, 'nobody');
+    }
+    this.st.bidOpenedAt = now;
+    this.st.phase = 'dutch';
+    this.setTimer('dutch', now, dutchDuration(plan));
+    this.say('dutch', now, { price: money(plan.start) });
+    return { core: true };
+  }
+
+  /** The live dutch price at host time `now` (the same formula every phone runs). */
+  dutchPrice(now: number): number | null {
+    const st = this.st;
+    const plan = this.lot?.dutch;
+    if (st.phase !== 'dutch' || !plan || !st.timer) return null;
+    const left = st.paused ? st.timer.frozenLeft ?? 0 : st.timer.endsAt - now;
+    return dutchPriceAt(plan, Math.max(0, st.timer.total - left));
+  }
+
+  /** «أبيها»: the first one the host hears buys the car at the price showing at that moment. */
+  take(pid: string, lotId: string, now: number): { ok: boolean; reason?: Nack; changes: Changes } {
+    const st = this.st;
+    const p = this.player(pid);
+    if (!p) return { ok: false, reason: 'unknown', changes: {} };
+    if (p.spectator) return { ok: false, reason: 'spectator', changes: {} };
+    const lot = this.lot;
+    if (st.phase !== 'dutch' || !lot || lot.id !== lotId || st.paused) {
+      return { ok: false, reason: ['sold', 'unsold'].includes(st.phase) ? 'late' : 'phase', changes: {} };
+    }
+    if (st.timer && now > st.timer.endsAt + CLOSE_GRACE_MS) return { ok: false, reason: 'late', changes: {} };
+    if (!this.hasRoom(p)) return { ok: false, reason: 'full', changes: {} };
+    const price = this.dutchPrice(now);
+    if (price == null) return { ok: false, reason: 'phase', changes: {} };
+    if (!this.canAfford(p, price)) return { ok: false, reason: 'cash', changes: {} };
+    p.bids += 1;
+    st.bid = { amount: price, by: pid, at: now, count: 1 };
+    st.lid += 1;
+    st.log = [{ id: st.lid, by: pid, amount: price, at: now, jump: 0 }];
+    const ch = this.closeSold(now, pid, price);
+    this.say('dutch_sold', now, { buyer: p.name, price: money(price) });
+    return { ok: true, changes: ch };
   }
 
   bid(pid: string, lotId: string, amount: number, now: number): { ok: boolean; reason?: Nack; changes: Changes } {
@@ -531,6 +580,18 @@ export class HostEngine {
         if (!valid.length) return this.closeUnsold(now, 'no_bid');
         return this.closeSold(now, valid[0].by, valid[0].amount, { sealedBids: bids.map((b) => ({ by: b.by, amount: b.amount })) });
       }
+      case 'dutch': {
+        const plan = this.lot?.dutch;
+        const price = this.dutchPrice(now);
+        // past halfway down the dalal pokes the room once
+        if (plan && price != null && st.calls === 0 && left > 0 && dutchProgress(plan, price) >= 0.55) {
+          st.calls = 1;
+          this.say('dutch_low', now, { price: money(price) });
+          return { core: true };
+        }
+        if (left > -CLOSE_GRACE_MS) return {};
+        return this.closeUnsold(now, 'no_bid');
+      }
       case 'sold': {
         const sale = st.sales[st.sales.length - 1];
         const elapsed = st.timer.total - left;
@@ -564,6 +625,12 @@ export class HostEngine {
   /** `away`: the host's phone left the page (screen off / another app), so the clock holds for everyone. */
   pause(now: number, away = false): Changes {
     const st = this.st;
+    if (st.phase === 'dutch' && !st.paused && st.timer) {
+      st.paused = true;
+      st.away = away;
+      st.timer = { ...st.timer, frozenLeft: Math.max(0, st.timer.endsAt - now) };
+      return { core: true };
+    }
     if (st.paused || !st.timer || !['preview', 'bidding', 'sealed', 'sold', 'unsold', 'intro'].includes(st.phase)) return {};
     st.paused = true;
     st.away = away;
@@ -574,6 +641,14 @@ export class HostEngine {
   resume(now: number): Changes {
     const st = this.st;
     if (!st.paused || !st.timer) return {};
+    if (st.phase === 'dutch') {
+      // the falling price picks up exactly where it froze (the floor hold gets a moment back)
+      st.paused = false;
+      st.away = false;
+      const left = Math.max(1500, st.timer.frozenLeft ?? 0);
+      st.timer = { kind: st.timer.kind, endsAt: now + left, total: st.timer.total };
+      return { core: true };
+    }
     st.paused = false;
     st.away = false;
     const floor = st.phase === 'bidding' && st.bid ? this.speed.minExtend : 2500;
@@ -595,6 +670,11 @@ export class HostEngine {
 
   /** Pull the current car off the block without a sale. */
   skipLot(now: number): Changes {
+    if (this.st.phase === 'dutch') {
+      this.st.paused = false;
+      this.st.bid = null;
+      return this.closeUnsold(now, 'nobody');
+    }
     if (!['preview', 'bidding', 'sealed'].includes(this.st.phase)) return {};
     this.st.paused = false;
     this.st.bid = null;
