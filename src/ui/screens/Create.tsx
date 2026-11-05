@@ -58,7 +58,7 @@ export function Create() {
     <main className="shell narrow create">
       <div className="page-head">
         <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
-        <span className="chip chip-green">صالة جديدة</span>
+        <span className="chip chip-live"><i className="dot" /> صالة جديدة</span>
       </div>
       <form
         className="stack"

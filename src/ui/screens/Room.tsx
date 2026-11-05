@@ -5,11 +5,12 @@ import type { Core, Hist } from '../../engine/types';
 import { money, store } from '../../lib/util';
 import { go, goHome, useBack } from '../App';
 import { Icon, Toasts } from '../components/Bits';
+import { TireLoader } from '../components/TireLoader';
 import { BrandLogo, LOGO, LogoMark } from '../components/Logo';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
 import { Auction } from './Auction';
 import { Intro } from './Intro';
-import { Lobby } from './Lobby';
+import { CodePlate, Lobby } from './Lobby';
 import { TvLink } from './Tv';
 import { Results } from './Results';
 import { Showcase } from './Showcase';
@@ -36,8 +37,8 @@ export function RoomGate({ code }: { code: string }) {
           }}
         >
           <img className="join-logo" src={LOGO.stack} width={220} height={193} alt="مزاد الكراج" draggable={false} />
-          <div className="code">{code}</div>
-          <p className="mute" style={{ margin: 0 }}>انعزمت على المزاد. اكتب اسمك وادخل الصالة.</p>
+          <CodePlate code={code} />
+          <p className="mute join-line">انعزمت على المزاد. اكتب اسمك وادخل الصالة.</p>
           <input className="input" autoFocus value={name} maxLength={18} onChange={(e) => setName(e.target.value)} placeholder="اسمك" autoComplete="nickname" />
           <button className="btn btn-primary btn-block" disabled={name.trim().length < 2}>
             ادخل الصالة
@@ -143,7 +144,7 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
         </button>
       )}
       {inGame && core.lotNo > 0 && (
-        <div className={`tb-lot ${live ? 'is-live' : ''}`}>
+        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`اللوت ${core.lotNo} من ${core.lotsTotal}`}>
           <small>{live ? <span className="live"><i />مباشر</span> : 'اللوت'}</small>
           <span className="tb-lot-n">
             <b className="ltr">{String(core.lotNo).padStart(2, '0')}</b>
@@ -154,7 +155,10 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
       <div className="grow" />
       {off && <span className="tb-off" role="status"><i />مقطوع</span>}
       {me && !me.spectator && core.phase !== 'lobby' && (
-        <div className="wallet" aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}>
+        <div
+          className={`wallet ${me.cash < core.settings.budget * 0.15 ? 'low' : ''}`}
+          aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}
+        >
           <div className="w-top">
             <small>رصيدك</small>
             <span className="wg">
@@ -163,6 +167,10 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
             </span>
           </div>
           <b className="ltr">{money(me.cash)}</b>
+          {/* a fuel gauge: what's left of the night's budget */}
+          <i className="w-gauge" aria-hidden="true">
+            <i style={{ ['--f' as string]: Math.min(1, Math.max(0, me.cash / Math.max(1, core.settings.budget))) }} />
+          </i>
         </div>
       )}
       <button
@@ -258,20 +266,24 @@ function Room({ code, me }: { code: string; me: Me }) {
   }, [core]);
 
   if (!core) {
+    const hosting = room.role === 'host';
+    const slow = waited > 8;
+    // the host's phone only opens the line once the night's market has loaded, so that's its wait
+    const line = hosting
+      ? 'نجهّز سوق الليلة ونصفّ السيارات…'
+      : !room.net.connected
+        ? 'نتصل بالمزاد…'
+        : slow
+          ? 'متصلين، بس المضيف ما فتح الصالة للحين'
+          : 'لقينا الخط، ننتظر المضيف يرد…';
     return (
       <main className="shell narrow">
-        <div className="center-screen">
-          <div className="stack" style={{ justifyItems: 'center', gap: 16 }}>
-            <div className="spinner" />
-            <div className="t-display" style={{ fontSize: 30 }}>ندوّر على الصالة</div>
-            <div className="code" style={{ fontSize: 40 }}>{code}</div>
-            <p className="mute" style={{ margin: 0, maxWidth: 34 + 'ch' }}>
-              {!room.net.connected
-                ? 'نتصل بالمزاد…'
-                : waited > 8
-                  ? 'متصلين بس المضيف ما فتح الصالة للحين. تأكد من الكود أو خلّ المضيف يفتح الصفحة.'
-                  : 'متصلين، ننتظر المضيف…'}
-            </p>
+        <div className="center-screen ws-center">
+          <div className="wait-screen">
+            <div className="t-display ws-title">{hosting ? 'نفتح الصالة' : 'ندوّر على الصالة'}</div>
+            <CodePlate code={code} />
+            <TireLoader label={line} size={76} className="ws-loader" />
+            {!hosting && slow && <p className="ws-help">تأكد من الكود، أو خلّ المضيف يفتح الصفحة عنده.</p>}
             <button className="btn btn-quiet" onClick={goHome}>رجوع</button>
           </div>
         </div>
