@@ -216,7 +216,7 @@ export function Create() {
         </div>
         </div>
 
-        <button className="btn btn-gold btn-block create-go" style={{ minHeight: 58, fontSize: 19 }} aria-disabled={!ok}>
+        <button className="btn btn-gold btn-block create-go" style={{ minHeight: 58, fontSize: 19 }}>
           افتح الصالة
         </button>
       </form>
