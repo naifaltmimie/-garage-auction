@@ -37,7 +37,7 @@ export function GarageCard({ p, sales, slots, me, hideValues }: { p: PlayerPub; 
                   {s.car.modelAr} <span className="trim">{s.car.trim}</span>
                 </b>
                 <small>
-                  {s.car.makeAr}، <span className="ltr">{s.car.year}</span>، {km(s.car.km)}
+                  <bdi>{s.car.makeAr}</bdi>، <span className="ltr">{s.car.year}</span>، <bdi>{km(s.car.km)}</bdi>
                 </small>
                 <div className="gcar-nums">
                   <span>

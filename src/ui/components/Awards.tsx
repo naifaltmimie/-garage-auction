@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, FinalResults, Sale } from '../../engine/types';
 import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
@@ -118,7 +118,8 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   const over = skipped || step > total;
   useEffect(() => {
     if (!ready || over || total === 0) return;
-    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 500 : items[step - 1]?.grand ? 3400 : 2600);
+    // the first envelope waits a beat, so the champion's row on the podium gets its moment first
+    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 1900 : items[step - 1]?.grand ? 3400 : 2600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, over, step, total]);
@@ -133,6 +134,31 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, ready, skipped, total]);
 
+  // the show follows itself down the page: the stage when the envelopes start, then the share card
+  const secRef = useRef<HTMLElement>(null);
+  const mineRef = useRef<HTMLDivElement>(null);
+  const glide = (el: HTMLElement | null, block: ScrollLogicalPosition) => {
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    if (r.top >= 64 && r.bottom <= vh - 8) return;
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block, behavior: still ? 'auto' : 'smooth' });
+  };
+  const started = ready && total > 0;
+  useEffect(() => {
+    if (!started || skipped) return;
+    const t = window.setTimeout(() => glide(secRef.current, 'start'), 1100);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started]);
+  useEffect(() => {
+    if (!over || !ready) return;
+    const t = window.setTimeout(() => glide(mineRef.current, 'nearest'), skipped ? 120 : 600);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [over, ready]);
+
   if (!ready || !res) return null;
   const cur = !over && step >= 1 && step <= total ? items[step - 1] : null;
   const listed = over ? items : items.slice(0, Math.max(0, step - 1));
@@ -140,7 +166,7 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   const nightBadges = [...new Set([...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)])];
 
   return (
-    <section className="aw" aria-label="جوائز الليلة">
+    <section className="aw" ref={secRef} aria-label="جوائز الليلة">
       <header className="aw-head">
         <span className="aw-kicker">حفل الختام</span>
         <h2>جوائز الليلة</h2>
@@ -214,7 +240,7 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
       )}
 
       {over && meRow && !room.spectator && (
-        <div className="aw-mine">
+        <div className="aw-mine" ref={mineRef}>
           {nightBadges.length > 0 && (
             <div className="aw-badges">
               <span className="aw-badges-label">شاراتك الليلة</span>
