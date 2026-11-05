@@ -201,11 +201,11 @@ const GLYPH = {
   ),
   // a saloon in profile: drawn facing right, then turned to face the way the page reads
   car: (
-    <g transform="matrix(-1 0 0 1 24 -.6)">
-      <path d="M4.8 16.5H3.4A1.4 1.4 0 0 1 2 15.1v-2.3a1.6 1.6 0 0 1 1.2-1.55l2.3-.55 2.1-3.1a1.9 1.9 0 0 1 1.6-.85h4.6a1.9 1.9 0 0 1 1.5.75l2.5 3.2 2.9.7a2.2 2.2 0 0 1 1.3 2.15v1.55a1.4 1.4 0 0 1-1.4 1.4h-1.4M9.2 16.5h5.6" />
-      <path d="M5.5 10.7h12.3M11.7 6.75v3.95" />
-      <circle cx="7" cy="16.5" r="2.2" />
-      <circle cx="17" cy="16.5" r="2.2" />
+    <g transform="matrix(-1 0 0 1 24 -.9)">
+      <path d="M4.55 16.2H3.3A1.3 1.3 0 0 1 2 14.9v-2a1.5 1.5 0 0 1 1.1-1.45l2.5-.65 2.7-2.9a1.8 1.8 0 0 1 1.3-.55h3.9a1.8 1.8 0 0 1 1.35.6l2.75 2.95 3 .65a2 2 0 0 1 1.4 1.9v1.45a1.3 1.3 0 0 1-1.3 1.3h-1.05M9.05 16.2h6.1" />
+      <path d="M5.6 10.85h12M11.9 7.35v3.5" />
+      <circle cx="6.8" cy="16.2" r="2.25" />
+      <circle cx="17.4" cy="16.2" r="2.25" />
     </g>
   ),
   // the head is banded at both faces; it hangs over the sound block it's about to strike

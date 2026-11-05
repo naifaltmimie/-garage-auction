@@ -537,10 +537,10 @@ html .tv .paddle {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 30px;
+  height: 26px;
   border-radius: 24px 24px 0 0;
   background: var(--tex-tread) center / 40px 24px;
-  opacity: .9;
+  opacity: .5;
   pointer-events: none;
 }
 
