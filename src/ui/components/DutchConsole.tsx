@@ -47,7 +47,7 @@ export function DutchHint({ plan }: { plan: DutchPlan }) {
     <div className="dc-hint">
       <span className="dc-tag">مزاد هولندي</span>
       <span>
-        يبدأ من <b className="t-money">{money(plan.start)}</b> وينزل لين <b className="t-money">{money(plan.floor)}</b>، أول واحد يقول أبيها ياخذها
+        يبدأ من <b className="t-money">{money(plan.start)}</b> وينزل لين <b className="t-money">{money(plan.floor)}</b>
       </span>
     </div>
   );
@@ -63,7 +63,8 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const step = Math.min(dutchSteps(plan), Math.floor(elapsed / plan.every));
   const prog = dutchProgress(plan, price);
   const onFloor = price <= plan.floor;
-  const heat = onFloor ? 3 : prog >= 0.8 ? 2 : prog >= 0.5 ? 1 : 0;
+  // tension: calm, warmer past halfway, gold close to the floor, red for the last steps and the floor
+  const heat = onFloor || prog >= 0.9 ? 3 : prog >= 0.72 ? 2 : prog >= 0.45 ? 1 : 0;
 
   const cash = me?.cash ?? 0;
   const maxBid = maxBidFor(cash, lot);
