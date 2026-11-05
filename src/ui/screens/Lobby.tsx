@@ -7,6 +7,7 @@ import { MARKETS } from '../../engine/markets';
 import type { Mix, Speed } from '../../engine/types';
 import { carsN, money } from '../../lib/util';
 import { Icon, QR } from '../components/Bits';
+import { TvGlyph, openTv } from './Tv';
 import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 
@@ -68,6 +69,11 @@ export function Lobby({ room }: { room: RoomView }) {
               </button>
             </div>
             <small className="mute">اللي جنبك يصوّر الكود، واللي بعيد ترسل له الرابط</small>
+            {room.role === 'host' && (
+              <button className="btn btn-ghost btn-block tv-open" onClick={() => openTv(room.code)}>
+                <TvGlyph /> افتح شاشة العرض
+              </button>
+            )}
           </section>
 
           <div className="stack" style={{ gap: 14 }}>

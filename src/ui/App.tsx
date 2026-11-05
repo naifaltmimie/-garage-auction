@@ -4,6 +4,7 @@ import { Create } from './screens/Create';
 import { Home } from './screens/Home';
 import { HowTo } from './screens/HowTo';
 import { RoomGate } from './screens/Room';
+import { Tv, tvCodeOf } from './screens/Tv';
 
 export type Route = { name: 'home' } | { name: 'new' } | { name: 'rules' } | { name: 'room'; code: string };
 
@@ -34,6 +35,8 @@ export function App() {
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
+  const tv = tvCodeOf(location.hash);
+  if (tv) return <Tv key={tv} code={tv} />;
   if (route.name === 'new') return <Create />;
   if (route.name === 'rules') return <HowTo />;
   if (route.name === 'room') return <RoomGate key={route.code} code={route.code} />;
