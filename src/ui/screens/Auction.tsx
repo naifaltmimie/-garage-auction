@@ -8,6 +8,7 @@ import { LotSheet } from '../components/LotSheet';
 // own props change, never because a bid or the clock moved
 const LotSheetMemo = memo(LotSheet);
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
+import { ReactionLayer } from '../components/Reactions';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 /** Ticks in the last seconds of an open lot. */
@@ -86,6 +87,7 @@ export function Auction({ room }: { room: RoomView }) {
       {core.phase === 'unsold' && saleForLot && <UnsoldReveal core={core} sale={saleForLot} />}
       {core.phase === 'approval' && <ApprovalReveal core={core} />}
       {log && <BidLog core={core} myId={room.myId} onClose={() => setLog(false)} />}
+      <ReactionLayer room={room} />
     </main>
   );
 }

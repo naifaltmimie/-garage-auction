@@ -13,6 +13,7 @@ import { Results } from './Results';
 import { Showcase } from './Showcase';
 import { Standings } from './Standings';
 import { Voting } from './Voting';
+import { FxToggle } from '../components/Reactions';
 
 export function RoomGate({ code }: { code: string }) {
   const [me, setMe] = useState<Me | null>(() => meFor(code));
@@ -182,6 +183,7 @@ function TopBar({ room, onPlayers }: { room: RoomView; onPlayers: () => void }) 
       >
         <Icon name={prefs.voice ? 'sound' : 'mute'} />
       </button>
+      <FxToggle />
       <button className="iconbtn tb-btn" aria-label="الكراجات والترتيب" onClick={onPlayers}>
         <Icon name="users" />
       </button>
