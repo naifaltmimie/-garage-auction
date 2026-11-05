@@ -1,8 +1,9 @@
 import { HostEngine } from '../src/engine/host';
-import { CATALOGUE } from '../src/data/catalogue';
+import { CATALOGUE, loadMarket } from '../src/data/market';
 import { DEFAULT_SETTINGS, minNextBid } from '../src/engine/rules';
 import { money } from '../src/lib/util';
 
+await loadMarket();
 let now = 1_000_000;
 const eng = HostEngine.create({ code: 'TEST01', hostId: 'h1', hostSec: 's', hostName: 'نايف', settings: { ...DEFAULT_SETTINGS, budget: 1_500_000, speed: 'fast' }, now }, CATALOGUE);
 for (const [id, name] of [['p2', 'فهد'], ['p3', 'سعد'], ['p4', 'عبدالله']]) eng.join(id, 's', name, now);

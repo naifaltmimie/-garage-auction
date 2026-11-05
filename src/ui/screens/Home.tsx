@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
-import { CATALOGUE } from '../../data/catalogue';
-import { PHOTOS } from '../../data/photos';
+import { loadMarket } from '../../data/market';
+import { SHOWROOM } from '../../data/showroom';
 import { hijriToday, isCode, money, normalizeCode, store } from '../../lib/util';
 import { go } from '../App';
 import { CareerChip } from '../components/CareerPanel';
@@ -14,9 +14,8 @@ import { GavelMark } from './Room';
 function useShowroom(n = 8) {
   return useMemo(() => {
     // the front page shows only ads whose first photo was checked to be the outside of the car
-    const coverOf = (id: string) => PHOTOS[id]?.find((a) => a.ext && a.imgs.length);
-    const withPhotos = CATALOGUE.filter((m) => coverOf(m.id));
-    const pool = [...withPhotos].sort(() => Math.random() - 0.5);
+    // (SHOWROOM is pre-picked that way by scripts/build_showroom.ts, so players never load the market)
+    const pool = [...SHOWROOM].sort(() => Math.random() - 0.5);
     // a spread of tiers so the strip looks like a real hall
     const out: typeof pool = [];
     const seen = new Set<string>();
@@ -27,7 +26,7 @@ function useShowroom(n = 8) {
       out.push(m);
     }
     for (const m of pool) if (out.length < n && !out.includes(m)) out.push(m);
-    return out.map((m) => ({ m, img: coverOf(m.id)!.imgs[0] }));
+    return out.map((m) => ({ m, img: m.img }));
   }, [n]);
 }
 
@@ -85,6 +84,8 @@ export function Home() {
               className="btn btn-primary btn-block"
               onClick={() => {
                 sound.unlock();
+                // the host deals from the full market: start fetching it now
+                loadMarket().catch(() => {});
                 go('/new');
               }}
             >

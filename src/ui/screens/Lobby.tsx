@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { sound } from '../../audio/sound';
-import { CATALOGUE } from '../../data/catalogue';
-import { marketDepth } from '../../engine/lotgen';
+import { depthOf } from '../../data/depth';
 import { BUDGETS, GARAGE_SIZES, lotsFor } from '../../engine/rules';
 import { MARKETS } from '../../engine/markets';
 import type { Mix, Speed } from '../../engine/types';
@@ -132,7 +131,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 </div>
                 <div>
                   <dt>السيارات بالمزاد</dt>
-                  <dd>{carsN(Math.max(1, Math.min(lotsFor(s, active.length), marketDepth(s, CATALOGUE))))}</dd>
+                  <dd>{carsN(Math.max(1, Math.min(lotsFor(s, active.length), depthOf(s))))}</dd>
                 </div>
                 <div>
                   <dt>السرعة والسوق</dt>

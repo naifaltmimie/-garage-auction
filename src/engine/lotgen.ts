@@ -8,7 +8,8 @@ import { historyFor, micronsFor, rollSurprise, scanFor } from './realism';
 import { TRANSFER_FEE, increment, roundToStep } from './rules';
 import { marketOf } from './markets';
 import { dutchPlan } from './dutch';
-import { PHOTOS, type AdSet } from '../data/photos';
+import type { AdSet } from '../data/photos';
+import { PHOTOS } from '../data/market';
 import type {
   Body, CarModel, CarPub, Cond, FeeRule, LotFull, LotKind, Mech, PanelId, PanelStatus, PlatePub, SaleMode, Seller, Settings,
   Surprise, Tier,
@@ -833,7 +834,7 @@ type Bucket = 'cheap' | 'low' | 'mid' | 'high' | 'dream';
 // how the lots spread over price bands (relative to one garage slot of the budget)
 const SPREAD: Record<Bucket, number> = { cheap: 0.16, low: 0.25, mid: 0.3, high: 0.2, dream: 0.09 };
 
-function bucketOf(value: number, perSlot: number, budget: number): Bucket | null {
+export function bucketOf(value: number, perSlot: number, budget: number): Bucket | null {
   if (value > budget * 0.92) return null;
   const r = value / perSlot;
   if (r < 0.12) return 'cheap';

@@ -1,6 +1,6 @@
 // Room wiring. The host runs HostEngine and publishes three retained snapshots
 // (core / lot / hist); players publish intents and read snapshots.
-import { CATALOGUE } from '../data/catalogue';
+import { CATALOGUE } from '../data/market';
 import { HostEngine, type Changes, type HostState, type Nack } from '../engine/host';
 import type { Action, Core, Envelope, Hist, LotPub, Private } from '../engine/types';
 import { randId, store } from '../lib/util';
@@ -84,6 +84,7 @@ export class HostRoom {
       const deck = store.get<HostState['deck'] | null>(`mzk:hostdeck:${code}`, null);
       if (deck?.length && st.phase !== 'lobby') st.deck = deck;
     }
+    // the market chunk is loaded by now: useRoom awaits loadMarket() before calling load()
     const room = new HostRoom(new HostEngine(st, CATALOGUE));
     room.savedDeck = st.deck;
     return room;

@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
-import { CATALOGUE } from '../../data/catalogue';
-import { marketDepth } from '../../engine/lotgen';
+import { depthOf } from '../../data/depth';
+import { loadMarket } from '../../data/market';
 import { MARKETS } from '../../engine/markets';
 import { BUDGETS, DEFAULT_SETTINGS, GARAGE_SIZES } from '../../engine/rules';
 import type { Settings, Speed } from '../../engine/types';
@@ -31,9 +31,13 @@ export function Create() {
   const ok = name.trim().length >= 2 && s.budget >= 50_000;
   // how many real ads each market has at its own budget
   const depth = useMemo(
-    () => Object.fromEntries(MARKETS.map((m) => [m.id, marketDepth({ ...DEFAULT_SETTINGS, mix: m.id, budget: m.budget }, CATALOGUE)])),
+    () => Object.fromEntries(MARKETS.map((m) => [m.id, depthOf({ ...DEFAULT_SETTINGS, mix: m.id, budget: m.budget })])),
     [],
   );
+  // this phone is about to host: fetch the car market while the settings are being picked
+  useEffect(() => {
+    loadMarket().catch(() => {});
+  }, []);
 
   const submit = () => {
     if (!ok) return;

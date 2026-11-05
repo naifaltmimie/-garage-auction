@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sound } from '../audio/sound';
-import { CATALOGUE } from '../data/catalogue';
+import { CATALOGUE, loadMarket, marketReady } from '../data/market';
 import { HostEngine } from '../engine/host';
 import { DEFAULT_SETTINGS } from '../engine/rules';
 import type { Action, Core, Private, Settings } from '../engine/types';
@@ -83,6 +83,7 @@ export function saveMe(code: string, me: Me) {
 export function createHostRoom(code: string, name: string, settings: Settings) {
   const me: Me = { pid: `h_${randId(10)}`, sec: randId(16), name };
   saveMe(code, me);
+  // only the state is kept here; the engine that deals the night is built in HostRoom.load once the market has loaded
   const engine = HostEngine.create({ code, hostId: me.pid, hostSec: me.sec, hostName: name, settings: { ...DEFAULT_SETTINGS, ...settings }, now: Date.now() }, CATALOGUE);
   store.set(`mzk:host:${code}`, engine.st);
   store.set('mzk:last', { code, at: Date.now(), host: true });
@@ -110,6 +111,22 @@ export function useRoom(code: string, me: Me): RoomView {
   const pendingSeal = useRef<Map<string, { lot: string; amount: number }>>(new Map());
   const pendingVote = useRef<Set<string>>(new Set());
   const tid = useRef(0);
+  // the host's phone deals from the full car market, a lazy chunk: wait for it (the spinner shows meanwhile)
+  const [market, setMarket] = useState(marketReady);
+  useEffect(() => {
+    if (!isHost || market) return;
+    let live = true;
+    const get = (): void => {
+      loadMarket().then(
+        () => live && setMarket(true),
+        () => live && setTimeout(get, 1500),
+      );
+    };
+    get();
+    return () => {
+      live = false;
+    };
+  }, [isHost, market]);
 
   const toast = useCallback((text: string, tone?: 'good' | 'bad') => {
     const id = ++tid.current;
@@ -120,6 +137,7 @@ export function useRoom(code: string, me: Me): RoomView {
   useEffect(() => {
     let raf = 0;
     if (isHost) {
+      if (!market) return;
       const room = HostRoom.load(code);
       if (!room) return;
       hostRef.current = room;
@@ -208,7 +226,7 @@ export function useRoom(code: string, me: Me): RoomView {
       room.stop();
       playerRef.current = null;
     };
-  }, [code, isHost, me, toast]);
+  }, [code, isHost, me, toast, market]);
 
   const act = useCallback(
     (a: Action) => {
