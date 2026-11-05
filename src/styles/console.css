@@ -3,17 +3,24 @@
 
 /* ------------------------------------------------ reactions switch docked in the panel */
 
-/* Reactions.tsx measures the panel's status row and sets --rx-f; without it (sale sheet on screen)
-   the switch floats just above the sheet as before */
+/* Reactions.tsx measures the panel's status row and sets --rx-f (docked opposite the clock), or the
+   bottom corner while a sale sheet is up; without it the switch floats above the panel as before */
 .rx-fab {
   bottom: var(--rx-f, calc(var(--rx-b) + 12px));
 }
 
 /* keep the slot opposite the clock free while the switch sits there */
-[data-rxdock] .auction .bidpanel .bp-status,
-[data-rxdock] .auction .bidpanel .dc-head {
+[data-rxdock='panel'] .auction .bidpanel .bp-status,
+[data-rxdock='panel'] .auction .bidpanel .dc-head {
   padding-inline-end: 54px;
   min-height: 46px;
+}
+
+/* over a sale sheet the switch sits in the bottom corner; the sheet ends with room for it */
+[data-rxdock='sheet'] .overlay .reveal::after {
+  content: '';
+  display: block;
+  height: 58px;
 }
 
 /* ------------------------------------------------ numbers that never shift the layout */

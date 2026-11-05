@@ -51,9 +51,11 @@ function useLane(phase: string, lotId: string | undefined) {
         });
         // the switch docks inside the bid panel's status row (opposite the clock), so it never sits on
         // the car's title or on the bid buttons; above a sale sheet it floats just over the sheet
+        // f: -1 float above the anchor, -2 bottom corner over a full sale sheet, else the docked offset
         let f = -1;
         const row = anchor && (anchor as Element).matches('.bidpanel') ? (anchor as Element).querySelector('.bp-status, .dc-head') : null;
-        if (row) {
+        if (document.querySelector('.overlay')) f = -2;
+        else if (row) {
           const s = row.getBoundingClientRect();
           f = Math.round(H - s.bottom + (s.height - 46) / 2);
         }
@@ -235,14 +237,14 @@ export function ReactionLayer({ room }: { room: RoomView }) {
   const style = {
     ['--rx-b' as string]: `${geo.b}px`,
     ['--lane' as string]: `${geo.lane}px`,
-    ...(geo.f >= 0 ? { ['--rx-f' as string]: `${geo.f}px` } : null),
+    ...(geo.f >= 0 ? { ['--rx-f' as string]: `${geo.f}px` } : geo.f === -2 ? { ['--rx-f' as string]: 'calc(12px + var(--safe-b))' } : null),
   } as CSSProperties;
 
-  // the bid panel keeps a slot free for the docked switch only while the switch is there
-  const docked = on && live && geo.f >= 0;
+  // the bid panel (or the sale sheet) keeps a slot free for the switch only while the switch is there
+  const docked = on && live && geo.f !== -1 ? (geo.f === -2 ? 'sheet' : 'panel') : '';
   useEffect(() => {
     const el = document.documentElement;
-    if (docked) el.dataset.rxdock = '1';
+    if (docked) el.dataset.rxdock = docked;
     else delete el.dataset.rxdock;
     return () => {
       delete el.dataset.rxdock;

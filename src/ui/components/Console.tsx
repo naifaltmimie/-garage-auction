@@ -180,6 +180,15 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
     }, SEND_WAIT);
     return () => window.clearTimeout(t);
   }, [sent, confirmed]);
+  // a refusal from the host (a red toast) frees the button at once instead of after SEND_WAIT
+  const lastBad = room.toasts.reduce((m, t) => (t.tone === 'bad' && t.id > m ? t.id : m), 0);
+  const seenBad = useRef(lastBad);
+  useEffect(() => {
+    if (lastBad <= seenBad.current) return;
+    seenBad.current = lastBad;
+    flight.current = null;
+    setSent(null);
+  }, [lastBad]);
   const sending = !!sent && sent.lot === lot?.id && !confirmed;
   const bid = (amount: number) => {
     if (!lot || !bidding) return;
