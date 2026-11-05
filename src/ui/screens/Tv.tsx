@@ -7,7 +7,8 @@ import { carsN, isCode, km, money, normalizeCode, signed } from '../../lib/util'
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
-import { QR } from '../components/Bits';
+import { Icon, QR } from '../components/Bits';
+import { TireLoader } from '../components/TireLoader';
 import { Wordmark } from '../components/Logo';
 import { Photo } from '../components/Gallery';
 import { specLine } from '../components/LotSheet';
@@ -85,10 +86,7 @@ function toggleFull() {
 
 export function TvGlyph() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
-      <path d="M8 20h8M12 16.5V20" />
-    </svg>
+    <Icon name="tv" size={20} />
   );
 }
 
@@ -202,7 +200,7 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
   return (
     <header className="tv-top">
       <div className="tv-brand">
-        {core && <Wordmark size={40} className="tv-wordmark" />}
+        {core && <Wordmark size={38} layout="row" className="tv-wordmark" />}
         <span className="tv-brand-t">
           <small>شاشة العرض</small>
           <b>{core?.settings.roomName || 'صالة المزاد'}</b>
@@ -237,10 +235,10 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
 function Waiting({ code, status }: { code: string; status: ViewerStatus }) {
   return (
     <div className="tv-wait">
-      <Wordmark size={112} className="tv-wait-mark" />
+      <Wordmark size={150} className="tv-wait-mark" />
       <div className="tv-code-label">كود الصالة</div>
       <div className="tv-wait-code ltr">{code}</div>
-      <p>{status.connected ? 'ننتظر المضيف يفتح الصالة…' : 'نتصل بالصالة…'}</p>
+      <TireLoader size={92} className="tv-wait-tire" label={status.connected ? 'ننتظر المضيف يفتح الصالة…' : 'نتصل بالصالة…'} />
       <small>شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</small>
     </div>
   );
@@ -289,7 +287,9 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
         </div>
         <div className="tv-joined">
           <div className="tv-joined-h">
-            <span>المزايدين</span>
+            <span>
+              <Icon name="users" size={34} /> المزايدين
+            </span>
             <b>
               {num(players.length)} <small>من {num(s.maxPlayers)}</small>
             </b>
@@ -346,7 +346,7 @@ function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null;
   if (!lot) {
     return (
       <div className="tv-lot-wait">
-        <p>اللوت الجاي على الطريق…</p>
+        <TireLoader size={92} className="tv-wait-tire" label="اللوت الجاي على الطريق…" />
       </div>
     );
   }
@@ -473,7 +473,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
   const hot = (core.phase === 'bidding' || sealed) && t.ms > 0 && t.ms <= 5000;
   const feed = [...core.log].reverse().slice(0, 5);
   return (
-    <div className="tv-price">
+    <div className={`tv-price is-${core.phase}`}>
       {sealed ? (
         <div className="tv-price-main">
           <div className="tv-label">الظروف المختومة</div>
@@ -506,6 +506,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
       {core.timer && (
         <div className={`tv-clock ${hot ? 'hot' : ''}`}>
           <div className="tv-clock-n">
+            <Icon name="timer" size={46} />
             <b>{num(Math.max(0, secs))}</b>
             <small>{preview ? 'ثانية للمعاينة' : core.phase === 'approval' ? 'ثانية للبايع' : 'ثانية'}</small>
           </div>
@@ -757,7 +758,7 @@ function ResultsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
           <div className="tv-kicker">النتيجة النهائية</div>
           {champ && (
             <h1>
-              بطل الليلة: <span className="tv-champ">{champ.p.name}</span>
+              بطل الليلة: <span className="tv-champ"><Icon name="crown" size={64} />{champ.p.name}</span>
             </h1>
           )}
         </div>

@@ -1,1 +1,879 @@
-/* tv: tyre-theme fixes and polish for this area (imported after theme.css, so these win) */
+/* tv: tyre-theme fixes and polish for this area (imported after theme.css, so these win)
+   «شاشة العرض» in rubber. Note on order: tv.css is imported by Tv.tsx, which main.tsx loads after
+   this file, so every rule here is scoped one step deeper (.tv .x, html .tv .x) to win either way.
+   - surfaces: matte rubber with the grain; the bar and the floors carry the tread
+   - caliper red for live (the phase block, the bid leader's tag, the hot clock, the current leader)
+   - rim gold only for the big moments (sold, the winner, the top bid, the champion)
+   - the room code is a Saudi plate (paper, like the QR and the paddles); everything else is rubber
+   - nothing restarts on a clock tick; under reduced motion tv.css already stills everything */
+
+html.tv-mode,
+html.tv-mode body {
+  background: var(--rubber-0);
+}
+
+html .tv {
+  --tv-ink: var(--ink);
+  --tv-mute: #9a9da5;
+  --tv-dim: var(--dim);
+  --tv-line: rgba(255, 255, 255, .07);
+  --tv-tile: var(--rubber-2);
+  --tv-tile-2: var(--rubber-3);
+  --tv-face: linear-gradient(180deg, var(--rubber-3), var(--rubber-2));
+  --tv-lift: inset 0 1px 0 rgba(255, 255, 255, .05), 0 1px 0 #000, 0 22px 44px -18px rgba(0, 0, 0, .9);
+  --tv-well: inset 0 3px 10px rgba(0, 0, 0, .75), inset 0 0 0 1px rgba(255, 255, 255, .035);
+  background:
+    var(--tex-grain),
+    radial-gradient(80% 60% at 50% -8%, #23242a 0%, rgba(35, 36, 42, 0) 70%),
+    radial-gradient(90% 70% at 50% 115%, #050506 0%, rgba(5, 5, 6, 0) 60%),
+    var(--rubber-1);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------ the bar: tread cut across the top */
+
+.tv .tv-top {
+  position: relative;
+  z-index: 2;
+  margin: 0 -64px;
+  padding: 0 64px;
+  border-bottom: 0;
+  background:
+    var(--tex-tread) center / 46px 28px,
+    linear-gradient(180deg, #25262b 0%, #18191c 58%, #111214 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .05), 0 1px 0 #000, 0 22px 44px -16px rgba(0, 0, 0, .85);
+}
+
+.tv .tv-wordmark {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .55));
+}
+
+.tv .tv-wordmark + .tv-brand-t {
+  border-inline-start-color: rgba(255, 255, 255, .1);
+}
+
+.tv .tv-brand-t b {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tv .tv-brand-t small {
+  font-size: 20px;
+  color: var(--tv-mute);
+}
+
+/* the phase is a block like the buttons: a face on a dark deck */
+.tv .tv-phase {
+  height: 72px;
+  padding: 0 40px;
+  border-radius: 18px;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .07),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    inset 0 -2px 0 rgba(0, 0, 0, .3),
+    0 6px 0 #050506,
+    0 14px 24px -6px rgba(0, 0, 0, .7);
+  margin-bottom: 6px;
+}
+
+.tv .tv-phase.tone-live {
+  color: #fff;
+  background: linear-gradient(180deg, #f2393f 0%, #dd2229 52%, #c3161d 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .12),
+    inset 0 2px 0 rgba(255, 255, 255, .16),
+    inset 0 -2px 0 rgba(0, 0, 0, .25),
+    0 6px 0 #6e0a0f,
+    0 14px 24px -6px rgba(0, 0, 0, .7);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+}
+
+.tv .tv-phase.tone-seal {
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 2px var(--brand),
+    inset 0 2px 0 rgba(255, 255, 255, .09),
+    0 6px 0 #050506,
+    0 14px 24px -6px rgba(0, 0, 0, .7);
+}
+
+.tv .tv-phase.tone-seal .tv-live-dot {
+  color: var(--brand-hi);
+}
+
+.tv .tv-phase.tone-gold {
+  color: #2a1b00;
+  background: linear-gradient(180deg, #fbe39b 0%, #efc463 38%, #d9a23f 72%, #c68b2d 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .3),
+    inset 0 2px 0 rgba(255, 255, 255, .4),
+    inset 0 -2px 0 rgba(0, 0, 0, .18),
+    0 6px 0 #6e4b0e,
+    0 14px 24px -6px rgba(0, 0, 0, .7);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.tv .tv-phase.tone-red {
+  color: var(--red);
+  background: linear-gradient(180deg, #3a1517, #2a0f11);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 74, 79, .3),
+    inset 0 2px 0 rgba(255, 255, 255, .05),
+    0 6px 0 #000,
+    0 14px 24px -6px rgba(0, 0, 0, .7);
+}
+
+.tv .tv-live-dot {
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .18);
+}
+
+/* the lot number and the code sit sunk into the bar */
+.tv .tv-lotno,
+.tv .tv-joinchip {
+  padding: 10px 26px;
+  border-radius: 16px;
+  background: var(--rubber-0);
+  box-shadow: var(--tv-well);
+}
+
+.tv .tv-lotno small,
+.tv .tv-joinchip small {
+  font-size: 19px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-lotno b {
+  font-size: 42px;
+  color: var(--ink);
+}
+
+.tv .tv-joinchip b {
+  font-size: 34px;
+  letter-spacing: .16em;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ the room code: a Saudi plate */
+
+.tv .tv-code,
+.tv .tv-wait-code {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: fit-content;
+  padding: 10px;
+  border-radius: 26px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  box-shadow:
+    inset 0 0 0 6px var(--plate),
+    inset 0 0 0 10px #16171a,
+    inset 0 -8px 0 10px rgba(0, 0, 0, .05),
+    0 2px 0 #000,
+    0 34px 60px -22px rgba(0, 0, 0, .95);
+  color-scheme: light;
+}
+
+.tv .tv-code {
+  margin-left: auto;
+  gap: 0;
+}
+
+.tv .tv-code span {
+  width: 118px;
+  height: 178px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--plate-ink);
+  font-size: 132px;
+  font-weight: 700;
+}
+
+.tv .tv-code span:first-child {
+  margin-left: 10px;
+}
+
+/* letters | numbers, like the plate's split */
+.tv .tv-code span:nth-child(4) {
+  margin-left: 12px;
+  box-shadow: inset 5px 0 0 #16171a;
+  width: 130px;
+  padding-left: 12px;
+}
+
+/* the band at the end: KSA, stacked */
+.tv .tv-code::after,
+.tv .tv-wait-code::after {
+  content: 'K\A S\A A';
+  white-space: pre;
+  display: grid;
+  place-content: center;
+  width: 74px;
+  margin-left: 14px;
+  box-shadow: inset 5px 0 0 #16171a;
+  padding-left: 5px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0;
+  text-align: center;
+  color: var(--plate-ink);
+}
+
+.tv .tv-wait-code {
+  align-items: center;
+  padding: 10px 10px 10px 54px;
+  font-size: 150px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  line-height: 1.18;
+}
+
+.tv .tv-wait-code::after {
+  align-self: stretch;
+  font-size: 32px;
+  letter-spacing: 0;
+}
+
+.tv .tv-code-label {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--tv-mute);
+}
+
+/* ------------------------------------------------------------------ the idle board: waiting for the host */
+
+.tv .tv-wait {
+  gap: 22px;
+  isolation: isolate;
+}
+
+.tv .tv-wait-mark {
+  margin-bottom: 26px;
+  filter: drop-shadow(0 22px 26px rgba(0, 0, 0, .65));
+}
+
+.tv .tv-wait .tv-wait-tire {
+  margin-top: 18px;
+}
+
+.tv .tv-wait small {
+  font-size: 24px;
+  color: var(--tv-dim);
+}
+
+/* a big tyre turning slowly in the corner of the attract screens (transform only; stilled under reduced motion) */
+.tv .tv-wait::before,
+.tv .tv-lobby::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 920px;
+  height: 920px;
+  left: -520px;
+  bottom: -560px;
+  background: var(--tex-tire) center / contain no-repeat;
+  opacity: .07;
+  pointer-events: none;
+  animation: tv-tire-turn 48s linear infinite;
+}
+
+.tv .tv-lobby::before {
+  left: auto;
+  right: -520px;
+  bottom: -560px;
+  animation-direction: reverse;
+}
+
+@keyframes tv-tire-turn {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* the tyre loader, sized for a room */
+.tv .tire-loader .tl-label,
+.tv .tv-lot-wait .tl-label {
+  max-width: none;
+  margin-top: 18px;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.tv .tv-lot-wait {
+  isolation: isolate;
+}
+
+/* ------------------------------------------------------------------ lobby */
+
+.tv .tv-lobby {
+  position: relative;
+  isolation: isolate;
+}
+
+.tv .tv-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--brand-hi);
+}
+
+.tv .tv-kicker::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 5px var(--brand-50);
+}
+
+.tv .tv-lobby-title {
+  margin: 10px 0 40px;
+  font-size: 96px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: #fff;
+}
+
+.tv .tv-link {
+  margin-top: 30px;
+  font-size: 34px;
+  color: var(--ink-2);
+}
+
+.tv .tv-facts {
+  gap: 18px;
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 48px;
+}
+
+.tv .tv-facts span {
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 6px;
+  padding: 20px 28px 22px;
+  border-radius: 20px;
+  background: var(--tv-face);
+  box-shadow: var(--tv-lift);
+}
+
+.tv .tv-facts small {
+  font-size: 22px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-facts b {
+  font-size: 46px;
+  color: #fff;
+}
+
+.tv .tv-qr {
+  padding: 28px 28px 20px;
+  border-radius: 26px;
+  box-shadow: 0 2px 0 #000, 0 34px 60px -22px rgba(0, 0, 0, .95);
+}
+
+.tv .tv-qr small {
+  font-size: 23px;
+  font-weight: 600;
+  color: #3c3d42;
+}
+
+.tv .tv-joined {
+  padding: 26px 28px 24px;
+  border-radius: 24px;
+  background: var(--tv-face);
+  box-shadow: var(--tv-lift);
+}
+
+.tv .tv-joined-h {
+  align-items: center;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.tv .tv-joined-h > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tv .tv-joined-h .ic {
+  color: var(--tv-mute);
+}
+
+.tv .tv-joined-h b {
+  font-size: 38px;
+}
+
+.tv .tv-joined li {
+  padding: 8px 24px 8px 10px;
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 3px 0 #050506;
+  font-size: 30px;
+}
+
+.tv .tv-joined li em {
+  color: var(--gold-hi);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.tv .tv-joined-wait {
+  font-size: 25px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-full-hint {
+  font-size: 20px;
+  color: var(--tv-dim);
+}
+
+html .tv .paddle {
+  width: 54px;
+  height: 54px;
+  font-size: 22px;
+  color: var(--plate-ink);
+}
+
+/* ------------------------------------------------------------------ intro: the start is a big moment */
+
+.tv .tv-intro .tv-kicker {
+  color: var(--gold-hi);
+}
+
+.tv .tv-intro .tv-kicker::before {
+  box-shadow: 0 0 0 5px var(--gold-50);
+}
+
+.tv .tv-intro h1 {
+  font-size: 140px;
+  letter-spacing: -.01em;
+  color: #fff;
+}
+
+.tv .tv-intro p {
+  font-size: 38px;
+  color: var(--ink-2);
+}
+
+.tv .tv-intro-names li {
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 4px 0 #050506, 0 14px 24px -10px rgba(0, 0, 0, .8);
+  font-size: 34px;
+}
+
+/* ------------------------------------------------------------------ the lot on the block */
+
+.tv .tv-photo {
+  border-radius: 24px;
+  background: #0a0b0c;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 1px 0 #000, 0 30px 60px -24px rgba(0, 0, 0, .95);
+}
+
+.tv .tv-photo::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), inset 0 -120px 120px -60px rgba(0, 0, 0, .55);
+  pointer-events: none;
+}
+
+.tv .tv-covered-tag {
+  background: var(--rubber-1);
+  color: var(--gold-hi);
+  box-shadow: inset 0 0 0 1px rgba(232, 185, 85, .35), 0 8px 18px -6px rgba(0, 0, 0, .8);
+}
+
+.tv .tv-carhead h2 {
+  font-size: 66px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tv .tv-carhead h2 small {
+  color: var(--tv-mute);
+}
+
+.tv .tv-specs {
+  font-size: 30px;
+  color: var(--ink-2);
+}
+
+.tv .tv-specs .tv-year {
+  color: #fff;
+}
+
+/* the price panel: a rubber slab, the tread across its head, a red lip while it's live */
+.tv .tv-price,
+.tv .tv-verdict {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background:
+    var(--tex-grain),
+    linear-gradient(180deg, var(--rubber-3) 0%, var(--rubber-2) 40%, #141517 100%);
+  color: var(--ink);
+  box-shadow: var(--tv-lift);
+}
+
+.tv .tv-price::before,
+.tv .tv-verdict::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 30px;
+  border-radius: 24px 24px 0 0;
+  background: var(--tex-tread) center / 40px 24px;
+  opacity: .9;
+  pointer-events: none;
+}
+
+.tv .tv-price.is-bidding,
+.tv .tv-price.is-sealed,
+.tv .tv-price.is-dutch {
+  box-shadow: inset 0 6px 0 var(--brand), var(--tv-lift);
+}
+
+.tv .tv-price > *,
+.tv .tv-verdict > * {
+  position: relative;
+}
+
+.tv .tv-label {
+  font-size: 27px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-amount {
+  font-size: 128px;
+  color: #fff;
+  letter-spacing: -.025em;
+}
+
+.tv .tv-amount small {
+  font-size: 32px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-amount.sealed {
+  color: #fff;
+}
+
+.tv .tv-leader {
+  font-size: 29px;
+  color: var(--ink-2);
+}
+
+.tv .tv-leader b {
+  font-size: 46px;
+  color: var(--gold-hi);
+}
+
+.tv .tv-leader-tag {
+  padding: 7px 16px;
+  border-radius: 10px;
+  background: var(--brand-50);
+  color: var(--brand-hi);
+  box-shadow: inset 0 0 0 1px var(--brand-100);
+  font-size: 21px;
+  font-weight: 700;
+}
+
+/* the clock: calm in white, red only when it's hot */
+.tv .tv-clock {
+  border-top-color: var(--tv-line);
+}
+
+.tv .tv-clock-n {
+  align-items: center;
+}
+
+.tv .tv-clock-n .ic {
+  color: var(--tv-mute);
+  align-self: center;
+}
+
+.tv .tv-clock-n b {
+  font-size: 76px;
+  color: #fff;
+}
+
+.tv .tv-clock-n small {
+  font-size: 25px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-bar {
+  height: 16px;
+  border-radius: 8px;
+  background: var(--rubber-0);
+  box-shadow: var(--tv-well);
+}
+
+.tv .tv-bar i {
+  background: linear-gradient(180deg, #fff, #d9dadf);
+}
+
+.tv .tv-clock.hot .tv-clock-n b,
+.tv .tv-clock.hot .tv-clock-n .ic {
+  color: var(--brand-hi);
+}
+
+.tv .tv-clock.hot .tv-bar i {
+  background: linear-gradient(180deg, var(--brand-hi), var(--brand));
+}
+
+.tv .tv-est {
+  font-size: 27px;
+  color: var(--ink-2);
+}
+
+.tv .tv-est small {
+  color: var(--tv-mute);
+}
+
+.tv .tv-feed,
+.tv .tv-feed li {
+  border-color: var(--tv-line);
+}
+
+.tv .tv-feed li {
+  font-size: 29px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-feed li.top {
+  color: #fff;
+}
+
+.tv .tv-feed li.top b {
+  color: var(--gold-hi);
+}
+
+.tv .tv-feed li em {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--brand-hi);
+}
+
+.tv .tv-feed li.empty {
+  color: var(--tv-dim);
+}
+
+/* sold: rim gold; not sold: caliper red */
+.tv .tv-verdict.sold {
+  box-shadow: inset 0 8px 0 var(--gold), var(--tv-lift);
+}
+
+.tv .tv-verdict.unsold {
+  box-shadow: inset 0 8px 0 var(--brand), var(--tv-lift);
+}
+
+.tv .tv-stamp {
+  font-size: 100px;
+  color: var(--gold-hi);
+}
+
+.tv .tv-verdict.unsold .tv-stamp {
+  color: var(--brand-hi);
+}
+
+.tv .tv-buyer b {
+  font-size: 60px;
+  color: var(--gold-hi);
+}
+
+.tv .tv-v {
+  border-radius: 18px;
+  background: var(--rubber-1);
+  box-shadow: var(--tv-well);
+  font-size: 25px;
+  color: var(--ink-2);
+}
+
+.tv .tv-v.v-steal,
+.tv .tv-v.v-good {
+  background: var(--ok-50);
+  box-shadow: inset 0 0 0 1px var(--ok-100);
+}
+
+.tv .tv-v.v-steal b,
+.tv .tv-v.v-good b {
+  color: var(--ok-700);
+}
+
+.tv .tv-v.v-over,
+.tv .tv-v.v-robbed {
+  background: var(--red-50);
+  box-shadow: inset 0 0 0 1px rgba(255, 74, 79, .3);
+}
+
+.tv .tv-roast {
+  color: var(--ink-2);
+}
+
+/* the strip along the floor: everyone's wallet, ranked */
+.tv .tv-ticker li {
+  border-radius: 18px;
+  background: var(--tv-face);
+  box-shadow: var(--tv-lift);
+}
+
+.tv .tv-ticker li.lead {
+  background: linear-gradient(180deg, #2a1416, #1d1012);
+  box-shadow: inset 0 0 0 2px var(--brand), var(--tv-lift);
+}
+
+.tv .tv-rank {
+  color: var(--tv-mute);
+}
+
+.tv .tv-ticker li:first-child .tv-rank,
+.tv .tv-table li.first .tv-rank {
+  color: var(--gold-hi);
+}
+
+.tv .tv-tk-name {
+  font-size: 29px;
+  color: #fff;
+}
+
+.tv .tv-tk-cash {
+  font-size: 23px;
+  color: var(--ink-2);
+}
+
+.tv .tv-last {
+  border-radius: 18px;
+  border-inline-start: 0;
+  background: var(--tv-face);
+  box-shadow: inset -5px 0 0 var(--ok), var(--tv-lift);
+}
+
+.tv .tv-last small {
+  font-size: 20px;
+  color: var(--ok-700);
+}
+
+.tv .tv-last b {
+  color: #fff;
+}
+
+.tv .tv-last span {
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------------ standings and results */
+
+.tv .tv-board-h h1 {
+  font-size: 80px;
+  color: #fff;
+}
+
+.tv .tv-board-sub {
+  font-size: 32px;
+  color: var(--ink-2);
+}
+
+.tv .tv-champ {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--gold-hi);
+}
+
+.tv .tv-champ .ic {
+  flex: none;
+  margin-bottom: 8px;
+}
+
+.tv .tv-table li {
+  border-radius: 18px;
+  background: var(--tv-face);
+  box-shadow: var(--tv-lift);
+  font-size: 31px;
+}
+
+.tv .tv-table li.tv-th {
+  background: none;
+  box-shadow: none;
+  font-size: 21px;
+  color: var(--tv-mute);
+}
+
+.tv .tv-table li.first {
+  background: linear-gradient(180deg, #2e2512, #1f1a10);
+  box-shadow: inset 0 0 0 2px var(--gold), var(--tv-lift);
+}
+
+.tv .tv-cash {
+  color: var(--ink-2);
+}
+
+.tv .tv-cars small,
+.tv .tv-val small {
+  color: var(--tv-mute);
+}
+
+.tv .tv-val.gain {
+  color: var(--ok-700);
+}
+
+.tv .tv-val.loss {
+  color: var(--red);
+}
+
+.tv .tv-voted {
+  background: var(--ok-50);
+  color: var(--ok-700);
+  box-shadow: inset 0 0 0 1px var(--ok-100);
+}
+
+.tv .tv-award {
+  background: var(--gold-50);
+  color: var(--gold-hi);
+  box-shadow: inset 0 0 0 1px rgba(232, 185, 85, .32);
+}
+
+.tv .tv-awards li {
+  border-radius: 18px;
+  border-top: 0;
+  background: var(--tv-face);
+  box-shadow: inset 0 5px 0 var(--gold), var(--tv-lift);
+}
+
+.tv .tv-awards span {
+  color: #fff;
+}
+
+/* ------------------------------------------------------------------ status */
+
+.tv .tv-hold {
+  padding: 16px 36px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  color: var(--amber);
+  box-shadow: inset 0 0 0 2px rgba(242, 173, 50, .45), 0 6px 0 #050506, 0 18px 30px -8px rgba(0, 0, 0, .8);
+  font-size: 30px;
+}
+
+.tv .tv-off {
+  color: var(--red);
+  font-size: 21px;
+}
