@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#121216" />
-    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#141517" />
+    <meta name="color-scheme" content="dark" />
     <meta name="referrer" content="no-referrer" />
     <title>مزاد الكراج</title>
     <meta name="description" content="مزاد سيارات حي بين الشباب: سيارات حقيقية من السوق السعودي، صور إعلانات، تقرير فحص، ولوحات مميزة." />
@@ -36,20 +36,20 @@
          replaces everything inside #root. Colours are the base.css tokens (--bg, --green-900, --gold).
          The logo is plain text in one block marked LOGO below, so a new logo is a one-block swap. -->
     <style>
-      html, body { background: #f4f3f0; }
-      html.boot-tv, html.boot-tv body { background: #0a0a0c; }
-      #boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #f4f3f0; }
-      #boot .boot-bar { position: absolute; top: 0; left: 0; right: 0; height: calc(58px + env(safe-area-inset-top, 0px)); background: linear-gradient(180deg, #1c1d22 0%, #121216 58%, #0e0e11 100%); box-shadow: 0 1px 0 rgba(227, 178, 79, .45); }
-      #boot .boot-core { display: grid; justify-items: center; padding-top: calc(58px + env(safe-area-inset-top, 0px)); }
+      html, body { background: #111214; }
+      html.boot-tv, html.boot-tv body { background: #0b0c0d; }
+      #boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(130% 75% at 50% 0%, #2a2b30 0%, #17181b 52%, #0f1012 100%); }
+      #boot .boot-bar { display: none; }
+      #boot .boot-core { display: grid; justify-items: center; }
       /* LOGO: the stacked price-tag logo (public/brand/lockup.svg) */
-      #boot .boot-logo { display: block; width: min(230px, 60vw); height: auto; opacity: 0; transform: translateY(-10px) rotate(-6deg) scale(.92); transition: opacity .4s cubic-bezier(.2, .8, .2, 1), transform .6s cubic-bezier(.2, 1.5, .4, 1); }
+      #boot .boot-logo { display: block; width: min(260px, 66vw); height: auto; opacity: 0; transform: translateY(-14px) rotate(-7deg) scale(.9); transition: opacity .4s cubic-bezier(.2, .8, .2, 1), transform .6s cubic-bezier(.2, 1.5, .4, 1); filter: drop-shadow(0 22px 24px rgba(0, 0, 0, .65)); }
       #boot.is-ready .boot-logo { opacity: 1; transform: none; }
       .boot-tv #boot .boot-logo { width: min(420px, 40vw); }
       /* end LOGO */
-      #boot .boot-load { display: block; width: 76px; height: 3px; margin-top: 30px; border-radius: 99px; overflow: hidden; background: rgba(18, 18, 22, .1); opacity: 0; animation: boot-in .4s .45s both; }
-      #boot .boot-load i { display: block; width: 26px; height: 100%; border-radius: 99px; background: #e5262d; animation: boot-sweep 1.2s cubic-bezier(.65, 0, .35, 1) infinite; }
-      #boot noscript p { margin: 22px 0 0; font: 15px system-ui, sans-serif; color: #6b6d74; }
-      .boot-tv #boot { background: #0a0a0c; }
+      #boot .boot-load { display: block; width: 120px; height: 6px; margin-top: 34px; border-radius: 99px; overflow: hidden; background: linear-gradient(180deg, #24262b, #141517); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); opacity: 0; animation: boot-in .4s .45s both; }
+      #boot .boot-load i { display: block; width: 34px; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ff4a4f, #c3161d); animation: boot-sweep 1.1s cubic-bezier(.65, 0, .35, 1) infinite; }
+      #boot noscript p { margin: 22px 0 0; font: 15px system-ui, sans-serif; color: #8d9098; }
+      .boot-tv #boot { background: #0b0c0d; }
       .boot-tv #boot .boot-bar { display: none; }
       .boot-tv #boot .boot-core { padding-top: 0; }
       .boot-tv #boot .boot-load { width: 120px; background: rgba(255, 255, 255, .1); }
