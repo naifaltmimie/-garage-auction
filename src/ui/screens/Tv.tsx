@@ -62,7 +62,20 @@ export function tvCodeOf(hash: string): string | null {
 
 /** Opens the big screen for this room in its own tab / window. */
 export function openTv(code: string) {
-  window.open(`${location.origin}${location.pathname}${location.search}#/tv/${code}`, '_blank', 'noopener');
+  const url = `${location.origin}${location.pathname}${location.search}#/tv/${code}`;
+  // its own window rather than a tab: the host's page has to stay on screen, or the clock holds for everyone
+  const w = window.open(url, `mzk-tv-${code}`, 'popup,width=1280,height=720');
+  if (!w) window.open(url, '_blank');
+}
+
+/** Double-click or F / Enter puts the board in full screen (and back). */
+function toggleFull() {
+  try {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    else void document.documentElement.requestFullscreen?.().catch(() => {});
+  } catch {
+    /* not allowed here */
+  }
 }
 
 export function TvGlyph() {
@@ -139,7 +152,12 @@ export function Tv({ code }: { code: string }) {
     const prev = document.title;
     document.title = `شاشة العرض · ${code}`;
     document.documentElement.classList.add('tv-mode');
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F' || e.key === 'Enter') toggleFull();
+    };
+    addEventListener('keydown', onKey);
     return () => {
+      removeEventListener('keydown', onKey);
       document.title = prev;
       document.documentElement.classList.remove('tv-mode');
     };
@@ -155,7 +173,7 @@ export function Tv({ code }: { code: string }) {
 
   const off = !!core && (!status.connected || status.hostGone);
   return (
-    <div className="tv" dir="rtl">
+    <div className="tv" dir="rtl" onDoubleClick={toggleFull}>
       <div className="tv-stage" style={{ transform: `translate(-50%, -50%) scale(${k})` }}>
         <TopBar core={core} code={code} />
         <div className="tv-body">{body}</div>
@@ -288,6 +306,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
             ))}
           </ul>
           {players.length < 2 && <p className="tv-joined-wait">ننتظر الشباب يدخلون…</p>}
+          <p className="tv-full-hint">دبل كلك على الشاشة أو اضغط F عشان تملا الشاشة</p>
         </div>
       </section>
     </div>
