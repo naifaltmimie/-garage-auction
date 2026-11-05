@@ -1027,8 +1027,9 @@ html.tv-mode body {
   width: 420px;
   display: grid;
   align-content: center;
-  gap: 2px;
-  padding: 14px 26px;
+  gap: 0;
+  padding: 8px 26px;
+  line-height: 1.35;
   border-radius: 18px;
   background: var(--tv-tile);
   border-inline-start: 4px solid var(--gold-hi);

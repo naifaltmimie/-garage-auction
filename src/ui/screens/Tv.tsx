@@ -536,7 +536,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
             {buyer && <Paddle n={buyer.paddle} />}
             <b>{buyer?.name ?? ''}</b>
           </div>
-          <div className="tv-label">بـ</div>
+          <div className="tv-label">بسعر</div>
           <div className="tv-amount">
             <span className="ltr">{money(sale.hammer)}</span>
             <small>ريال</small>
