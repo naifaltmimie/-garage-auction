@@ -1,0 +1,228 @@
+/* ================================================================ lot sheet (صفحة العرض) on phones
+   Gallery skeleton, full-screen viewer, and the catalogue hierarchy of the lot card.
+   Only transform/opacity animate; nothing here depends on the bid clock. */
+
+/* the gallery's own layers stay inside it, so the card's rounded top always sits over the photo */
+.gallery {
+  isolation: isolate;
+}
+
+.lot-card {
+  z-index: 2;
+}
+
+/* skeleton: a still base with one soft sweep that moves by transform only (no background-position repaints) */
+.g-slide {
+  background: #dde2db;
+  animation: none;
+  contain: strict;
+}
+
+.g-slide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .45) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: lot-sweep 1.3s cubic-bezier(.4, 0, .2, 1) infinite;
+  will-change: transform;
+}
+
+.g-slide:has(.g-img.ok) {
+  background: transparent;
+}
+
+.g-slide:has(.g-img.ok)::before {
+  content: none;
+}
+
+@keyframes lot-sweep {
+  to { transform: translateX(100%); }
+}
+
+/* the photo layer: its own compositing layer so the fade-in never repaints the track */
+.g-img {
+  transition: opacity .28s var(--ease);
+}
+
+.g-track {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
+/* counter: quiet, readable over any photo */
+.g-count {
+  bottom: 26px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  padding: 3px 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+.g-count span {
+  opacity: .66;
+  font-weight: 600;
+}
+
+.g-dots {
+  bottom: 31px;
+  pointer-events: none;
+}
+
+.g-dots i {
+  transition: transform .2s var(--ease), background-color .2s;
+}
+
+.g-dots i.on {
+  width: 6px;
+  transform: scaleX(2.4);
+  margin-inline: 4px;
+}
+
+/* ---------------------------------------------------------------- full-screen viewer */
+.lightbox {
+  grid-template-rows: auto minmax(0, 1fr);
+  overscroll-behavior: contain;
+  touch-action: pan-x pinch-zoom;
+}
+
+.lb-bar {
+  position: relative;
+  z-index: 2;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 16px;
+}
+
+.lb-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+}
+
+.lb-count span {
+  opacity: .6;
+  font-weight: 600;
+}
+
+.lb-close {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.lb-close:active {
+  background: rgba(255, 255, 255, .24);
+}
+
+.lb-track {
+  min-height: 0;
+  height: 100%;
+  overscroll-behavior: contain;
+  padding-bottom: var(--safe-b);
+}
+
+.lb-slide {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lb-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity .25s var(--ease);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lb-slide img.ok {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------- the card: catalogue hierarchy */
+.lot .pane {
+  animation: none;
+}
+
+/* numbers inside Arabic lines keep their own direction */
+.keyfacts dd,
+.pricebar b,
+.car-year b {
+  unicode-bidi: isolate;
+}
+
+.keyfacts dd {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.pricebar {
+  background: var(--green-50);
+}
+
+.pricebar b {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lot-head .plate,
+.lot-head > :last-child {
+  flex-shrink: 0;
+}
+
+.car-name {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 370px) {
+  .lot-card {
+    padding-inline: 14px;
+  }
+
+  .keyfacts > div {
+    padding: 8px 8px;
+  }
+
+  .keyfacts dd {
+    font-size: 13.5px;
+  }
+
+  .pricebar {
+    padding: 11px 12px;
+  }
+
+  .pricebar b {
+    font-size: 16.5px;
+  }
+
+  .car-name {
+    font-size: 24px;
+  }
+
+  .tabs button {
+    padding: 0 8px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-slide::before {
+    animation: none;
+  }
+
+  .g-img,
+  .lb-slide img {
+    transition: none;
+  }
+}

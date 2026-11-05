@@ -10,6 +10,7 @@ import './styles/news.css';
 import './styles/reactions.css';
 import './styles/awards.css';
 import './styles/brand.css';
+import './styles/lot.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';
