@@ -11,7 +11,12 @@
   --brand-gold: var(--gold-hi);
   --brand-shadow: #021912;
   --brand-ring: #04211a;
-  /* a thin ring so the two lines read as layered where they lock, then a hard drop */
+}
+
+/* a thin ring so the two lines read as layered where they lock, then a hard drop.
+   Declared on the elements (not :root) so a tone can swap the ring and drop colours. */
+.brand-name,
+.wordmark {
   --brand-type-shadow:
     .045em 0 0 var(--brand-ring), -.045em 0 0 var(--brand-ring), 0 .045em 0 var(--brand-ring), 0 -.045em 0 var(--brand-ring),
     .032em .032em 0 var(--brand-ring), -.032em .032em 0 var(--brand-ring), .032em -.032em 0 var(--brand-ring), -.032em -.032em 0 var(--brand-ring),
@@ -113,4 +118,15 @@
   margin-top: -.2em;
   font-size: .7em;
   color: var(--brand-gold);
+}
+
+/* on plate-white / stone: green over dark gold, paper-coloured ring, soft green drop */
+.wordmark.is-light {
+  --brand-ring: var(--plate);
+  --brand-shadow: rgba(6, 47, 34, .2);
+  color: var(--green-900);
+}
+
+.wordmark.is-light .wordmark-bottom {
+  color: var(--gold);
 }

@@ -37,12 +37,13 @@ export function LogoMark({ size = 28, className, title }: MarkProps) {
 
 /**
  * The stacked title lockup. Size it with font-size on the element (or `size`, in px, for the
- * «مزاد» line); everything else is in em, so it scales as one piece.
+ * «مزاد» line); everything else is in em, so it scales as one piece. `tone="light"` is for
+ * plate-white or stone backgrounds. Styles live in src/styles/brand.css.
  */
-export function Wordmark({ size, className }: { size?: number; className?: string }) {
+export function Wordmark({ size, tone = 'dark', className }: { size?: number; tone?: 'dark' | 'light'; className?: string }) {
   return (
     <span
-      className={['wordmark', className].filter(Boolean).join(' ')}
+      className={['wordmark', tone === 'light' ? 'is-light' : '', className].filter(Boolean).join(' ')}
       style={size ? { fontSize: size } : undefined}
       role="img"
       aria-label="مزاد الكراج"
