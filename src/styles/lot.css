@@ -176,6 +176,15 @@
   white-space: nowrap;
 }
 
+/* a million-riyal range may break at its dash on a 360px phone, never inside a number */
+.pricebar > div:first-child {
+  min-width: 0;
+}
+
+.pricebar > div:first-child b {
+  white-space: normal;
+}
+
 .lot-head .plate,
 .lot-head > :last-child {
   flex-shrink: 0;
@@ -214,6 +223,58 @@
     padding: 0 8px;
     font-size: 14px;
   }
+}
+
+/* ---------------------------------------------------------------- inspection: one quiet ruled sheet, not a pile of cards
+   verdicts, mechanics and panels read like the key facts above: hairline rules, the colour only on the value */
+.verdicts,
+.mech {
+  gap: 1px;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.verdicts .vbox,
+.verdicts .vbox.tone-good,
+.verdicts .vbox.tone-bad,
+.verdicts .vbox.tone-mid,
+.mech .mitem {
+  border: 0;
+  border-radius: 0;
+  background: var(--card-2);
+}
+
+.verdicts .vbox b {
+  overflow-wrap: break-word;
+}
+
+.verdicts .vbox b.big {
+  font-family: var(--f-num);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-list {
+  gap: 0;
+}
+
+.panel-list li {
+  padding: 7px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.panel-list li:last-child {
+  border-bottom: 0;
+}
+
+/* the seller's own words read as a quote, the inspector's as a ruled list */
+.notes li,
+.quote p {
+  overflow-wrap: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {

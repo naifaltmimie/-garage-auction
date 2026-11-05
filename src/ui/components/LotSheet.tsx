@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useMemo, useRef, useState } from 'react';
 import { MODE_LABEL, SELLER_LABEL, chassisCard, damageLine } from '../../engine/lotgen';
 import { gradeWord } from '../../engine/realism';
 import type { CarPub, Cond, LotPub, PanelId } from '../../engine/types';
@@ -138,12 +138,16 @@ function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?:
 
 type Tab = 'inspect' | 'records' | 'ad' | 'specs';
 
-export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: LotPub; total: number; reserveMet: boolean; opening: number; revealed?: CarPub | null }) {
-  const [picked, setPicked] = useState<PanelId | null>(null);
-  const [tab, setTab] = useState<Tab>('inspect');
-  const car = revealed ?? lot.car;
-  const covered = lot.kind === 'covered' && !revealed;
+/** Synced state arrives as fresh objects on every message. While a value's content is unchanged this
+ *  hands back the very same object, so the memoised parts below skip every bid and every clock tick. */
+function useSame<T>(v: T): T {
+  const s = useMemo(() => JSON.stringify(v ?? null), [v]);
+  const r = useRef<{ s: string; v: T } | null>(null);
+  if (!r.current || r.current.s !== s) r.current = { s, v };
+  return r.current.v;
+}
 
+const LotGallery = memo(function LotGallery({ lot, car }: { lot: LotPub; car: CarPub | null }) {
   const badges = (
     <>
       {lot.kind === 'covered' && <span className="g-kind">تحت الغطا</span>}
@@ -152,18 +156,56 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
       {lot.relist > 0 && <span className="g-kind gold">إعادة عرض</span>}
     </>
   );
+  return car ? (
+    <Gallery photos={car.photos} body={car.body} color={car.colorHex}>
+      {badges}
+    </Gallery>
+  ) : (
+    <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered>
+      {badges}
+    </Gallery>
+  );
+});
+
+const LotHead = memo(function LotHead({ lot, car, revealed }: { lot: LotPub; car: CarPub | null; revealed: boolean }) {
+  if (!car) {
+    return (
+      <div className="car-title">
+        <div className="car-make">سيارة تحت الغطا</div>
+        <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
+        <div className="car-year">
+          <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
+          <span>الغطا ما ينشال إلا بعد ما تنزل المطرقة</span>
+        </div>
+        <div className="hints">
+          {lot.cover?.hints.map((h) => (
+            <span key={h} className="chip">{h}</span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="lot-head">
+        <CarTitle car={car} />
+        <CarPlate plate={car.plate} size="sm" />
+      </div>
+      <KeyFacts car={car} lot={lot} revealed={revealed} />
+    </>
+  );
+});
+
+export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: { lot: LotPub; total: number; reserveMet: boolean; opening: number; revealed?: CarPub | null }) {
+  const lot = useSame(lotIn);
+  const revealed = useSame(revIn ?? null);
+  const car = revealed ?? lot.car;
+  const covered = lot.kind === 'covered' && !revealed;
+  const shown = covered || !car ? null : car;
 
   return (
     <article className="lot" key={lot.id} aria-label={`لوت ${lot.no}`}>
-      {covered || !car ? (
-        <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered>
-          {badges}
-        </Gallery>
-      ) : (
-        <Gallery photos={car.photos} body={car.body} color={car.colorHex}>
-          {badges}
-        </Gallery>
-      )}
+      <LotGallery lot={lot} car={shown} />
 
       <div className="lot-card">
         <div className="lot-tags">
@@ -175,37 +217,15 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
             ) : (
               <span className="chip chip-gold">بدون حد</span>
             ))}
-          {car?.plate.special && !covered && (
-            <span className={`chip chip-gold plate-chip ${car.plate.special.tier}`}>
-              {car.plate.special.label}
-              {car.plate.special.note && <small> · {car.plate.special.note}</small>}
+          {shown?.plate.special && (
+            <span className={`chip chip-gold plate-chip ${shown.plate.special.tier}`}>
+              {shown.plate.special.label}
+              {shown.plate.special.note && <small> · {shown.plate.special.note}</small>}
             </span>
           )}
         </div>
 
-        {covered || !car ? (
-          <div className="car-title">
-            <div className="car-make">سيارة تحت الغطا</div>
-            <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
-            <div className="car-year">
-              <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
-              <span>الغطا ما ينشال إلا بعد ما تنزل المطرقة</span>
-            </div>
-            <div className="hints">
-              {lot.cover?.hints.map((h) => (
-                <span key={h} className="chip">{h}</span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="lot-head">
-              <CarTitle car={car} />
-              <CarPlate plate={car.plate} size="sm" />
-            </div>
-            <KeyFacts car={car} lot={lot} revealed={!!revealed} />
-          </>
-        )}
+        <LotHead lot={lot} car={shown} revealed={!!revealed} />
 
         <div className="pricebar">
           <div>
@@ -220,8 +240,31 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
         </div>
       </div>
 
-      {car && !covered && (
-        <div className="lot-tabs">
+      {shown && <LotTabs lot={lot} car={shown} revealed={!!revealed} />}
+    </article>
+  );
+}
+
+const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car: CarPub; revealed: boolean }) {
+  const [picked, setPicked] = useState<PanelId | null>(null);
+  const [tab, setTab] = useState<Tab>('inspect');
+  const box = useRef<HTMLDivElement>(null);
+
+  // when the tab bar is stuck under the header, the new section starts at its top, not half-way down the old one
+  const pick = (k: Tab) => {
+    if (k === tab) return;
+    const el = box.current;
+    const bar = el?.firstElementChild as HTMLElement | null | undefined;
+    if (el && bar) {
+      const stick = parseFloat(getComputedStyle(bar).top) || 0;
+      const top = el.getBoundingClientRect().top;
+      if (top < stick - 1) window.scrollTo({ top: window.scrollY + top - stick });
+    }
+    setTab(k);
+  };
+
+  return (
+        <div className="lot-tabs" ref={box}>
           <div className="tabs" role="tablist">
             {(
               [
@@ -231,13 +274,12 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
                 ['specs', 'المواصفات'],
               ] as [Tab, string][]
             ).map(([k, label]) => (
-              <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>
+              <button key={k} role="tab" aria-selected={tab === k} onClick={() => pick(k)}>
                 {label}
                 {k === 'ad' && lot.notes.length > 0 && <i className="tab-dot" />}
               </button>
             ))}
           </div>
-
           {tab === 'inspect' && (
             <div className="pane">
               <div className="verdicts">
@@ -416,7 +458,5 @@ export function LotSheet({ lot, total, reserveMet, opening, revealed }: { lot: L
             </div>
           )}
         </div>
-      )}
-    </article>
   );
-}
+});
