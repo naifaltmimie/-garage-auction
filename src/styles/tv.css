@@ -1773,3 +1773,7 @@ html body .tv .tv-ticker li.lead {
 html body .tv .tv-lobby-mark {
   margin-bottom: 18px;
 }
+html body .tv .tv-verdict .tv-stamp {
+  margin-top: 22px;
+  font-size: 92px;
+}
