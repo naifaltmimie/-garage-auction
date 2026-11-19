@@ -1,4 +1,4 @@
-/* Awards ceremony, «سجلي» and «شارك كراجك». On the tyre tokens in theme.css (rubber, caliper red, rim gold); t-end.css adds the motion. */
+/* Awards ceremony, «سجلي» and «شارك كراجك». On the tyre tokens in theme.css (rubber, caliper red, alloy); t-end.css adds the motion. */
 
 .aw {
   display: grid;
@@ -16,7 +16,7 @@
 .aw-kicker {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--alloy);
   letter-spacing: .02em;
 }
 
@@ -73,7 +73,7 @@
   font-size: clamp(30px, 9vw, 40px);
   font-weight: 700;
   line-height: 1.2;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .aw-card.grand .aw-title {
@@ -84,7 +84,7 @@
   display: block;
   width: 64px;
   height: 2px;
-  background: var(--gold-hi);
+  background: var(--ink);
   transform-origin: center;
   animation: aw-rule .5s .15s var(--ease) both;
 }
@@ -113,7 +113,7 @@
   font-weight: 700;
   padding: 1px 8px;
   border-radius: 999px;
-  background: var(--gold);
+  background: var(--alloy);
   color: #0c0d0f;
 }
 
@@ -184,13 +184,13 @@
 }
 
 .aw-row.mine {
-  background: var(--gold-50);
+  background: var(--alloy-50);
   border-color: rgba(214, 218, 226, .32);
 }
 
 .aw-row.grand {
-  border: 2px solid var(--gold-hi);
-  box-shadow: 0 0 0 4px var(--gold-50);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 4px var(--alloy-50);
 }
 
 .aw-n {
@@ -209,7 +209,7 @@
 .aw-row-title {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--alloy);
 }
 
 .aw-row-name {
@@ -284,15 +284,15 @@
   padding: 2px 12px;
   border-radius: 999px;
   border: 1px solid rgba(214, 218, 226, .36);
-  background: var(--gold-50);
-  color: var(--gold-hi);
+  background: var(--alloy-50);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 700;
 }
 
 .aw-badge.new {
-  background: var(--gold-lo);
-  border-color: var(--gold-lo);
+  background: var(--alloy-lo);
+  border-color: var(--alloy-lo);
   color: #fff;
 }
 
@@ -377,7 +377,7 @@
 .cr-chip small {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--alloy);
 }
 
 .cr-head {
@@ -486,8 +486,8 @@
 
 .cr-badges li.got {
   border: 1px solid rgba(214, 218, 226, .36);
-  background: var(--gold-50);
-  color: var(--gold);
+  background: var(--alloy-50);
+  color: var(--alloy);
 }
 
 .cr-nights {

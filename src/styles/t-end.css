@@ -1,7 +1,7 @@
 /* ================================================================ t-end: the end of the night, in rubber
    Showcase, voting, the wait for votes, the podium, the awards ceremony, «سجلي», the share sheet and
    «الجديد». Imported after theme.css, so these win. Rubber surfaces, caliper red for what you pick,
-   rim gold only for the champion and the awards, green only for gains. */
+   alloy only for the champion and the awards, green only for gains. */
 
 /* ---------------------------------------------------------------- garages (showcase, voting, results) */
 
@@ -219,7 +219,7 @@
 
 .results-page .result.first {
   padding-inline-start: 24px;
-  border: 2px solid var(--gold);
+  border: 2px solid var(--alloy);
   background:
     linear-gradient(180deg, rgba(214, 218, 226, .17), rgba(214, 218, 226, .03) 70%),
     var(--rubber-2);
@@ -229,16 +229,16 @@
 
 .results-page .result.first .rank,
 .results-page .result.first .score .t-money {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
-/* the champion's chequered flag, in rim gold, down the leading edge */
+/* the champion's chequered flag, in alloy, down the leading edge */
 .rs-flag {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
   width: 12px;
-  background: repeating-conic-gradient(var(--gold) 0 25%, #17130a 0 50%) 0 0 / 12px 12px;
+  background: repeating-conic-gradient(var(--alloy) 0 25%, #17130a 0 50%) 0 0 / 12px 12px;
   opacity: .9;
 }
 
@@ -260,7 +260,7 @@
   margin-bottom: 2px;
   font-size: 12.5px;
   font-weight: 800;
-  color: var(--gold);
+  color: var(--alloy);
 }
 
 /* the line above the podium while the places are called */
@@ -342,10 +342,10 @@
 }
 
 .aw-kicker {
-  color: var(--gold);
+  color: var(--alloy);
 }
 
-/* the stage: a lit rubber box with a rim-gold hairline and a tread floor */
+/* the stage: a lit rubber box with a alloy hairline and a tread floor */
 .aw-frame {
   min-height: 320px;
   padding: 26px 18px 52px;
@@ -381,11 +381,11 @@
 }
 
 .aw-title {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .aw-rule {
-  background: var(--gold);
+  background: var(--alloy);
 }
 
 .aw-fig .t-money {
@@ -410,7 +410,7 @@
 
 .aw-name em,
 .aw-row-name em {
-  background: var(--gold);
+  background: var(--alloy);
   color: #0c0d0f;
 }
 
@@ -570,7 +570,7 @@
 }
 
 .aw-row.grand {
-  border: 2px solid var(--gold);
+  border: 2px solid var(--alloy);
   background:
     linear-gradient(180deg, rgba(214, 218, 226, .16), rgba(214, 218, 226, .03)),
     var(--rubber-2);
@@ -596,8 +596,8 @@
 /* your night */
 .aw-badge {
   border-color: rgba(214, 218, 226, .36);
-  background: var(--gold-50);
-  color: var(--gold-hi);
+  background: var(--alloy-50);
+  color: var(--ink);
 }
 
 .aw-badge.new {
@@ -703,12 +703,12 @@
 
 .cr-badges li.got {
   border: 1px solid rgba(214, 218, 226, .4);
-  background: var(--gold-50);
-  color: var(--gold);
+  background: var(--alloy-50);
+  color: var(--alloy);
 }
 
 .cr-badges li.got b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .cr-nights li {
@@ -785,7 +785,7 @@
   }
 }
 
-/* the share button while the poster is drawn: a small tyre rolls in the gold */
+/* the share button while the poster is drawn: a small spinner */
 .aw-share .sg-spin {
   width: 22px;
   height: 22px;
