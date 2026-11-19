@@ -1,15 +1,28 @@
 import type { PlatePub } from '../../engine/types';
 import { indic, money } from '../../lib/util';
 
-/** The palm and crossed swords, as printed small on the plate's KSA strip. */
+/** The national emblem as pressed on the plate's KSA strip: a date palm standing above two crossed
+ *  curved swords, blades up, hilts down. Filled shapes so it still reads at 14px. */
 function Emblem() {
   return (
     <svg className="kp-emblem" viewBox="0 0 24 24" aria-hidden="true">
-      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 14.2V6.8" strokeWidth="1.5" />
-        <path d="M12 6.8c-1.9-1.7-4.3-1.9-6.2-.7M12 6.8c1.9-1.7 4.3-1.9 6.2-.7M12 6.8c-1.6-.3-3.3.8-4.1 2.5M12 6.8c1.6-.3 3.3.8 4.1 2.5M12 6.8c-.6-1.6-.2-3.2 1-4.3" strokeWidth="1.25" />
-        <path d="M5.2 20c3.6-1 7.8-3.3 13.4-7.6M18.8 20c-3.6-1-7.8-3.3-13.4-7.6" strokeWidth="1.35" />
-        <path d="M6 18.1l1.4 2.3M18 18.1l-1.4 2.3" strokeWidth="1.15" />
+      <g fill="currentColor">
+        {/* fronds: five filled leaves fanning from the crown */}
+        <path d="M12 7.2C10.6 5.4 8.2 4.9 5.6 5.9c2.2.1 4 .8 6.4 1.9Z" />
+        <path d="M12 7.2c1.4-1.8 3.8-2.3 6.4-1.3-2.2.1-4 .8-6.4 1.9Z" />
+        <path d="M12 7.4C10.2 7 7.9 8 6.6 10.4c1.6-1.3 3.3-2 5.4-2.4Z" />
+        <path d="M12 7.4c1.8-.4 4.1.6 5.4 3-1.6-1.3-3.3-2-5.4-2.4Z" />
+        <path d="M12 7.2c-.9-1.9-.6-3.8.9-5.2-.5 1.7-.6 3.3-.3 5.2Z" />
+        {/* trunk */}
+        <path d="M11.35 7.6h1.3l-.25 8.4h-.8Z" />
+        {/* swords: curved blades rising from the hilts, crossing under the trunk */}
+        <path d="M4.6 10.6c1.6 3.4 5.4 6.6 12.6 8.6l.5-.9c-6.6-2.3-10.3-4.8-13.1-7.7Z" />
+        <path d="M19.4 10.6c-1.6 3.4-5.4 6.6-12.6 8.6l-.5-.9c6.6-2.3 10.3-4.8 13.1-7.7Z" />
+        {/* guards and grips */}
+        <path d="M15.9 17.2l2.7 2.6-.7.7-2.7-2.6Z" />
+        <path d="M8.1 17.2l-2.7 2.6.7.7 2.7-2.6Z" />
+        <path d="M17.6 19.3l1.9 1.9-.9.9-1.9-1.9Z" />
+        <path d="M6.4 19.3l-1.9 1.9.9.9 1.9-1.9Z" />
       </g>
     </svg>
   );
