@@ -23,8 +23,8 @@ export function Home() {
         <div className="hero-bg" aria-hidden="true">
           <i className="hero-lamp" />
           <i className="hero-floor" />
-          <img className="hero-track" src="/brand/wheel/track-512.webp" width={512} height={512} alt="" draggable={false} />
-          <img className="hero-wheel" src="/brand/wheel/hero-960.webp" width={960} height={960} alt="" draggable={false} decoding="async" />
+          <img className="hero-track" src="/brand/wheel/track-512.webp" width={512} height={512} alt="" draggable={false} onError={(e) => (e.currentTarget.style.display = 'none')} />
+          <img className="hero-wheel" src="/brand/wheel/hero-960.webp" width={960} height={960} alt="" draggable={false} decoding="async" onError={(e) => (e.currentTarget.style.display = 'none')} />
         </div>
 
         <div className="hero-top">
