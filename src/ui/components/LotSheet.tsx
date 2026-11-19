@@ -208,7 +208,7 @@ export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: {
   const shown = covered || !car ? null : car;
 
   return (
-    <article className="lot" key={lot.id} aria-label={`لوت ${lot.no}`}>
+    <article className="lot" key={lot.id} aria-label={`السيارة ${lot.no}`}>
       <LotGallery lot={lot} car={shown} />
 
       <div className="lot-card">

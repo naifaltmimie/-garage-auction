@@ -76,8 +76,8 @@ export function Auction({ room }: { room: RoomView }) {
       <ClosingTicks room={room} />
       <div className="lot-wrap">
         {/* the lot number as a windshield sticker: white paper, black digits */}
-        <span className="lot-sticker" aria-label={`لوت ${lot.no}`}>
-          لوت <b className="ltr">{String(lot.no).padStart(2, '0')}</b>
+        <span className="lot-sticker" aria-label={`رقم ${lot.no}`}>
+          رقم <b className="ltr">{String(lot.no).padStart(2, '0')}</b>
         </span>
         <LotSheetMemo
           lot={lot}

@@ -144,7 +144,7 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
         </button>
       )}
       {inGame && core.lotNo > 0 && (
-        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`${live ? 'مباشر، ' : ''}اللوت ${core.lotNo} من ${core.lotsTotal}`}>
+        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`${live ? 'على السوم، ' : ''}السيارة ${core.lotNo} من ${core.lotsTotal}`}>
           {live && <i className="tb-live" aria-hidden="true" />}
           <span className="tb-lot-n ltr">
             <b>{String(core.lotNo).padStart(2, '0')}</b>/{core.lotsTotal}

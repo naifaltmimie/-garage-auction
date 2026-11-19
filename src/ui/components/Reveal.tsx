@@ -59,7 +59,7 @@ function Hero({ sale, stamp, grey, mine }: { sale: Sale; stamp: string; grey?: b
         <div className="rv-ink">
           <span>{stamp}</span>
           {mine && <em>لك</em>}
-          <small className="ltr">LOT {String(sale.no).padStart(2, '0')}</small>
+          <small>سيارة رقم <span className="ltr">{sale.no}</span></small>
         </div>
       </div>
     </div>
@@ -101,7 +101,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
     );
   }
   return (
-    <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة اللوت">
+    <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة السيارة">
       <div className="reveal">
         {sealed && (
           <div className="rv-sec">

@@ -271,7 +271,7 @@ export function ReactionLayer({ room }: { room: RoomView }) {
       {on && live && (
         <>
           {open && (
-            <div className="rx-tray" ref={trayRef} role="group" aria-label="تفاعل مع اللوت">
+            <div className="rx-tray" ref={trayRef} role="group" aria-label="تفاعل مع السيارة">
               <i key={cool} className={`rx-cool ${cool ? 'run' : ''}`} aria-hidden="true" />
               {REACTIONS.map((r) => (
                 <button
@@ -291,7 +291,7 @@ export function ReactionLayer({ room }: { room: RoomView }) {
             type="button"
             className={`rx-fab ${open ? 'open' : ''}`}
             aria-expanded={open}
-            aria-label={open ? 'سكّر التفاعلات' : 'تفاعل مع اللوت'}
+            aria-label={open ? 'سكّر التفاعلات' : 'تفاعل مع السيارة'}
             onClick={() => setOpen((o) => !o)}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
