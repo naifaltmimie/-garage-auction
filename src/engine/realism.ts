@@ -2,6 +2,7 @@
 // Effects: "pct" is a fraction of the car's value, "sar" a fixed riyal amount (scaled by class).
 import type { Rng } from '../lib/rng';
 import { arDigits, money } from '../lib/util';
+import { PLATE_WORDS, gradePlate, wordLetters } from './lotgen';
 import type { CarModel, CarPub, PanelStatus, SaleMode, Seller, Surprise } from './types';
 
 export interface SurpriseCtx {
@@ -302,12 +303,20 @@ const DEFS: Def[] = [
 ];
 
 function plateFor(rng: Rng, delta: number): string {
+  // names a plate that really grades at the claimed worth (same grader as the deck's plates)
   const L = ['ا', 'ب', 'ح', 'د', 'ر', 'س', 'ص', 'ط', 'ع', 'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ى'];
-  const l = rng.pick(L);
-  const d = rng.int(1, 9);
-  if (delta >= 1_000_000) return `${l} ${arDigits(d)}`;
-  if (delta >= 60_000) return `${rng.pick(L)} ${rng.pick(L)} ${l} ${arDigits(d)}`;
-  return `${l} ${rng.pick(L)} ${l} ${arDigits(`${d}${d}${d}${rng.chance(0.5) ? d : ''}`)}`;
+  const want = delta >= 1_000_000 ? 'legend' : delta >= 250_000 ? 'rare' : delta >= 60_000 ? 'top' : 'special';
+  const d = () => String(rng.pick([1, 5, 7, 9, rng.int(1, 9)]));
+  for (let i = 0; i < 80; i++) {
+    let letters: string[];
+    let num: string;
+    if (want === 'legend') [letters, num] = [[rng.pick(L)], d()];
+    else if (want === 'rare') [letters, num] = rng.chance(0.6) ? [wordLetters(rng.pick(PLATE_WORDS)), d()] : [Array(2).fill(rng.pick(L)), d().repeat(2)];
+    else if (want === 'top') [letters, num] = rng.chance(0.5) ? [[rng.pick(L), rng.pick(L), rng.pick(L)], d()] : [wordLetters(rng.pick(PLATE_WORDS)), d().repeat(2)];
+    else [letters, num] = rng.chance(0.5) ? [[rng.pick(L), rng.pick(L), rng.pick(L)], d().repeat(2)] : [[rng.pick(L), rng.pick(L), rng.pick(L)], d().repeat(4)];
+    if (gradePlate(letters, num)?.tier === want) return `${letters.join(' ')} ${arDigits(num)}`;
+  }
+  return `${rng.pick(L)} ${arDigits(d())}`;
 }
 
 export interface Rolled {
