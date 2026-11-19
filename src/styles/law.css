@@ -93,6 +93,18 @@
   background: rgba(9, 9, 11, .82);
 }
 
+/* Home: the wheel leans out of the bottom corner, clear of the actions; the quiet buttons are solid over it */
+.hero-wheel {
+  left: -52%;
+  bottom: -30%;
+  opacity: .82;
+}
+
+.hero-cta .btn-ghost,
+.hero-cta .btn-quiet {
+  background: var(--rubber-2);
+}
+
 /* the plate chip is paper, like the plate */
 .chip.plate-chip {
   background: var(--plate);
