@@ -3,7 +3,7 @@
    this file, so every rule here is scoped one step deeper (.tv .x, html .tv .x) to win either way.
    - surfaces: matte rubber with the grain; the bar and the floors carry the tread
    - caliper red for live (the phase block, the bid leader's tag, the hot clock, the current leader)
-   - rim gold only for the big moments (sold, the winner, the top bid, the champion)
+   - the alloy only for the leader and the champion; prices and names in chalk white
    - the room code is a Saudi plate (paper, like the QR and the paddles); everything else is rubber
    - nothing restarts on a clock tick; under reduced motion tv.css already stills everything */
 
@@ -40,7 +40,6 @@ html .tv {
   padding: 0 64px;
   border-bottom: 0;
   background:
-    var(--tex-tread) center / 46px 28px,
     linear-gradient(180deg, #25262b 0%, #18191c 58%, #111214 100%);
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .05), 0 1px 0 #000, 0 22px 44px -16px rgba(0, 0, 0, .85);
 }
@@ -108,7 +107,7 @@ html .tv {
   color: var(--brand-hi);
 }
 
-.tv .tv-phase.tone-gold {
+.tv .tv-phase.tone-alloy {
   color: #0c0d0f;
   background: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 38%, #b4b8c1 72%, #8c909a 100%);
   box-shadow:
@@ -272,36 +271,6 @@ html .tv {
   color: var(--tv-dim);
 }
 
-/* a big tyre turning slowly in the corner of the attract screens (transform only; stilled under reduced motion) */
-.tv .tv-wait::before,
-.tv .tv-lobby::before,
-.tv .tv-intro::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  width: 920px;
-  height: 920px;
-  left: -520px;
-  bottom: -560px;
-  background: var(--tex-tire) center / contain no-repeat;
-  opacity: .07;
-  pointer-events: none;
-  animation: tv-tire-turn 48s linear infinite;
-}
-
-.tv .tv-lobby::before {
-  left: auto;
-  right: -520px;
-  bottom: -560px;
-  animation-direction: reverse;
-}
-
-@keyframes tv-tire-turn {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
 /* the tyre loader, sized for a room */
 .tv .tire-loader .tl-label,
 .tv .tv-lot-wait .tl-label {
@@ -429,7 +398,7 @@ html .tv {
 }
 
 .tv .tv-joined li em {
-  color: var(--gold-hi);
+  color: var(--ink);
   font-size: 19px;
   font-weight: 600;
 }
@@ -459,11 +428,11 @@ html .tv .paddle {
 }
 
 .tv .tv-intro .tv-kicker {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-intro .tv-kicker::before {
-  box-shadow: 0 0 0 5px var(--gold-50);
+  box-shadow: 0 0 0 5px var(--alloy-50);
 }
 
 .tv .tv-intro h1 {
@@ -508,7 +477,7 @@ html .tv .paddle {
 
 .tv .tv-covered-tag {
   background: var(--rubber-1);
-  color: var(--gold-hi);
+  color: var(--ink);
   box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .35), 0 8px 18px -6px rgba(0, 0, 0, .8);
 }
 
@@ -544,17 +513,7 @@ html .tv .paddle {
   box-shadow: var(--tv-lift);
 }
 
-.tv .tv-price::before,
-.tv .tv-verdict::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 26px;
-  border-radius: 24px 24px 0 0;
-  background: var(--tex-tread) center / 40px 24px;
-  opacity: .5;
-  pointer-events: none;
-}
+
 
 .tv .tv-price.is-bidding,
 .tv .tv-price.is-sealed,
@@ -594,7 +553,7 @@ html .tv .paddle {
 
 .tv .tv-leader b {
   font-size: 46px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-leader-tag {
@@ -675,7 +634,7 @@ html .tv .paddle {
 }
 
 .tv .tv-feed li.top b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-feed li em {
@@ -688,9 +647,9 @@ html .tv .paddle {
   color: var(--tv-dim);
 }
 
-/* sold: rim gold; not sold: caliper red */
+/* sold and not sold share one quiet panel; the red lives in the stamp */
 .tv .tv-verdict.sold {
-  box-shadow: inset 0 8px 0 var(--gold), var(--tv-lift);
+  box-shadow: inset 0 8px 0 var(--alloy), var(--tv-lift);
 }
 
 .tv .tv-verdict.unsold {
@@ -699,7 +658,7 @@ html .tv .paddle {
 
 .tv .tv-stamp {
   font-size: 100px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-verdict.unsold .tv-stamp {
@@ -708,7 +667,7 @@ html .tv .paddle {
 
 .tv .tv-buyer b {
   font-size: 60px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-v {
@@ -758,7 +717,7 @@ html .tv .paddle {
 
 .tv .tv-ticker li:first-child .tv-rank,
 .tv .tv-table li.first .tv-rank {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-tk-name {
@@ -803,11 +762,11 @@ html .tv .paddle {
 }
 
 .tv .tv-results .tv-kicker {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-results .tv-kicker::before {
-  box-shadow: 0 0 0 5px var(--gold-50);
+  box-shadow: 0 0 0 5px var(--alloy-50);
 }
 
 .tv .tv-board-h h1 {
@@ -824,7 +783,7 @@ html .tv .paddle {
   display: inline-flex;
   align-items: center;
   gap: 14px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv .tv-champ .ic {
@@ -847,8 +806,8 @@ html .tv .paddle {
 }
 
 .tv .tv-table li.first {
-  background: linear-gradient(180deg, #2e2512, #1f1a10);
-  box-shadow: inset 0 0 0 2px var(--gold), var(--tv-lift);
+  background: var(--rubber-3);
+  box-shadow: inset 0 0 0 2px var(--alloy), var(--tv-lift);
 }
 
 .tv .tv-cash {
@@ -875,8 +834,8 @@ html .tv .paddle {
 }
 
 .tv .tv-award {
-  background: var(--gold-50);
-  color: var(--gold-hi);
+  background: var(--alloy-50);
+  color: var(--ink);
   box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .32);
 }
 
@@ -884,7 +843,7 @@ html .tv .paddle {
   border-radius: 18px;
   border-top: 0;
   background: var(--tv-face);
-  box-shadow: inset 0 5px 0 var(--gold), var(--tv-lift);
+  box-shadow: inset 0 5px 0 var(--alloy), var(--tv-lift);
 }
 
 .tv .tv-awards span {
@@ -897,8 +856,8 @@ html .tv .paddle {
   padding: 16px 36px;
   border-radius: 16px;
   background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
-  color: var(--amber);
-  box-shadow: inset 0 0 0 2px rgba(242, 173, 50, .45), 0 6px 0 #050506, 0 18px 30px -8px rgba(0, 0, 0, .8);
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 2px var(--line), 0 6px 0 #050506, 0 18px 30px -8px rgba(0, 0, 0, .8);
   font-size: 30px;
 }
 
