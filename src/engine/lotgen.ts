@@ -236,48 +236,122 @@ function plateOf(letters: (readonly [string, string])[], num: string, special?: 
   return { ar: letters.map((l) => l[0]).join(' '), en: letters.map((l) => l[1]).join(' '), num, special };
 }
 
-/** Does this number/letter set look special to a Saudi eye? (normal plates must never look special) */
-function looksSpecial(num: string, letters: readonly (readonly [string, string])[]): boolean {
-  if (num.length <= 2) return true;
-  if (/^(\d)\1+$/.test(num)) return true; // 777, 7777
-  if (/^[1-9]0{2,}$/.test(num)) return true; // 100, 1000
-  if (/^(\d)(\d)\1\2$/.test(num) || /^(\d)(\d)\2\1$/.test(num)) return true; // 1212, 1221
-  if (num === '1234' || num === '4321' || num === '123' || num === '321') return true;
-  return letters.length < 3 || letters.every((l) => l === letters[0]);
+/** Clean, positive words and names the 17 plate letters can spell (read right to left). */
+export const PLATE_WORDS: readonly string[] = [
+  'ملك', 'صقر', 'بدر', 'حرب', 'سعد', 'كرم', 'نصر', 'عدل', 'حلا', 'سما', 'ورد', 'صدق', 'بطل', 'حسن', 'نور', 'هلا',
+  'قمر', 'دار', 'سلم', 'حكم', 'امل', 'نبل', 'عسل', 'برق', 'رعد', 'بحر', 'نهر', 'سهل', 'نسر', 'اسد', 'حمد', 'عود',
+  'درب', 'قلب', 'صبر', 'قصر', 'ربح', 'سور', 'كحل', 'حلم', 'ملح', 'عمر', 'سحر', 'بسم', 'حصن', 'ركن',
+];
+const wordKey = (letters: readonly string[]) => letters.map((l) => (l === 'هـ' ? 'ه' : l)).join('');
+const WORD_SET = new Set(PLATE_WORDS);
+/** plate letters for a word (ه is written هـ on the plate) */
+export const wordLetters = (w: string) => [...w].map((c) => (c === 'ه' ? 'هـ' : c));
+
+export interface PlateGrade {
+  tier: 'legend' | 'rare' | 'top' | 'special' | 'nice';
+  label: string;
+  note: string;
+  /** 0..1, where the plate sits inside its tier */
+  score: number;
 }
+
+const DIG_AR = ['صفر', 'واحد', 'اثنين', 'ثلاث', 'أربع', 'خمس', 'ست', 'سبع', 'ثمان', 'تسع'];
+const DIG_PL = ['أصفار', 'واحدات', 'اثنينات', 'ثلاثات', 'أربعات', 'خمسات', 'ستات', 'سبعات', 'ثمانيات', 'تسعات'];
+const LIKED = new Set(['1', '5', '7', '9', '0']);
+
+/**
+ * Grades a plate the way the Saudi market does: fewer digits first, then repeated or named letters, then the
+ * digits themselves. The ONLY thing that decides whether a plate is tagged, its tier, label and note.
+ */
+export function gradePlate(letters: readonly string[], num: string): PlateGrade | null {
+  const n = letters.length;
+  const len = num.length;
+  const sameL = letters.every((l) => l === letters[0]);
+  const repL = n === 3 && !sameL && new Set(letters).size < 3;
+  const word = n === 3 && WORD_SET.has(wordKey(letters)) ? wordKey(letters) : null;
+  const sameD = len >= 2 && /^(\d)\1+$/.test(num);
+  const round = /^[1-9]0+$/.test(num);
+  const twins = len === 2 && sameD;
+  const stepped = num === '1234' || num === '4321' || num === '123' || num === '321';
+  const mirror = len === 4 && (/^(\d)(\d)\2\1$/.test(num) || /^(\d)(\d)\1\2$/.test(num)) && !sameD;
+  const liked = [...num].filter((c) => LIKED.has(c)).length / len;
+  const one = num === '1' ? 0.25 : 0;
+  const sc = (base: number) => Math.max(0, Math.min(1, base + 0.35 * liked + one));
+  const g = (tier: PlateGrade['tier'], label: string, note: string, base: number): PlateGrade => ({ tier, label, note, score: sc(base) });
+  const L = (tier: PlateGrade['tier']) =>
+    tier === 'legend' ? 'لوحة أسطورية' : tier === 'rare' ? 'لوحة نادرة' : tier === 'top' ? 'لوحة مميزة' : '';
+
+  if (n === 1 && len <= 2) return g('legend', L('legend'), len === 1 ? 'حرف واحد ورقم واحد' : 'حرف واحد ورقمين', len === 1 ? 0.4 : 0);
+  if (n === 3 && sameL && len === 1) return g('legend', L('legend'), 'ثلاث حروف متشابهة ورقم مفرد', 0);
+  if (n === 2 && sameL && len <= 2) return g('rare', L('rare'), len === 1 ? 'حرفين متشابهة ورقم مفرد' : twins ? 'حرفين متشابهة ورقمين متشابهة' : 'حرفين متشابهة ورقمين', len === 1 ? 0.4 : twins ? 0.25 : 0);
+  if (word && len === 1) return g('rare', L('rare'), `اسم (${word}) ورقم مفرد`, 0.1);
+  if (n === 3 && sameL && len === 2) return g('rare', L('rare'), twins ? 'ثلاث حروف متشابهة ورقمين متشابهة' : 'ثلاث حروف متشابهة ورقمين', twins ? 0.3 : 0);
+  if (n === 3 && sameL && len === 3 && round) return g('rare', L('rare'), `ثلاث حروف متشابهة ورقم ${num}`, 0);
+  if (n === 3 && len === 1) return g('top', L('top'), repL ? 'حروف مكررة ورقم مفرد' : 'رقم مفرد', repL ? 0.15 : 0);
+  if (word && (twins || (len === 3 && sameD))) return g('top', L('top'), `اسم (${word}) و${twins ? 'رقمين متشابهة' : `ثلاث ${DIG_PL[+num[0]]}`}`, twins ? 0.2 : 0);
+  if (n === 3 && sameL && len === 3 && (sameD || stepped)) return g('top', L('top'), sameD ? 'حروف متشابهة وأرقام متشابهة' : 'حروف متشابهة ورقم متسلسل', sameD ? 0.2 : 0);
+  if (len === 4 && sameD) return g('special', 'رقم مميز', `أربع ${DIG_PL[+num[0]]}`, 0.2);
+  if (len === 3 && sameD) return g('special', 'رقم مميز', `ثلاث ${DIG_PL[+num[0]]}`, 0.1);
+  if (n === 3 && twins) return g('special', 'رقم مميز', `رقمين متشابهة (${DIG_AR[+num[0]]})`, 0.3);
+  if (n === 3 && len === 2) return g('special', 'رقم مميز', word ? `رقمين واسم (${word})` : 'رقمين بس', word ? 0.15 : 0);
+  if (word) return g('special', 'حروف مميزة', `اسم (${word})`, 0);
+  if (n === 3 && sameL) return g('special', 'حروف مميزة', 'ثلاث حروف متشابهة', 0.1);
+  if ((len === 3 || len === 4) && round) return g('nice', 'رقم حلو', len === 4 ? 'رقم ألفي' : 'رقم مئوي', 0.2);
+  if (num === '1234') return g('nice', 'رقم حلو', 'أرقام متسلسلة', 0.1);
+  if (mirror && repL) return g('nice', 'رقم حلو', 'رقم مرايا وحرف مكرر', 0);
+  return null;
+}
+
+/** Does this plate look special to a Saudi eye? Exactly when the grader tags it (ordinary plates never do). */
+function looksSpecial(num: string, letters: readonly (readonly [string, string])[]): boolean {
+  return gradePlate(letters.map((l) => l[0]), num) !== null;
+}
+
+/** value ranges per tier, from real Absher/Haraj sales */
+const TIER_RANGE: Record<PlateGrade['tier'], [number, number, number]> = {
+  legend: [900_000, 4_500_000, 50_000],
+  rare: [250_000, 1_500_000, 10_000],
+  top: [60_000, 300_000, 5_000],
+  special: [12_000, 90_000, 500],
+  nice: [3_000, 18_000, 500],
+};
 
 /**
  * A Saudi private plate. Most are ordinary (three letters, four digits) and carry no tag at all. The special
  * ones follow what really trades: one letter and one digit (Absher sold «ع 1» for 21 million and «ط 1» for
- * 4.15 million), two letters and two digits («م م 22» 1.47 million), three letters and one digit (~100 ألف),
- * three letters and two digits (15–40 ألف), four identical digits, and the cheaper «حلوة» patterns.
- * `cap` keeps a plate within what the room can pay (half a player's budget).
+ * 4.15 million), two letters and two digits («م م 22» 1.47 million), names in the letters («ص ق ر 7»),
+ * three identical letters, three letters and one digit, four identical digits, and the cheaper «رقم حلو» patterns.
+ * The tier and label always come from `gradePlate`. `cap` keeps a plate within what the room can pay.
  */
 export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
   const L = () => rng.pick(PLATE_LETTERS);
-  const three = () => {
-    for (;;) {
-      const x = [L(), L(), L()];
-      if (!(x[0] === x[1] && x[1] === x[2])) return x;
-    }
-  };
+  const byAr = (c: string) => PLATE_LETTERS.find((l) => l[0] === c)!;
+  const three = () => [L(), L(), L()];
   const same = (n: number) => {
     const l = L();
     return Array.from({ length: n }, () => l);
   };
+  const word = () => wordLetters(rng.pick(PLATE_WORDS)).map(byAr);
+  const rep = () => {
+    const a = L();
+    let b = L();
+    while (b === a) b = L();
+    return rng.pick([[a, a, b], [a, b, a], [b, a, a]]);
+  };
   const d = () => String(rng.int(1, 9));
-  const round = (v: number, step: number) => Math.round(v / step) * step;
+  const dl = () => rng.pick(['1', '5', '7', '9', d()]);
+  const plain = (lo: number, hi: number) => String(rng.int(lo, hi));
   const posh = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport';
   const w = (normal: number, rich: number) => (posh ? rich : normal);
-  const tiers: [string, number][] = [
+  const tiers: [PlateGrade['tier'], number][] = [
     ['legend', cap >= 900_000 ? w(0.0015, 0.006) : 0],
     ['rare', cap >= 250_000 ? w(0.0035, 0.012) : 0],
     ['top', cap >= 60_000 ? w(0.01, 0.025) : 0],
     ['special', cap >= 12_000 ? w(0.03, 0.05) : 0],
-    ['nice', cap >= 3_000 ? w(0.06, 0.07) : 0],
+    ['nice', cap >= 3_000 ? w(0.05, 0.06) : 0],
   ];
   let roll = rng.next();
-  let tier = 'normal';
+  let tier: PlateGrade['tier'] | 'normal' = 'normal';
   for (const [t, p] of tiers) {
     if (roll < p) {
       tier = t;
@@ -286,61 +360,56 @@ export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
     roll -= p;
   }
 
-  if (tier === 'legend') {
-    const x = d();
-    const v = x === '1' ? rng.range(2_500_000, 4_500_000) : rng.range(900_000, 2_800_000);
-    return plateOf([L()], x, { tier: 'legend', label: 'لوحة أسطورية', note: 'حرف ورقم', value: round(Math.min(v, cap), 50_000) });
-  }
-  if (tier === 'rare') {
-    if (rng.chance(0.7)) {
-      const x = d();
-      const v = x === '1' || x === '9' ? rng.range(600_000, 1_500_000) : rng.range(250_000, 1_000_000);
-      return plateOf(same(2), x + x, { tier: 'rare', label: 'لوحة نادرة', note: 'حرفين ورقمين', value: round(Math.min(v, cap), 10_000) });
+  type Cand = [(readonly [string, string])[], string];
+  const gens: Record<PlateGrade['tier'], [() => Cand, number][]> = {
+    legend: [[() => [[L()], dl()], 55], [() => [[L()], plain(10, 99)], 20], [() => [same(3), dl()], 25]],
+    rare: [
+      [() => [same(2), rng.chance(0.5) ? dl() : rng.chance(0.5) ? d().repeat(2) : plain(10, 99)], 45],
+      [() => [word(), dl()], 35],
+      [() => [same(3), rng.chance(0.6) ? d().repeat(2) : `${d()}00`], 20],
+    ],
+    top: [
+      [() => [rng.chance(0.25) ? rep() : three(), dl()], 45],
+      [() => [word(), rng.chance(0.5) ? d().repeat(2) : d().repeat(3)], 35],
+      [() => [same(3), rng.chance(0.7) ? d().repeat(3) : rng.pick(['123', '321'])], 20],
+    ],
+    special: [
+      [() => [three(), d().repeat(4)], 22],
+      [() => [three(), d().repeat(3)], 18],
+      [() => [three(), d().repeat(2)], 18],
+      [() => [three(), plain(10, 99)], 12],
+      [() => [word(), plain(1000, 9999)], 20],
+      [() => [same(3), plain(1000, 9999)], 10],
+    ],
+    nice: [
+      [() => [three(), `${d()}000`], 30],
+      [() => [three(), `${d()}00`], 30],
+      [() => [three(), '1234'], 15],
+      [() => {
+        const a = d();
+        let b = d();
+        while (b === a) b = d();
+        return [rep(), rng.pick([`${a}${b}${b}${a}`, `${a}${b}${a}${b}`])];
+      }, 25],
+    ],
+  };
+
+  if (tier !== 'normal') {
+    for (let i = 0; i < 60; i++) {
+      const [letters, num] = rng.weighted(gens[tier])();
+      const gr = gradePlate(letters.map((l) => l[0]), num);
+      if (!gr || gr.tier !== tier) continue;
+      const [lo, hi, step] = TIER_RANGE[tier];
+      const pos = Math.min(1, gr.score * 0.75 + rng.next() * 0.25);
+      let v = Math.round((lo + (hi - lo) * pos * pos) / step) * step;
+      if (tier === 'legend' || tier === 'rare' || tier === 'top') v = Math.round(Math.min(v, cap) / step) * step;
+      return plateOf(letters, num, { tier: gr.tier, label: gr.label, note: gr.note, value: v });
     }
-    return plateOf(same(3), d(), { tier: 'rare', label: 'لوحة نادرة', note: 'ثلاث حروف متشابهة ورقم', value: round(Math.min(rng.range(300_000, 1_200_000), cap), 10_000) });
-  }
-  if (tier === 'top') {
-    if (rng.chance(0.7)) {
-      const x = d();
-      const v = rng.range(60_000, 160_000) * (x === '1' ? 1.5 : 1);
-      return plateOf(three(), x, { tier: 'top', label: 'لوحة مميزة جداً', note: 'رقم واحد', value: round(Math.min(v, cap), 5_000) });
-    }
-    const x = d();
-    return plateOf(same(3), x + x, { tier: 'top', label: 'لوحة مميزة جداً', note: 'حروف متشابهة ورقمين', value: round(Math.min(rng.range(120_000, 300_000), cap), 5_000) });
-  }
-  if (tier === 'special') {
-    const kind = rng.weighted([['two', 45], ['four', 35], ['same3', 20]] as const);
-    if (kind === 'two') {
-      const twin = rng.chance(0.35);
-      const num = twin ? d().repeat(2) : String(rng.int(10, 99));
-      const v = twin ? rng.range(25_000, 70_000) : rng.range(12_000, 40_000);
-      return plateOf(three(), num, { tier: 'special', label: 'لوحة مميزة', note: twin ? 'رقمين متشابهة' : 'رقمين', value: round(v, 500) });
-    }
-    if (kind === 'four') {
-      return plateOf(three(), d().repeat(4), { tier: 'special', label: 'لوحة مميزة', note: 'أربعة أرقام متشابهة', value: round(rng.range(20_000, 60_000), 500) });
-    }
-    return plateOf(same(3), d().repeat(3), { tier: 'special', label: 'لوحة مميزة', note: 'حروف وأرقام متشابهة', value: round(rng.range(30_000, 90_000), 500) });
-  }
-  if (tier === 'nice') {
-    const kind = rng.weighted([['three', 30], ['thousand', 20], ['letters', 25], ['pattern', 15], ['hundred', 10]] as const);
-    if (kind === 'three') return plateOf(three(), d().repeat(3), { tier: 'nice', label: 'لوحة حلوة', note: 'ثلاث أرقام متشابهة', value: round(rng.range(6_000, 18_000), 500) });
-    if (kind === 'thousand') return plateOf(three(), `${d()}000`, { tier: 'nice', label: 'لوحة حلوة', note: 'رقم ألفي', value: round(rng.range(5_000, 15_000), 500) });
-    if (kind === 'hundred') return plateOf(three(), `${d()}00`, { tier: 'nice', label: 'لوحة حلوة', note: 'رقم مئوي', value: round(rng.range(4_000, 10_000), 500) });
-    if (kind === 'pattern') {
-      const a = d();
-      let b = d();
-      while (b === a) b = d();
-      const num = rng.pick([`${a}${b}${a}${b}`, `${a}${b}${b}${a}`, '1234']);
-      return plateOf(three(), num, { tier: 'nice', label: 'لوحة حلوة', note: num === '1234' ? 'أرقام متسلسلة' : 'أرقام متكررة', value: round(rng.range(3_000, 9_000), 500) });
-    }
-    let num = String(rng.int(1000, 9999));
-    while (looksSpecial(num, [['ا', 'A'], ['ب', 'B'], ['ح', 'J']])) num = String(rng.int(1000, 9999));
-    return plateOf(same(3), num, { tier: 'nice', label: 'لوحة حلوة', note: 'ثلاث حروف متشابهة', value: round(rng.range(4_000, 12_000), 500) });
   }
   // an ordinary plate: nothing about it may look special
   for (;;) {
     const letters = three();
-    const num = rng.chance(0.9) ? String(rng.int(1000, 9999)) : String(rng.int(101, 999));
+    const num = rng.chance(0.9) ? plain(1000, 9999) : plain(101, 999);
     if (!looksSpecial(num, letters)) return plateOf(letters, num);
   }
 }
