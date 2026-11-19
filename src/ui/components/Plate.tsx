@@ -41,13 +41,13 @@ export function CarPlate({ plate, size = 'md', showValue }: { plate: PlatePub; s
   return (
     <div className={`kplate ${size} ${sp ? `special ${sp.tier}` : ''}`} role="img" aria-label={`لوحة ${plate.ar} ${plate.num}${sp ? `، ${sp.label}` : ''}`}>
       <div className="kp-face">
-        <span className="kp-c kp-num ar">{indic(plate.num)}</span>
+        <span className="kp-c kp-num ar">{[...indic(plate.num)].map((d, i) => <i key={i}>{d}</i>)}</span>
         <span className="kp-c kp-let ar">
           {ar.map((l, i) => (
             <i key={i}>{l}</i>
           ))}
         </span>
-        <span className="kp-c kp-num en">{plate.num}</span>
+        <span className="kp-c kp-num en">{[...plate.num].map((d, i) => <i key={i}>{d}</i>)}</span>
         <span className="kp-c kp-let en">
           {en.map((l, i) => (
             <i key={i}>{l}</i>

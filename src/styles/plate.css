@@ -10,14 +10,14 @@
   --ph: 42px;
   --fa: 17px;
   --fe: 14px;
-  --band: 16px;
+  --band: 19px;
   --rule: 1.2px;
   --ink-plate: #111214;
   --emboss: 0 -0.5px 0 rgba(255, 255, 255, .9), 0 .7px .4px rgba(0, 0, 0, .28);
 }
 
-.kplate.sm { --pw: 150px; --ph: 36px; --fa: 14.5px; --fe: 12px; --band: 13px; --rule: 1px; }
-.kplate.lg { --pw: 256px; --ph: 60px; --fa: 25px; --fe: 20px; --band: 22px; --rule: 1.5px; }
+.kplate.sm { --pw: 150px; --ph: 36px; --fa: 14.5px; --fe: 12px; --band: 15px; --rule: 1px; }
+.kplate.lg { --pw: 256px; --ph: 60px; --fa: 25px; --fe: 20px; --band: 27px; --rule: 1.5px; }
 
 .kplate .kp-face {
   grid-template-columns: 1fr 1fr var(--band);
@@ -56,18 +56,26 @@
   font-stretch: condensed;
   padding: 0;
 }
-.kplate .kp-num.ar { font-size: var(--fa); letter-spacing: .14em; padding-inline-start: .14em; padding-top: 1px; }
-.kplate .kp-num.en { font-size: var(--fe); letter-spacing: .3em; padding-inline-start: .3em; }
+/* each digit in its own equal cell so every Arabic-Indic digit sits exactly above its Latin twin */
+.kplate .kp-num { gap: 0; letter-spacing: 0; }
+.kplate .kp-num i {
+  display: inline-block;
+  width: calc(var(--pw) * .088);
+  text-align: center;
+  font-style: normal;
+}
+.kplate .kp-num.ar { font-size: var(--fa); padding-top: 1px; }
+.kplate .kp-num.en { font-size: var(--fe); }
 
-.kplate .kp-let { gap: .5em; direction: rtl; }
+.kplate .kp-let { gap: .32em; direction: rtl; }
 .kplate .kp-let i { min-width: .9em; }
 .kplate .kp-let.ar i {
   font-family: var(--f-ui);
   font-weight: 700;
-  font-size: calc(var(--fa) * 1.05);
+  font-size: calc(var(--fa) * .98);
   transform: translateY(-.06em);
 }
-.kplate .kp-let.en { gap: .55em; }
+.kplate .kp-let.en { gap: .5em; }
 .kplate .kp-let.en i {
   font-family: var(--f-num);
   font-weight: 800;
@@ -83,8 +91,8 @@
   text-shadow: var(--emboss);
 }
 .kplate .kp-emblem {
-  width: calc(var(--band) * .86);
-  height: calc(var(--band) * .86);
+  width: calc(var(--band) * .92);
+  height: calc(var(--band) * .92);
   color: var(--ink-plate);
   filter: drop-shadow(0 .5px .3px rgba(0, 0, 0, .25));
 }
