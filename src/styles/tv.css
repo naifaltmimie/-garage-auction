@@ -1794,3 +1794,6 @@ html body .tv .tv-verdict .tv-amount[data-len='10'],
 html body .tv .tv-verdict .tv-amount[data-len='11'] {
   font-size: 88px;
 }
+html body .tv .tv-last small {
+  color: var(--mute);
+}
