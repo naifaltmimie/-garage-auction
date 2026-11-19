@@ -1,0 +1,59 @@
+/* ================================================================ the real wheel
+   Art: public/brand/wheel (rendered by scripts/brand/wheel). Imported last.
+   .wheel-brake  the disc and the red caliper: never turn
+   .wheel-rim    the tyre and the rim, see-through between the spokes: turns
+   .wheel-light  where the room's light falls: never turns */
+
+.wheel {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--w, 96px);
+  height: var(--w, 96px);
+}
+
+.wheel > i {
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat;
+}
+
+.wheel-brake {
+  background-image: url('/brand/wheel/brake-512.webp');
+}
+
+.wheel-rim {
+  background-image: url('/brand/wheel/wheel-512.webp');
+}
+
+.wheel.is-small .wheel-brake {
+  background-image: url('/brand/wheel/brake-160.webp');
+}
+
+.wheel.is-small .wheel-rim {
+  background-image: url('/brand/wheel/wheel-160.webp');
+}
+
+.wheel.is-spin .wheel-rim {
+  animation: wheel-spin 1.1s linear infinite;
+}
+
+.wheel.is-slow .wheel-rim {
+  animation-duration: 3.2s;
+}
+
+.wheel.is-fast .wheel-rim {
+  animation-duration: .45s;
+}
+
+@keyframes wheel-spin {
+  to {
+    rotate: -360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel.is-spin .wheel-rim {
+    animation-duration: 6s;
+  }
+}

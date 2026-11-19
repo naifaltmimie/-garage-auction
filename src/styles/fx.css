@@ -14,7 +14,7 @@
   --fx-t3: 420ms;   /* entrances */
   --fx-t4: 700ms;   /* the big moments */
   --fx-stagger: 42ms;
-  --fx-gold-line: rgba(214, 173, 82, .55);
+  --fx-gold-line: rgba(214, 218, 226, .55);
 }
 
 /* ---------- press, release, focus: the same touch everywhere ---------- */
@@ -151,8 +151,8 @@
   translate: -50% -50%;
   background: conic-gradient(from 0deg,
       transparent 0deg 268deg,
-      rgba(214, 173, 82, 0) 268deg,
-      rgba(214, 173, 82, .9) 336deg,
+      rgba(214, 218, 226, 0) 268deg,
+      rgba(214, 218, 226, .9) 336deg,
       #fff4d2 352deg,
       transparent 360deg);
   animation: fx-orbit 3.4s linear infinite;
@@ -363,7 +363,7 @@
   inset: 0;
   z-index: -1;
   border-radius: inherit;
-  background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 0%), rgba(214, 173, 82, .2), rgba(214, 173, 82, 0) 70%);
+  background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 0%), rgba(214, 218, 226, .2), rgba(214, 218, 226, 0) 70%);
   opacity: 0;
   transition: opacity var(--fx-t3) var(--fx-out);
   pointer-events: none;

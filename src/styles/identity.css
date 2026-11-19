@@ -81,7 +81,7 @@
   border-radius: var(--r);
   background: var(--green-900);
   color: var(--card);
-  box-shadow: inset 0 0 0 1px rgba(214, 173, 82, .45), var(--sh-2); /* --gold-hi ring */
+  box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .45), var(--sh-2); /* --gold-hi ring */
 }
 
 .idn-market small {

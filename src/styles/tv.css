@@ -1009,7 +1009,7 @@ html.tv-mode body {
 }
 
 .tv-ticker li.lead {
-  background: rgba(214, 173, 82, 0.16);
+  background: rgba(214, 218, 226, 0.16);
   box-shadow: inset 0 0 0 2px var(--gold-hi);
 }
 
@@ -1150,8 +1150,8 @@ html.tv-mode body {
 }
 
 .tv-table li.first {
-  background: rgba(214, 173, 82, 0.16);
-  box-shadow: inset 0 0 0 2px rgba(214, 173, 82, 0.7);
+  background: rgba(214, 218, 226, 0.16);
+  box-shadow: inset 0 0 0 2px rgba(214, 218, 226, 0.7);
 }
 
 .tv-table .tv-rank {
@@ -1187,7 +1187,7 @@ html.tv-mode body {
 }
 
 .tv-award {
-  background: rgba(214, 173, 82, 0.2);
+  background: rgba(214, 218, 226, 0.2);
   color: var(--gold-hi);
 }
 

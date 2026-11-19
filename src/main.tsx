@@ -21,6 +21,7 @@ import './styles/t-auction.css';
 import './styles/t-room.css';
 import './styles/t-end.css';
 import './styles/t-tv.css';
+import './styles/wheel.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';

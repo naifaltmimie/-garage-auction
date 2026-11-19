@@ -190,7 +190,7 @@
   background: var(--plate);
   color: var(--plate-ink);
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(232, 185, 85, .45), var(--sh-1);
+  box-shadow: 0 0 0 2px rgba(214, 218, 226, .45), var(--sh-1);
 }
 
 /* ================================================================ waiting inside the auction */
@@ -304,9 +304,9 @@
 }
 
 .fx-mine .rv-stamp {
-  background: linear-gradient(180deg, #fbe39b 0%, #efc463 40%, #d9a23f 75%, #c68b2d 100%);
-  border-color: #2a1b00;
-  color: #2a1b00;
+  background: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 40%, #b4b8c1 75%, #8c909a 100%);
+  border-color: #0c0d0f;
+  color: #0c0d0f;
   box-shadow: 0 0 0 3px var(--gold-hi), 0 18px 40px rgba(0, 0, 0, .6);
 }
 
@@ -327,8 +327,8 @@
 
 /* the buyer's row: gold when it's yours */
 .fx-mine .rv-buyer {
-  border-color: rgba(232, 185, 85, .45);
-  background: linear-gradient(180deg, rgba(232, 185, 85, .14), rgba(232, 185, 85, .04)), var(--card);
+  border-color: rgba(214, 218, 226, .45);
+  background: linear-gradient(180deg, rgba(214, 218, 226, .14), rgba(214, 218, 226, .04)), var(--card);
 }
 
 .fx-mine .rv-buyer b,

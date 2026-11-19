@@ -25,10 +25,10 @@ const C = {
   dim: '#5d6068',
   red: '#e5262d',
   redHi: '#ff4a4f',
-  gold: '#e8b955',
+  gold: '#d5d8de',
   goldHi: '#f6cf74',
-  goldLine: 'rgba(232, 185, 85, .55)',
-  goldHair: 'rgba(232, 185, 85, .22)',
+  goldLine: 'rgba(214, 218, 226, .55)',
+  goldHair: 'rgba(214, 218, 226, .22)',
   gain: '#55d892',
   loss: '#ff6b6f',
 };
@@ -156,7 +156,7 @@ export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasE
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
   const lit = ctx.createRadialGradient(W / 2, 140, 20, W / 2, 140, 760);
-  lit.addColorStop(0, champ ? 'rgba(232, 185, 85, .12)' : 'rgba(255, 255, 255, .05)');
+  lit.addColorStop(0, champ ? 'rgba(214, 218, 226, .12)' : 'rgba(255, 255, 255, .05)');
   lit.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = lit;
   ctx.fillRect(0, 0, W, H);
@@ -197,9 +197,9 @@ export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasE
     rr(ctx, x, y, w, 58, 29);
     if (champ) {
       const gg = ctx.createLinearGradient(0, y, 0, y + 58);
-      gg.addColorStop(0, '#fbe39b');
-      gg.addColorStop(0.45, '#efc463');
-      gg.addColorStop(1, '#c68b2d');
+      gg.addColorStop(0, '#fafbfc');
+      gg.addColorStop(0.45, '#dfe2e7');
+      gg.addColorStop(1, '#8c909a');
       ctx.fillStyle = gg;
       ctx.fill();
     } else {
@@ -209,7 +209,7 @@ export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasE
       ctx.lineWidth = 2;
       ctx.stroke();
     }
-    txt(ctx, label, W / 2, y + 39, { size: 28, weight: 600, color: champ ? '#2a1b00' : C.ink2, align: 'center' });
+    txt(ctx, label, W / 2, y + 39, { size: 28, weight: 600, color: champ ? '#0c0d0f' : C.ink2, align: 'center' });
     y += 58;
   }
 
@@ -300,7 +300,7 @@ export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasE
   const by = 1150;
   for (const { b, w } of pills) {
     rr(ctx, bx - w, by, w, 54, 27);
-    ctx.fillStyle = 'rgba(232, 185, 85, .1)';
+    ctx.fillStyle = 'rgba(214, 218, 226, .1)';
     ctx.fill();
     ctx.strokeStyle = C.goldLine;
     ctx.lineWidth = 2;

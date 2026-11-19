@@ -48,7 +48,7 @@
   border-radius: var(--r-lg);
   background: radial-gradient(120% 80% at 50% 0%, #26272e 0%, var(--rubber-0) 62%);
   color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(232, 185, 85, .45), inset 0 0 0 7px var(--rubber-0), inset 0 0 0 8px rgba(232, 185, 85, .15), var(--sh-2);
+  box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .45), inset 0 0 0 7px var(--rubber-0), inset 0 0 0 8px rgba(214, 218, 226, .15), var(--sh-2);
   overflow: hidden;
 }
 
@@ -114,7 +114,7 @@
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--gold);
-  color: #2a1b00;
+  color: #0c0d0f;
 }
 
 .aw-fig {
@@ -185,7 +185,7 @@
 
 .aw-row.mine {
   background: var(--gold-50);
-  border-color: rgba(232, 185, 85, .32);
+  border-color: rgba(214, 218, 226, .32);
 }
 
 .aw-row.grand {
@@ -283,7 +283,7 @@
   min-height: 30px;
   padding: 2px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(232, 185, 85, .36);
+  border: 1px solid rgba(214, 218, 226, .36);
   background: var(--gold-50);
   color: var(--gold-hi);
   font-size: 13px;
@@ -485,7 +485,7 @@
 }
 
 .cr-badges li.got {
-  border: 1px solid rgba(232, 185, 85, .36);
+  border: 1px solid rgba(214, 218, 226, .36);
   background: var(--gold-50);
   color: var(--gold);
 }
