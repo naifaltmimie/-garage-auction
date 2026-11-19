@@ -57,8 +57,8 @@ export function Voting({ room }: { room: RoomView }) {
     <main className="shell narrow voting-page">
       <div className="stack" style={{ gap: 14 }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="t-label" style={{ color: 'var(--gold)' }}>التقييم السري، محد يشوف تقييمك</div>
-          <h1 className="t-display" style={{ fontSize: 40, margin: '2px 0' }}>كم تعطي هالكراج؟</h1>
+          <h1 className="t-display" style={{ fontSize: 36, margin: '2px 0' }}>كم تعطي هالكراج؟</h1>
+          <p className="mute" style={{ margin: 0, fontSize: 14 }}>تقييم سري، محد يشوف تقييمك</p>
           <div className="progress-dots">
             {targets.map((p, k) => (
               <i key={p.id} className={k <= i ? 'on' : ''} />
@@ -70,7 +70,7 @@ export function Voting({ room }: { room: RoomView }) {
           {Array.from({ length: 10 }, (_, k) => k + 1).map((n) => (
             <button
               key={n}
-              className={`btn rate-key ${val === n ? 'btn-primary' : 'btn-ghost'}`}
+              className={`btn btn-ghost rate-key ${val === n ? 'on' : ''}`}
               role="radio"
               aria-checked={val === n}
               aria-pressed={val === n}
