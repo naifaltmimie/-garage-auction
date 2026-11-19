@@ -1,15 +1,15 @@
 /* المزاد الهولندي — falling-price console. Only transform/opacity animate. */
 
 .dutch-panel {
-  --dc-ink: #f4efe0;
-  --dc-hot: var(--gold-hi);
+  --dc-ink: var(--ink);
+  --dc-hot: var(--ink);
   --dc-board: var(--green-950);
   grid-template-columns: minmax(0, 1fr);
   gap: 9px;
 }
-.dutch-panel[data-heat='1'] { --dc-ink: #f6e7bd; }
-.dutch-panel[data-heat='2'] { --dc-ink: var(--gold-hi); }
-.dutch-panel[data-heat='3'] { --dc-ink: #ff8a7a; --dc-hot: #ff6b5e; }
+.dutch-panel[data-heat='1'] { --dc-ink: var(--ink); }
+.dutch-panel[data-heat='2'] { --dc-ink: var(--ink); }
+.dutch-panel[data-heat='3'] { --dc-ink: var(--brand-hi); --dc-hot: var(--brand); }
 
 .dc-head {
   display: flex;
@@ -23,10 +23,10 @@
   align-items: center;
   gap: 5px;
   padding: 3px 9px 3px 10px;
-  border-radius: 999px;
-  background: var(--gold-50);
-  color: var(--gold-lo);
-  border: 1px solid #ecd9a6;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
   font-size: 12px;
   font-weight: 700;
   line-height: 18px;
@@ -168,17 +168,17 @@
   top: 0;
   bottom: 0;
   z-index: 1;
-  background: repeating-linear-gradient(135deg, rgba(229, 38, 45, .22) 0 4px, rgba(229, 38, 45, .1) 4px 8px);
+  background: repeating-linear-gradient(135deg, rgba(244, 244, 246, .16) 0 4px, rgba(244, 244, 246, .05) 4px 8px);
 }
 .dc-fill {
   position: absolute;
   inset: 0;
   transform-origin: right center;
-  background: linear-gradient(270deg, var(--green-700), var(--gold-hi));
+  background: var(--ink-2);
   transition-property: transform;
   transition-timing-function: linear;
 }
-.dutch-panel[data-heat='3'] .dc-fill { background: linear-gradient(270deg, var(--gold), var(--red)); }
+.dutch-panel[data-heat='3'] .dc-fill { background: var(--brand); }
 .dc-mine {
   position: absolute;
   top: -2px;

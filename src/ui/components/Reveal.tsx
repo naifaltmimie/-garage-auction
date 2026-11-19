@@ -8,7 +8,6 @@ import { photoSrc } from './Gallery';
 import { CarTitle } from './LotSheet';
 import { CarPlate, Paddle } from './Plate';
 import { Silhouette } from './Silhouette';
-import { GoldLeaf } from './fx/GoldLeaf';
 import { TireLoader } from './TireLoader';
 
 function useCount(target: number, run: boolean, ms = 1100) {
@@ -37,15 +36,31 @@ function CountUp({ target, run }: { target: number; run: boolean }) {
   return <>{money(useCount(target, run))}</>;
 }
 
-function Hero({ sale, stamp, grey }: { sale: Sale; stamp: string; grey?: boolean }) {
-  // the stamp itself: ink-white for a sale, the buyer's own in rim gold (via .fx-mine), red when it didn't sell
+/** The rubber stamp's uneven ink edge: a static turbulence displacement, defined once per reveal. */
+function InkFilter() {
+  return (
+    <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
+      <filter id="rv-ink" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+  );
+}
+
+function Hero({ sale, stamp, grey, mine }: { sale: Sale; stamp: string; grey?: boolean; mine?: boolean }) {
+  // the stamp: red rubber ink for a sale, solid red with white letters when it is this phone's, chalk grey when unsold
   const photo = sale.car.photos?.[0];
   return (
     <div className={`rv-hero ${grey ? 'grey' : ''}`}>
       {photo ? <img src={photoSrc(photo)} alt="" referrerPolicy="no-referrer" /> : <div className="rv-studio"><Silhouette body={sale.car.body} color={sale.car.colorHex} /></div>}
-      <div className="rv-stamp">
-        <span>{stamp}</span>
-        <small className="ltr">LOT {String(sale.no).padStart(2, '0')}</small>
+      <InkFilter />
+      <div className={`rv-stamp ${mine ? 'mine' : ''}`}>
+        <div className="rv-ink">
+          <span>{stamp}</span>
+          {mine && <em>لك</em>}
+          <small className="ltr">LOT {String(sale.no).padStart(2, '0')}</small>
+        </div>
       </div>
     </div>
   );
@@ -87,7 +102,6 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
   }
   return (
     <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة اللوت">
-      {mine && stage >= 0 && <GoldLeaf once={`${sale.lotId}-${sale.no}`} />}
       <div className="reveal">
         {sealed && (
           <div className="rv-sec">
@@ -105,11 +119,11 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
 
         {stage >= 0 && (
           <>
-            <Hero sale={sale} stamp="بيعت" />
-            <div className="rv-buyer">
+            <Hero sale={sale} stamp="بيعت" mine={mine} />
+            <div className={`rv-buyer ${mine ? 'alloy' : ''}`}>
               {buyer && <Paddle n={buyer.paddle} me={mine} />}
               <div>
-                <b>{mine ? 'مبروك، صارت لك' : `على ${buyer?.name ?? ''}`}</b>
+                <b>{mine ? 'مبروك، صارت لك' : `راحت لـ ${buyer?.name ?? ''}`}</b>
                 <small>{sale.approved ? 'صاحبها قال على البركة' : sale.kind === 'dutch' ? 'قال أبيها قبل الكل' : `${sale.bids} سوم`}</small>
               </div>
               <div className="rv-hammer">
@@ -169,9 +183,9 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
             <small>القيمة الحقيقية بالسوق</small>
             <b className="t-money"><CountUp target={shownValue} run={stage >= 2} /></b>
             {plateVal > 0 && <span className="mute small">منها اللوحة {money(plateVal)}</span>}
-            <span className={`verdict tone-${tone}`}>
-              {stage >= 3 || !sale.surprise ? VERDICT_LABEL[sale.verdict] : profitShown >= 0 ? 'ربح' : 'خسارة'}
+            <span className={`verdict tone-${tone} ${profitShown >= 0 ? 'up' : 'down'}`}>
               <b className="ltr">{signed(profitShown)}</b>
+              {stage >= 3 || !sale.surprise ? VERDICT_LABEL[sale.verdict] : profitShown >= 0 ? 'ربح' : 'خسارة'}
             </span>
             {(stage >= 3 || !sale.surprise) && <div className="roast">{sale.roast}</div>}
           </div>

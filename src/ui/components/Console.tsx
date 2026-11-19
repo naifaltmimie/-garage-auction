@@ -250,7 +250,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
             </span>
           )}
         </div>
-        {ext > 0 && <span key={ext} className="chip chip-gold ext-pill">تمدد الوقت</span>}
+        {ext > 0 && <span key={ext} className="chip ext-pill">تمدد الوقت</span>}
         {core.reserveMet && lot?.reserve && <span className="chip chip-green">انفك الحد</span>}
       </div>
 

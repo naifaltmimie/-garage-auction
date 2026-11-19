@@ -92,7 +92,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const price = Math.max(plan.floor, plan.start - step * plan.step);
   const prog = dutchProgress(plan, price);
   const onFloor = price <= plan.floor;
-  // tension: calm, warmer past halfway, gold close to the floor, red for the last steps and the floor
+  // tension: chalk while it falls, caliper red for the last steps and the floor
   const heat = onFloor || prog >= 0.9 ? 3 : prog >= 0.72 ? 2 : prog >= 0.45 ? 1 : 0;
 
   const cash = me?.cash ?? 0;

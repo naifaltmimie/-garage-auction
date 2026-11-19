@@ -169,28 +169,28 @@
   z-index: 1;
 }
 
-/* the falling price's rail: red for the drop, never green */
+/* the falling price's rail: chalk while it falls, caliper red only for the last steps */
 .bidpanel.dutch-panel .dc-fill {
-  background: linear-gradient(270deg, var(--brand-lo), var(--brand));
+  background: var(--ink-2);
 }
 
 .bidpanel.dutch-panel[data-heat='3'] .dc-fill {
-  background: linear-gradient(270deg, var(--gold), var(--red));
+  background: var(--brand);
 }
 
 .bidpanel.dutch-panel .dc-est {
   color: var(--ink-2);
 }
 
-/* ================================================================ paddles stay paper; yours has a gold ring */
+/* ================================================================ paddles stay paper; yours has an alloy ring */
 
 .auction .paddle.me,
 .overlay .paddle.me,
 .bidpanel .bp-bidder.me .paddle {
   background: var(--plate);
   color: var(--plate-ink);
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(214, 218, 226, .45), var(--sh-1);
+  border-color: var(--alloy);
+  box-shadow: 0 0 0 2px var(--alloy-mid), var(--sh-1);
 }
 
 /* ================================================================ waiting inside the auction */
@@ -247,7 +247,7 @@
 
 .env-mine b {
   font-size: 17px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* between lots: where the bid buttons were, the next car is on its way */
@@ -286,11 +286,11 @@
 }
 
 .reveal.thinking .rv-line b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* ================================================================ the hammer: stamps that hit on dark
-   Sold: a black rubber stamp with a white rule. Yours: rim gold. Unsold: caliper red, set down quietly. */
+   Base stamp box; the red rubber stamp further down sets its final look. */
 
 .rv-stamp {
   background: linear-gradient(180deg, #1f2024, #0d0e10);
@@ -307,7 +307,7 @@
   background: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 40%, #b4b8c1 75%, #8c909a 100%);
   border-color: #0c0d0f;
   color: #0c0d0f;
-  box-shadow: 0 0 0 3px var(--gold-hi), 0 18px 40px rgba(0, 0, 0, .6);
+  box-shadow: none;
 }
 
 .fx-mine .rv-stamp small {
@@ -325,7 +325,7 @@
   filter: grayscale(1) brightness(.6);
 }
 
-/* the buyer's row: gold when it's yours */
+/* the buyer's row */
 .fx-mine .rv-buyer {
   border-color: rgba(214, 218, 226, .45);
   background: linear-gradient(180deg, rgba(214, 218, 226, .14), rgba(214, 218, 226, .04)), var(--card);
@@ -333,7 +333,7 @@
 
 .fx-mine .rv-buyer b,
 .fx-mine .rv-hammer b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .rv-hammer small {
@@ -441,7 +441,7 @@
 
 .rx-f.t-gold .rx-t,
 .rx-chip.t-gold {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* ================================================================ gallery arrows (hover devices): rubber knobs, not paper */
@@ -450,4 +450,252 @@
   background: linear-gradient(180deg, #2a2c32, #1c1d21);
   color: var(--ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
+}
+
+/* ================================================================ the colour law on the console
+   The price well is one flat sunk surface; the price is chalk white and the biggest thing in it.
+   The clock is chalk white and turns caliper red only in its last seconds. Red belongs to the bid button. */
+
+.bidpanel .bp-price,
+.bidpanel .bp-open {
+  background: var(--rubber-0, #0b0c0d);
+  border: 0;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .04);
+}
+.bidpanel .bp-price::before,
+.bidpanel .bp-price::after,
+.bidpanel .bp-open::before,
+.bidpanel .bp-open::after,
+.bidpanel .fx-beam {
+  display: none;
+}
+.bidpanel .bp-price .t-money,
+.bidpanel .bp-open b,
+.bidpanel .bp-open .t-money {
+  color: var(--ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.bidpanel .bp-open b { font-size: 30px; }
+.bidpanel .bp-price small,
+.bidpanel .bp-open small,
+.bidpanel .bp-open span,
+.bidpanel .bp-amount small {
+  color: var(--mute);
+}
+.bidpanel.hot .bp-price { background: var(--rubber-0, #0b0c0d); }
+
+.bidpanel .ring .bar { stroke: var(--ink); }
+.bidpanel .ring b { color: var(--ink); }
+.bidpanel .ring.hot .bar { stroke: var(--brand); }
+.bidpanel .ring.hot b { color: var(--brand); animation: none; }
+.bidpanel .ring.hot::after { border-color: var(--brand); }
+
+/* the دلال's line sits in a fixed two-line box; «تمدد الوقت» floats on the sheet's edge and never pushes it */
+.bidpanel .bp-status { position: relative; }
+.bidpanel .bp-call {
+  height: calc(2 * 1.35em);
+  align-content: center;
+}
+.bidpanel .bp-call.going { color: var(--ink); }
+.bidpanel .ext-pill {
+  position: absolute;
+  top: -14px;
+  inset-inline-start: 56px;
+  z-index: 2;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--rubber-3, #24262b);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.bidpanel .chip-green {
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--ink-2);
+}
+
+/* ================================================================ the hammer: a red rubber stamp
+   Sold: red ink, a double rectangular border, heavy letters, an uneven ink edge (#rv-ink), about -7deg.
+   This phone's: the same stamp inked solid, white letters, a small «لك». Unsold: a chalk-grey outline. */
+
+@keyframes fx-slam {
+  0% { transform: scale(2.3) rotate(-14deg); opacity: 0; animation-timing-function: var(--fx-out) }
+  22% { transform: scale(2.05) rotate(-12deg); opacity: .9; animation-timing-function: var(--fx-impact) }
+  52% { transform: scale(.9, .86) rotate(-7deg); opacity: 1; animation-timing-function: var(--fx-out) }
+  70% { transform: scale(1.035) rotate(-7deg) }
+  100% { transform: scale(1) rotate(-7deg); opacity: 1 }
+}
+
+.rv-hero .rv-stamp,
+.fx-mine .rv-hero .rv-stamp,
+.rv-hero.grey .rv-stamp {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  overflow: visible;
+  color: var(--brand);
+}
+.rv-hero .rv-stamp::after { display: none; }
+.rv-hero::before { display: none; }
+
+.rv-stamp .rv-ink {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 22px 10px;
+  border: 4px solid currentColor;
+  border-radius: 6px;
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  background: rgba(10, 11, 12, .55);
+  filter: url(#rv-ink);
+}
+.rv-stamp .rv-ink span {
+  font-family: var(--f-display);
+  font-size: 54px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.rv-stamp .rv-ink small {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .3em;
+  opacity: 1;
+}
+.rv-stamp .rv-ink em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* this phone bought it: solid red ink, white letters */
+.rv-hero .rv-stamp.mine .rv-ink {
+  background: var(--brand);
+  border-color: #fff;
+  outline-color: var(--brand);
+  color: #fff;
+}
+
+/* unsold: chalk grey outline, no red */
+.rv-hero.grey .rv-stamp { color: var(--ink-2); }
+.rv-hero.grey .rv-stamp .rv-ink span { font-size: 40px; }
+
+/* ================================================================ the winner strip
+   Yours: one alloy plate with dark tabular digits. Someone else's: a plain rubber row in chalk. */
+
+.reveal .rv-buyer,
+.fx-mine .reveal .rv-buyer {
+  background: var(--rubber-2, #17181b);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.reveal .rv-buyer b,
+.reveal .rv-hammer b { color: var(--ink); }
+.reveal .rv-buyer small,
+.reveal .rv-hammer small { color: var(--mute); font-weight: 600; }
+.reveal .rv-hammer b { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.fx-mine .reveal .rv-buyer.alloy {
+  background: var(--alloy-face);
+  border-color: transparent;
+}
+.fx-mine .reveal .rv-buyer.alloy b,
+.fx-mine .reveal .rv-buyer.alloy .rv-hammer b { color: var(--alloy-ink); }
+.fx-mine .reveal .rv-buyer.alloy small { color: color-mix(in srgb, var(--alloy-ink) 68%, transparent); }
+.reveal .rv-buyer .paddle,
+.reveal .rv-buyer.alloy .paddle {
+  background: var(--plate, #fff);
+  color: var(--plate-ink, #0b0c0d);
+  border-color: var(--plate-ink, #0b0c0d);
+  box-shadow: none;
+}
+.reveal .rv-buyer .paddle * { color: var(--plate-ink, #0b0c0d); }
+
+/* ================================================================ one continuous sheet with hairlines
+   The settlement, the true value and the comps share the reveal's surface; a hairline groups them. */
+
+.reveal > .rv-sec,
+.reveal > .rv-truth,
+.reveal > .rv-sec.comps {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 14px 4px 4px;
+}
+.reveal .rv-sec h4 { font-size: 15px; font-weight: 800; color: var(--ink); }
+
+/* «كشف التسوية» is a receipt: label right, tabular amount left, a dashed rule only above the total */
+.reveal .slip dl { font-size: 14px; gap: 6px 12px; }
+.reveal .slip dt { color: var(--ink-2); font-weight: 500; }
+.reveal .slip dd { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.reveal .slip .total {
+  border-top: 1px dashed var(--line-2);
+  padding-top: 10px;
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* the true value: the number big in chalk, the gain or loss as small text beside it, the verdict under it */
+.reveal .rv-truth { justify-items: center; gap: 2px; }
+.reveal .rv-truth > b { color: var(--ink); font-weight: 800; font-size: 42px; font-variant-numeric: tabular-nums; }
+.reveal .verdict,
+.reveal .verdict.tone-good,
+.reveal .verdict.tone-bad,
+.reveal .verdict.tone-flat {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.reveal .verdict b { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
+.reveal .verdict.up b { color: var(--ok, #3ccf7a); }
+.reveal .roast { font-size: 17px; color: var(--ink-2); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-hero .rv-stamp { animation: none; transform: rotate(-7deg); }
+}
+
+/* ================================================================ the lot sticker on the windshield */
+
+.auction .lot-wrap { position: relative; }
+.auction .lot-sticker {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  inset-inline-end: 14px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px 4px;
+  border-radius: 3px;
+  background: var(--plate, #f6f6f3);
+  color: var(--plate-ink, #0b0c0d);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  transform: rotate(2deg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  pointer-events: none;
+}
+.auction .lot-sticker b {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
