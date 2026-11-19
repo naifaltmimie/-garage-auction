@@ -1779,12 +1779,12 @@ html body .tv .tv-verdict .tv-stamp {
 }
 /* the price steps down by its length so 7 digits and «ريال» always fit the panel */
 html body .tv .tv-amount[data-len='7'] {
-  font-size: 124px;
+  font-size: 120px;
 }
 html body .tv .tv-amount[data-len='9'],
 html body .tv .tv-amount[data-len='10'],
 html body .tv .tv-amount[data-len='11'] {
-  font-size: 100px;
+  font-size: 92px;
 }
 html body .tv .tv-verdict .tv-amount[data-len='7'] {
   font-size: 104px;
