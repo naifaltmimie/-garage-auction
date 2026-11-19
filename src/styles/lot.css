@@ -322,3 +322,87 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------- the دلال's file and the inspector's readings
+   the story sits under the name in the second ink; readings are a ruled two-column list with a small tone mark */
+.saga {
+  margin: 8px 0 0;
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.saga small {
+  font-size: 11px;
+  color: var(--mute);
+}
+
+.checks {
+  margin: 0;
+  display: grid;
+}
+
+.checks .ck {
+  display: grid;
+  grid-template-columns: minmax(84px, 34%) 1fr;
+  gap: 8px;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.checks .ck:last-child {
+  border-bottom: 0;
+}
+
+.checks dt {
+  color: var(--mute);
+}
+
+.checks dd {
+  margin: 0;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.checks dd i {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  transform: translateY(-1px);
+}
+
+.checks .ck-good dd i {
+  background: var(--ok);
+}
+
+.checks .ck-bad dd i {
+  background: var(--brand);
+}
+
+.quirks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quirks li {
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+
+.quirks li:last-child {
+  border-bottom: 0;
+}
