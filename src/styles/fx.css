@@ -315,8 +315,8 @@
 }
 
 @keyframes fx-set-down {
-  from { transform: translateY(-10px) scale(1.06) rotate(-8deg); opacity: 0 }
-  to { transform: scale(1) rotate(-8deg); opacity: 1 }
+  from { transform: translateY(-10px) scale(1.06) rotate(-7deg); opacity: 0 }
+  to { transform: scale(1) rotate(-7deg); opacity: 1 }
 }
 
 @keyframes fx-dim {

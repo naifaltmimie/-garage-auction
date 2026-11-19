@@ -168,7 +168,7 @@
   top: 0;
   bottom: 0;
   z-index: 1;
-  background: repeating-linear-gradient(135deg, rgba(229, 38, 45, .22) 0 4px, rgba(229, 38, 45, .1) 4px 8px);
+  background: repeating-linear-gradient(135deg, rgba(244, 244, 246, .16) 0 4px, rgba(244, 244, 246, .05) 4px 8px);
 }
 .dc-fill {
   position: absolute;
