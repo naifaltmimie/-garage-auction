@@ -791,3 +791,502 @@
   height: 22px;
   filter: none;
 }
+
+/* ================================================================ the end of the night: one sheet, chalk on rubber, alloy for the champion */
+
+/* results header: one title, one caption */
+.rs-head {
+  text-align: center;
+}
+
+.rs-head h1 {
+  font-size: clamp(36px, 10vw, 56px);
+  margin: 0 0 4px;
+}
+
+.rs-head p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.results-page .rs-next {
+  background: none;
+  border: 0;
+  border-block: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+/* the champion: the name big in chalk on one alloy plate, the chequered flag, the score in tabular digits */
+.rs-champion {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'k k' 'n s';
+  align-items: end;
+  gap: 4px 12px;
+  width: 100%;
+  padding: 16px 16px 16px 16px;
+  padding-inline-start: 40px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+  animation: rs-up .3s var(--ease) both;
+}
+
+.rs-champion .rs-flag {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 24px;
+  border-start-start-radius: 14px;
+  border-end-start-radius: 14px;
+  background: repeating-conic-gradient(#0b0c0d 0 25%, #f4f4f1 0 50%) 0 0 / 12px 12px;
+  opacity: 1;
+}
+
+.rs-champ-k {
+  grid-area: k;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alloy-ink);
+  opacity: .75;
+}
+
+.rs-champ-name {
+  grid-area: n;
+  min-width: 0;
+  font-size: clamp(30px, 9vw, 44px);
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.rs-champ-score {
+  grid-area: s;
+  display: grid;
+  justify-items: end;
+  line-height: 1;
+}
+
+.rs-champ-score .t-money {
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--alloy-ink);
+}
+
+.rs-champ-score small,
+.rs-score small {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: .7;
+}
+
+.rs-champion .rs-you {
+  margin-inline-start: 8px;
+  background: var(--alloy-ink);
+  color: var(--alloy-hi);
+}
+
+/* the ranked list: hairlines, no boxes */
+.rs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rs-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.rs-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+  animation: rs-up .3s var(--ease) both;
+}
+
+/* a motorsport number plate: white paper, black digits; the leader's is red with white digits */
+.rs-plate {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .25);
+}
+
+.rs-plate.lead {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: none;
+}
+
+.rs-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rs-name {
+  font-size: 17px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.rs-meta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.rs-meta .gain {
+  color: var(--ok);
+}
+
+.rs-meta .loss {
+  color: var(--ink-2);
+}
+
+.rs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 2px;
+}
+
+.rs-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.rs-tag + .rs-tag::before {
+  content: '·';
+  margin-inline-end: 10px;
+  color: var(--dim);
+}
+
+.rs-score {
+  display: grid;
+  justify-items: end;
+  line-height: 1.1;
+}
+
+.rs-score .t-money {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-you {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--rubber-0);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  vertical-align: 2px;
+}
+
+@keyframes rs-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* standings sheet: the same plates; the profit in green or chalk */
+.standing .t-money.gain {
+  color: var(--ok);
+}
+
+.standing .t-money.loss {
+  color: var(--ink-2);
+}
+
+/* voting: the picked score is chalk-white filled; keys wrap, never shrink below 44px */
+.rate {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+}
+
+.rate .rate-key {
+  min-height: 52px;
+  min-width: 44px;
+}
+
+.rate .rate-key.on {
+  background: var(--ink);
+  color: var(--rubber-0);
+  border-color: var(--ink);
+  animation: rate-pick .2s var(--ease) both;
+}
+
+/* ---------------------------------------------------------------- awards: a paper card with an alloy seal, brisk */
+
+.aw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: start;
+}
+
+.aw-head h2 {
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.aw-skip {
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--ink-2);
+}
+
+.aw .aw-frame {
+  min-height: 260px;
+  padding: 20px 16px;
+  border-radius: 14px;
+  background: var(--rubber-1, var(--card));
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.aw .aw-frame::after {
+  content: none;
+}
+
+.aw .aw-title,
+.aw .aw-card.grand .aw-title {
+  color: var(--ink);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+}
+
+.aw .aw-card.grand .aw-name {
+  color: var(--ink);
+}
+
+.aw .aw-rule {
+  background: var(--line);
+}
+
+.aw .aw-fig.gain .t-money {
+  color: var(--ok);
+}
+
+.aw .aw-fig.loss .t-money {
+  color: var(--ink-2);
+}
+
+.aw .aw-name em,
+.aw .aw-row-name em,
+.aw-rest em {
+  background: var(--ink);
+  color: var(--rubber-0);
+}
+
+/* the envelope: white paper with an alloy seal; it opens and slides away in under a second */
+.aw .aw-env {
+  inset: 0;
+  animation: aw-env2 .7s var(--ease) both;
+}
+
+.aw .aw-env::before,
+.aw .aw-card.grand .aw-env::before {
+  border-radius: 8px;
+  background:
+    linear-gradient(155deg, transparent 49.5%, rgba(0, 0, 0, .12) 50%, transparent 50.5%),
+    linear-gradient(25deg, transparent 49.5%, rgba(0, 0, 0, .12) 50%, transparent 50.5%),
+    var(--plate);
+  box-shadow: 0 16px 28px -14px rgba(0, 0, 0, .8);
+}
+
+.aw .aw-env-flap,
+.aw .aw-card.grand .aw-env-flap {
+  background: #e6e6e2;
+  animation: aw-flap .22s .12s cubic-bezier(.5, 0, .3, 1) both;
+}
+
+.aw .aw-seal {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: center;
+  width: 30px;
+  height: 30px;
+  margin-top: -12%;
+  border-radius: 50%;
+  background: var(--alloy-face);
+  box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, .2);
+  animation: aw-seal .2s .08s var(--ease) both;
+}
+
+@keyframes aw-seal {
+  to {
+    opacity: 0;
+    transform: scale(.6);
+  }
+}
+
+@keyframes aw-env2 {
+  0% {
+    opacity: 0;
+    transform: scale(.92);
+  }
+  20% {
+    opacity: 1;
+    transform: none;
+  }
+  60% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+}
+
+.aw .aw-card:not(.aw-wait) .aw-count {
+  animation: aw-fade .2s .35s both;
+}
+
+.aw .aw-card:not(.aw-wait) .aw-title {
+  animation: aw-fade .2s .4s both;
+}
+
+.aw .aw-card:not(.aw-wait) .aw-rule,
+.aw .aw-card:not(.aw-wait) .aw-goes {
+  animation: aw-fade .2s .45s both;
+}
+
+.aw .aw-card:not(.aw-wait) .aw-name,
+.aw .aw-card:not(.aw-wait) .aw-fig,
+.aw .aw-card:not(.aw-wait) .aw-line {
+  animation: aw-fade .25s .5s both;
+}
+
+/* the list that stays: hairlines, no boxes */
+.aw .aw-list {
+  gap: 0;
+}
+
+.aw .aw-row,
+.aw .aw-row.mine,
+.aw .aw-row.grand {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+.aw .aw-row + .aw-row {
+  border-top: 1px solid var(--line);
+}
+
+.aw .aw-row-title {
+  color: var(--ink-2);
+}
+
+.aw .aw-row-fig.gain .t-money {
+  color: var(--ok);
+}
+
+.aw .aw-row-fig.loss .t-money {
+  color: var(--ink-2);
+}
+
+.aw-rest h3 {
+  margin: 4px 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.aw-rest ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.aw-rest li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.aw-rest li b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.aw-rest em {
+  margin-inline-start: 6px;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.aw .aw-badge,
+.aw .aw-badge.new {
+  background: none;
+  border-color: var(--alloy-lo, var(--line));
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.aw-mine {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-champion,
+  .rs-row,
+  .aw .aw-env,
+  .aw .aw-seal,
+  .rate .rate-key.on {
+    animation: none;
+  }
+  .aw .aw-env {
+    display: none;
+  }
+}

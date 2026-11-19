@@ -1,6 +1,5 @@
 import { carsN, money, signed } from '../../lib/util';
 import { GarageCard } from '../components/Garage';
-import { Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 import { useState } from 'react';
 import { useBack } from '../App';
@@ -56,12 +55,15 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
           </div>
         ) : (
           <div>
-            {rows.map(({ p, cars, profit }) => (
+            {rows.map(({ p, cars, profit }, k) => (
               <button key={p.id} className="standing" style={{ width: '100%', textAlign: 'start' }} onClick={() => setOpen(p.id)}>
-                <Paddle n={p.paddle} me={p.id === room.myId} />
+                {/* race-number plates: the leader runs the red plate, everyone else white paper */}
+                <span className={`rs-plate ltr ${k === 0 && rows.length > 1 ? 'lead' : ''}`} aria-label={`المركز ${k + 1}`}>
+                  {k + 1}
+                </span>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 900, fontSize: 17 }}>
-                    {p.name} {p.id === room.myId && <span className="mute" style={{ fontSize: 13 }}>(أنت)</span>}
+                  <div style={{ fontWeight: 800, fontSize: 17 }}>
+                    {p.name} {p.id === room.myId && <em className="rs-you">أنت</em>}
                     {!p.online && <span className="mute" style={{ fontSize: 12 }}>، مقطوع</span>}
                   </div>
                   <div className="mute" style={{ fontSize: 13, fontWeight: 700 }}>

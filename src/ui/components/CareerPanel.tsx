@@ -39,7 +39,7 @@ export function CareerPanel({ onClose }: { onClose: () => void }) {
       <div className="cr-sheet" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <header className="cr-head">
           <div>
-            <span className="aw-kicker">على هالجوال</span>
+            
             <h2>سجلي</h2>
           </div>
           <button className="btn btn-quiet" onClick={onClose} aria-label="سكّر">

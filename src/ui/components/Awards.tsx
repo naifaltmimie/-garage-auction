@@ -5,7 +5,6 @@ import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
 import { money, signed } from '../../lib/util';
 import type { RoomView } from '../useRoom';
 import { ShareGarage } from './ShareGarage';
-import { TireLoader } from './TireLoader';
 
 /** One award as the ceremony shows it. Derived on this phone from what the host published. */
 export interface AwardItem {
@@ -18,6 +17,8 @@ export interface AwardItem {
   figureLabel?: string;
   tone?: 'gain' | 'loss';
   grand?: boolean;
+  /** importance: lower reads first when the ceremony is trimmed */
+  pri?: number;
 }
 
 const carName = (s: Sale) => `${s.car.makeAr} ${s.car.modelAr}`;
@@ -46,7 +47,7 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
   }
   if (buyers.size >= 2) {
     const most = uniqueTop(rows.filter((r) => r.cars >= 2), (r) => r.cars);
-    if (most) add({ key: 'dealer', title: 'الشريطي الذهبي', who: most.id, name: '', line: 'أكثر واحد شال سيارات', figure: String(most.cars), figureLabel: 'سيارات' }, 7, 2);
+    if (most) add({ key: 'dealer', title: 'شيخ الشريطية', who: most.id, name: '', line: 'أكثر واحد شال سيارات', figure: String(most.cars), figureLabel: 'سيارات' }, 7, 2);
     const lux = uniqueTop(rows.filter((r) => r.cars > 0), (r) => r.value);
     if (lux) add({ key: 'luxury', title: 'ملك الفخامة', who: lux.id, name: '', line: 'أغلى كراج بالقيمة الحقيقية', figure: money(lux.value), figureLabel: 'قيمة الكراج' }, 4, 9);
   }
@@ -67,7 +68,7 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
   const champ = host.get('champion');
   const out = pool.sort((a, b) => a.pri - b.pri).slice(0, 8).sort((a, b) => a.ord - b.ord);
   if (champ && nameOf(champ.who)) out.push({ key: 'champion', title: champ.title, who: champ.who, name: nameOf(champ.who), line: 'أعلى نقاط بين الشطارة بالشراء وتقييم الشباب', figure: champ.detail.replace(/[^\d,]/g, ''), figureLabel: 'نقطة', grand: true, pri: 0, ord: 99 });
-  return out.map(({ pri: _p, ord: _o, ...a }) => a);
+  return out.map(({ ord: _o, ...a }) => a);
 }
 
 /** Awards ceremony + this night saved to «سجلي» + «شارك كراجك». */
@@ -78,7 +79,14 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   // keyed on the results and sales only, so the core's frequent snapshots never restart the show
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const items = useMemo(() => (res ? computeAwards(core, sales, res) : []), [res?.at, res?.awards.length, sales.length, core.players.length]);
-  const total = items.length;
+  // the ceremony opens five envelopes at most: the most important ones, the champion last; the rest go to a plain list
+  const stage = useMemo(() => {
+    if (items.length <= 5) return items;
+    const top = new Set([...items].sort((a, b) => (a.pri ?? 0) - (b.pri ?? 0)).slice(0, 5).map((a) => a.key));
+    return items.filter((a) => top.has(a.key));
+  }, [items]);
+  const rest = useMemo(() => items.filter((a) => !stage.includes(a)), [items, stage]);
+  const total = stage.length;
   const meRow = res?.rows.find((r) => r.id === room.myId) ?? null;
   const nightKey = `${room.code}:${core.startedAt || res?.at || 0}`;
 
@@ -120,14 +128,14 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   useEffect(() => {
     if (!ready || over || total === 0) return;
     // the first envelope waits a beat, so the champion's row on the podium gets its moment first
-    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 1900 : items[step - 1]?.grand ? 3400 : 2600);
+    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 700 : stage[step - 1]?.grand ? 2400 : 1600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, over, step, total]);
   useEffect(() => {
     if (!ready || skipped || step < 1 || step > total) return;
     try {
-      if (items[step - 1]?.grand) sound.gavel(2);
+      if (stage[step - 1]?.grand) sound.gavel(2);
       else sound.tock();
     } catch {
       /* sound is optional */
@@ -161,16 +169,20 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   }, [over, ready]);
 
   if (!ready || !res) return null;
-  const cur = !over && step >= 1 && step <= total ? items[step - 1] : null;
-  const listed = over ? items : items.slice(0, Math.max(0, step - 1));
+  const cur = !over && step >= 1 && step <= total ? stage[step - 1] : null;
+  const listed = over ? stage : stage.slice(0, Math.max(0, step - 1));
   const myTitles = items.filter((a) => a.who === room.myId).map((a) => a.title);
   const nightBadges = [...new Set([...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)])];
 
   return (
     <section className="aw" ref={secRef} aria-label="جوائز الليلة">
       <header className="aw-head">
-        <span className="aw-kicker">حفل الختام</span>
         <h2>جوائز الليلة</h2>
+        {!over && total > 0 && (
+          <button className="btn btn-quiet aw-skip" onClick={() => setSkipped(true)}>
+            تخطَّ الحفل
+          </button>
+        )}
       </header>
 
       {total === 0 && <p className="aw-empty">ما انباعت سيارات تكفي لجوائز هالليلة.</p>}
@@ -182,6 +194,7 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
               <div className={`aw-card ${cur.grand ? 'grand' : ''}`} key={cur.key}>
                 <span className="aw-env" aria-hidden>
                   <i className="aw-env-flap" />
+                  <i className="aw-seal" />
                 </span>
                 <span className="aw-count">
                   الجائزة <span className="ltr">{step}</span> من <span className="ltr">{total}</span>
@@ -203,17 +216,13 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
               </div>
             ) : (
               <div className="aw-card aw-wait" key="wait">
-                <span className="aw-count">الظرف الأول</span>
-                <TireLoader size={46} label="نفتح الظرف…" />
+                <span className="aw-count">نفتح الظرف الأول…</span>
               </div>
             )}
           </div>
           <div className="aw-ctrl">
             <button className="btn btn-ghost" onClick={() => setStep((s) => Math.min(total + 1, s + 1))}>
               {step >= total ? 'خلّصنا' : 'الجائزة الجاية'}
-            </button>
-            <button className="btn btn-quiet" onClick={() => setSkipped(true)}>
-              تخطَّ الحفل
             </button>
           </div>
         </div>
@@ -241,6 +250,23 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
             </li>
           ))}
         </ol>
+      )}
+
+      {over && rest.length > 0 && (
+        <div className="aw-rest">
+          <h3>وباقي الجوائز</h3>
+          <ul>
+            {rest.map((a) => (
+              <li key={a.key}>
+                <span>{a.title}</span>
+                <b>
+                  {a.name}
+                  {a.who === room.myId && <em>أنت</em>}
+                </b>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {over && meRow && !room.spectator && (
