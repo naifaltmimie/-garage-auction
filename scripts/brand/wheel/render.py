@@ -34,7 +34,7 @@ def serve():
     return httpd
 
 
-def grab(page, name, size=2048):
+def grab(page, name, size=int(os.environ.get('SIZE', '2048'))):
     url = page.evaluate(f"window.renderLayer('{name}', {size})")
     im = Image.open(io.BytesIO(base64.b64decode(url.split(',')[1]))).convert('RGBA')
     if RAW:

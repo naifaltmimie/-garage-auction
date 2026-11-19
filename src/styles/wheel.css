@@ -23,19 +23,19 @@
   background: center / contain no-repeat;
 }
 
-.wheel-brake {
+.wheel > .wheel-brake {
   background-image: url('/brand/wheel/brake-512.webp');
 }
 
-.wheel-rim {
+.wheel > .wheel-rim {
   background-image: url('/brand/wheel/wheel-512.webp');
 }
 
-.wheel.is-small .wheel-brake {
+.wheel.is-small > .wheel-brake {
   background-image: url('/brand/wheel/brake-160.webp');
 }
 
-.wheel.is-small .wheel-rim {
+.wheel.is-small > .wheel-rim {
   background-image: url('/brand/wheel/wheel-160.webp');
 }
 

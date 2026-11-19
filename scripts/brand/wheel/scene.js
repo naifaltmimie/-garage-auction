@@ -130,12 +130,12 @@ export function buildTyre({ segments = 1080, rows = 200 } = {}) {
   geo.rotateX(Math.PI / 2);
   const { tb, tr } = sidewallMaps(pts, length);
   const mat = new THREE.MeshPhysicalMaterial({
-    color: 0x17171a,
-    roughness: 1,
+    color: 0x26262a,
+    roughness: 0.78,
     roughnessMap: tr,
     metalness: 0,
     bumpMap: tb,
-    bumpScale: 14,
+    bumpScale: 28,
     sheen: 0.35,
     sheenRoughness: 0.6,
     sheenColor: new THREE.Color(0x3a3c42),
@@ -170,18 +170,6 @@ function spokeShape() {
   return s;
 }
 
-function concave(geo, zFront, depth) {
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const r = Math.hypot(x, y);
-    const t = 1 - smooth(0.14, 0.66, r);
-    pos.setZ(i, z + zFront - depth * Math.pow(t, 0.8));
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
-
 export function buildRim() {
   const g = new THREE.Group();
   // outer lip (polished), flange and barrel (dark)
@@ -189,11 +177,11 @@ export function buildRim() {
   g.add(new THREE.Mesh(lathe([[0.64, 0.24], [0.636, 0.1], [0.636, -0.28], [0.69, -0.29]], 180), Object.assign(gun(), { side: THREE.DoubleSide })));
   // spoke face
   const spoke = new THREE.ExtrudeGeometry(spokeShape(), {
-    depth: 0.06, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.006, bevelSegments: 3, curveSegments: 1,
+    depth: 0.06, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.016, bevelSegments: 5, curveSegments: 1,
   });
   // concave face: each spoke leans back toward the hub, about 0.10 deeper at the hub than at the lip (flat facets stay crisp)
   spoke.translate(0, -0.67, -0.06);
-  spoke.rotateX(-Math.atan2(0.1, 0.5));
+  spoke.rotateX(-Math.atan2(0.16, 0.5));
   spoke.translate(0, 0.67, 0.27);
   const faceM = alu(), sideM = gun();
   for (let k = 0; k < 5; k++) {
@@ -221,7 +209,7 @@ export function buildRim() {
   }
   // centre cap: brand red inside a thin alloy ring
   g.add(new THREE.Mesh(lathe([[0.0, 0.192], [0.062, 0.192], [0.07, 0.19], [0.072, 0.18]], 128), alu()));
-  const red = new THREE.MeshPhysicalMaterial({ color: 0xe5262d, metalness: 0.1, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const red = new THREE.MeshPhysicalMaterial({ color: 0xe5262d, metalness: 0, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 2.2, emissive: 0x5a0a0d, emissiveIntensity: 0.6 });
   g.add(new THREE.Mesh(lathe([[0.0, 0.198], [0.052, 0.196], [0.056, 0.192]], 128), red));
   return g;
 }
@@ -235,9 +223,9 @@ export function buildBrake() {
   x.fillStyle = 'rgb(0,90,0)'; x.fillRect(0, 0, 1024, 1024);
   for (let i = 0; i < 900; i++) {
     const r = (0.3 + Math.random() * 0.26) / 0.56 * 512;
-    const v = 60 + Math.random() * 90;
+    const v = 40 + Math.random() * 200;
     x.strokeStyle = `rgba(0,${v | 0},0,.5)`;
-    x.lineWidth = 0.6 + Math.random();
+    x.lineWidth = 0.6 + Math.random() * 2.5;
     x.beginPath(); x.arc(512, 512, r, 0, TAU); x.stroke();
   }
   const rt = new THREE.CanvasTexture(c);
@@ -245,7 +233,7 @@ export function buildBrake() {
   // planar UVs over the disc's bounding square
   const uv = disc.attributes.uv, p = disc.attributes.position;
   for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / 1.12 + 0.5, p.getY(i) / 1.12 + 0.5);
-  const steel = new THREE.MeshPhysicalMaterial({ color: 0x6d7076, metalness: 1, roughness: 1, roughnessMap: rt });
+  const steel = new THREE.MeshPhysicalMaterial({ color: 0x5c5f66, metalness: 0.75, roughness: 1, roughnessMap: rt, envMapIntensity: 0.8 });
   const d = new THREE.Mesh(disc, steel); d.position.z = -0.06; g.add(d);
   // drilled holes suggestion: a darker inner band where the vanes show
   const hat = new THREE.Mesh(lathe([[0.0, -0.02], [0.2, -0.02], [0.24, -0.035], [0.3, -0.06]], 128), new THREE.MeshPhysicalMaterial({ color: 0x2b2d31, metalness: 0.8, roughness: 0.55 }));
@@ -257,7 +245,7 @@ export function buildBrake() {
   sh.absarc(0, 0, 0.38, mid + half, mid - half, true);
   sh.closePath();
   const cg = new THREE.ExtrudeGeometry(sh, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 6, curveSegments: 96 });
-  const red = new THREE.MeshPhysicalMaterial({ color: 0xe5262d, metalness: 0.15, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.08 });
+  const red = new THREE.MeshPhysicalMaterial({ color: 0xe5262d, metalness: 0, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 2.2, emissive: 0x5a0a0d, emissiveIntensity: 0.6 });
   const cal = new THREE.Mesh(cg, red); cal.position.z = -0.03; g.add(cal);
   const boltM = new THREE.MeshPhysicalMaterial({ color: 0xb8bcc2, metalness: 1, roughness: 0.3 });
   for (const s of [-1, 1]) {
@@ -274,16 +262,16 @@ function emissive(geo, intensity, color = 0xffffff) {
 }
 
 export function envAxis(renderer) {
-  // light that is the same at every angle around the wheel's axis: a big coaxial ring in front plus a weak frontal fill
+  // light that is the same at every angle around the wheel's axis: concentric rings (bright, dark gap, dimmer) on black,
+  // a wide ring that grazes the sidewall, and a small frontal disc
   const s = new THREE.Scene();
-  s.background = new THREE.Color(0x050506);
-  const ring = emissive(new THREE.TorusGeometry(3.2, 0.9, 32, 256), 2.2);
-  ring.position.z = 3.2; s.add(ring);
-  const fill = emissive(new THREE.CircleGeometry(1.4, 96), 0.55);
-  fill.position.z = 6; s.add(fill);
-  const back = emissive(new THREE.TorusGeometry(6, 1.2, 16, 128), 0.25);
-  back.position.z = -1; s.add(back);
-  return new THREE.PMREMGenerator(renderer).fromScene(s, 0.02).texture;
+  s.background = new THREE.Color(0x000000);
+  const add = (m, z) => { m.position.z = z; s.add(m); };
+  add(emissive(new THREE.TorusGeometry(2.4, 0.35, 24, 256), 4.0), 4.2); // bright, about 30 degrees off axis
+  add(emissive(new THREE.TorusGeometry(1.1, 0.18, 24, 256), 1.6), 5); // dimmer, about 12 degrees
+  add(emissive(new THREE.TorusGeometry(5.5, 0.9, 24, 256), 1.6), 1.2); // wide, grazing the sidewall bulge
+  add(emissive(new THREE.CircleGeometry(0.35, 64), 1.2), 6);
+  return new THREE.PMREMGenerator(renderer).fromScene(s, 0.01).texture;
 }
 
 export function envStudio(renderer, top = false) {
