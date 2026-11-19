@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>wheel render</title>
+<script type="importmap">{ "imports": { "three": "/three/three.module.js", "three/": "/three/" } }</script>
+<style>html,body{margin:0;background:#111214}</style>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { buildTyre, buildRim, buildBrake, envAxis, envStudio, treadDepth } from './scene.js';
+
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+
+let parts;
+function getParts() {
+  if (!parts) parts = { tyre: buildTyre(), rim: buildRim(), brake: buildBrake() };
+  return parts;
+}
+const E = 1 / 0.94; // 3% margin on each side
+
+function ortho() {
+  const c = new THREE.OrthographicCamera(-E, E, E, -E, 0.1, 20);
+  c.position.set(0, 0, 10);
+  return c;
+}
+
+function treadCanvas(w, h, pitches, mode) {
+  // the tread face laid flat: x = rolling direction (pitches across, tiles), y = across the tread
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); const img = x.createImageData(w, h);
+  for (let j = 0; j < h; j++) {
+    const v = (j / (h - 1)) * 2 - 1;
+    for (let i = 0; i < w; i++) {
+      const d = treadDepth((i / w) * pitches, v * 1.02);
+      const val = mode === 'contact' ? (d < 0.3 ? 255 : 0) : Math.round(255 * (1 - d));
+      const k = (j * w + i) * 4;
+      img.data[k] = img.data[k + 1] = img.data[k + 2] = val; img.data[k + 3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return c;
+}
+
+window.renderLayer = async (name, size) => {
+  renderer.setSize(size, size, false);
+  const scene = new THREE.Scene();
+  let cam = ortho();
+  const { tyre, rim, brake } = getParts();
+  if (name === 'wheel' || name === 'brake') {
+    scene.environment = envAxis(renderer);
+    scene.add(name === 'wheel' ? tyre : brake);
+    if (name === 'wheel') scene.add(rim);
+  } else if (name === 'full') {
+    scene.environment = envStudio(renderer, true);
+    scene.add(tyre, rim, brake);
+  } else if (name === 'hero') {
+    scene.environment = envStudio(renderer, false);
+    const g = new THREE.Group(); g.add(tyre, rim, brake);
+    g.rotation.y = (32 * Math.PI) / 180;
+    scene.add(g);
+    cam = new THREE.PerspectiveCamera(22, 1, 0.1, 50);
+    cam.position.set(0, 1.1, 6.2); cam.lookAt(0, 0, 0);
+  } else if (name === 'tread') {
+    const hc = treadCanvas(2048, 1024, 8, 'height');
+    const t = new THREE.CanvasTexture(hc); t.wrapS = THREE.RepeatWrapping;
+    const m = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.92, bumpMap: t, bumpScale: 6 });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
+    scene.add(plane);
+    const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(-1, 0.25, 0.35); scene.add(sun);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+    cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20); cam.position.z = 5;
+    renderer.setClearColor(0x0d0d0f, 1);
+    renderer.render(scene, cam);
+    renderer.setClearColor(0x000000, 0);
+    return renderer.domElement.toDataURL('image/png');
+  } else if (name === 'contact') {
+    return treadCanvas(size, size / 2, 8, 'contact').toDataURL('image/png');
+  }
+  renderer.render(scene, cam);
+  return renderer.domElement.toDataURL('image/png');
+};
+window.ready = true;
+</script>
+</body>
+</html>
