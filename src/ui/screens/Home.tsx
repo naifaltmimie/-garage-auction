@@ -7,10 +7,6 @@ import { CareerChip } from '../components/CareerPanel';
 import { WhatsNew, hasNews } from '../components/WhatsNew';
 import { LOGO } from '../components/Logo';
 
-// two tyre tracks drifting across the hero, behind the logo (drawn once when Home opens)
-const SKID_A = 'M -40 560 C 60 470, 120 360, 210 300 S 360 170, 450 40';
-const SKID_B = 'M -10 600 C 90 505, 150 395, 240 335 S 390 205, 480 75';
-
 export function Home() {
   const [code, setCode] = useState('');
   const [joining, setJoining] = useState(false);
@@ -22,23 +18,13 @@ export function Home() {
     <div className="home">
       <WhatsNew open={news} onClose={() => setNews(false)} />
       <section className="hero" aria-label="مزاد الكراج">
+        {/* one composed picture: a studio floor under a soft top light, a faint tyre print across it,
+            and the real wheel cropped by the bottom corner */}
         <div className="hero-bg" aria-hidden="true">
           <i className="hero-lamp" />
-          <svg className="hero-skid" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <mask id="skid-reveal" maskUnits="userSpaceOnUse">
-                <path className="hero-skid-draw" d={SKID_A} />
-                <path className="hero-skid-draw" d={SKID_B} />
-              </mask>
-            </defs>
-            <g mask="url(#skid-reveal)">
-              <path className="hero-skid-band" d={SKID_A} />
-              <path className="hero-skid-tread" d={SKID_A} />
-              <path className="hero-skid-band" d={SKID_B} />
-              <path className="hero-skid-tread" d={SKID_B} />
-            </g>
-          </svg>
-          <i className="hero-tread" />
+          <i className="hero-floor" />
+          <img className="hero-track" src="/brand/wheel/track-512.webp" width={512} height={512} alt="" draggable={false} />
+          <img className="hero-wheel" src="/brand/wheel/hero-960.webp" width={960} height={960} alt="" draggable={false} decoding="async" />
         </div>
 
         <div className="hero-top">

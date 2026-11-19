@@ -724,68 +724,119 @@ button.code-plate:active {
   border-color: var(--line);
 }
 
-/* ================================================================ the hall opening: a race start */
+/* ================================================================ the hall opening: a run sheet and a race start */
 
-/* five start lamps light one a second over the last five; the number slams in under them */
+.idn-intro .idn-logo {
+  width: 96px;
+  height: auto;
+  margin: 0;
+  filter: none;
+}
+
+.idn-intro .idn-call {
+  font-weight: 800;
+}
+
+/* the run sheet: one list with hairlines, label on the right, value on the left in tabular digits */
+.idn-sheet {
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.idn-sheet > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.idn-sheet dt {
+  color: var(--mute);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.idn-sheet dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* five red racing lamps light one a second over the last five; the number lands under them */
+.idn-count {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.idn-count small {
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .idn-lights {
   display: flex;
   justify-content: center;
-  gap: 9px;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 99px;
-  background: linear-gradient(180deg, #0a0b0c, #141518);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .85), inset 0 0 0 1px rgba(255, 255, 255, .06);
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 4px;
+  background: none;
+  box-shadow: none;
 }
 
 .idn-lights > i {
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 99px;
-  background: radial-gradient(circle at 40% 35%, #2b2d33, #121316 70%);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .9), 0 1px 0 rgba(255, 255, 255, .05);
+  background: var(--rubber-3, #1f2024);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .idn-lights > i::after {
   content: '';
   position: absolute;
-  inset: 3px;
+  inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 38% 32%, #ff9a9d, var(--brand-hi) 38%, var(--brand) 62%, var(--brand-lo));
+  background: var(--brand);
   opacity: 0;
-  transform: scale(.6);
-  transition: opacity .1s linear, transform .3s var(--spring);
+  transition: opacity .12s linear;
 }
 
 .idn-lights > i.on::after {
   opacity: 1;
-  transform: none;
 }
 
 .idn-count .idn-count-n {
   font-family: var(--f-num);
-  font-size: 92px;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 4px 0 #000;
+  font-size: 88px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .idn-count .idn-count-n.fx-count {
-  animation: room-slam .48s cubic-bezier(.2, 1.5, .4, 1) both;
+  animation: room-tick .24s var(--ease) both;
 }
 
 .idn-count.final .idn-count-n {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
-@keyframes room-slam {
+@keyframes room-tick {
   from {
     opacity: 0;
-    transform: scale(1.9);
-  }
-  40% {
-    opacity: 1;
+    transform: scale(1.15);
   }
   to {
     opacity: 1;
@@ -793,28 +844,23 @@ button.code-plate:active {
   }
 }
 
-/* the market on the opening: it was dark type on black; now white on a sunk well with a gold rim */
-.idn-market {
-  color: #fff;
-  background: linear-gradient(180deg, #0b0c0d, #141518);
-  box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, .8),
-    inset 0 0 0 1px rgba(214, 218, 226, .4),
-    0 10px 22px -10px rgba(0, 0, 0, .8);
+.idn-intro .idn-hint {
+  margin: 0;
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  animation-name: idn-in;
 }
 
-.idn-market b {
-  color: #fff;
+.idn-intro .idn-go {
+  margin-top: 4px;
 }
 
-.idn-market span {
-  color: var(--ink-2);
-}
-
-/* phones: tighten the opening so the start lamps are on screen without scrolling */
+/* phones: tighten the opening so the lamps and the number sit on screen without scrolling */
 @media (max-width: 480px) {
   .intro-screen {
-    padding: 10px 0 16px;
+    padding: 8px 0 16px;
   }
 
   .idn-intro .idn-seq {
@@ -822,20 +868,19 @@ button.code-plate:active {
   }
 
   .idn-intro .idn-logo {
-    width: 108px;
-    margin-bottom: 0;
+    width: 84px;
   }
 
   .idn-intro .idn-call {
-    font-size: clamp(25px, 7.2vw, 32px);
+    font-size: clamp(24px, 7vw, 30px);
   }
 
-  .idn-intro .idn-ledger > div {
-    padding-block: 9px 8px;
+  .idn-sheet > div {
+    padding: 9px 0;
   }
 
   .idn-count .idn-count-n {
-    font-size: 80px;
+    font-size: 72px;
   }
 }
 
