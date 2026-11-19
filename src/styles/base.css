@@ -327,7 +327,7 @@ img {
 /* brushed gold: the big moments (open the hall, start the auction) */
 .btn-gold {
   color: #2a1d02;
-  background: linear-gradient(180deg, #f7e7b0 0%, #e8c879 30%, #d4a94c 62%, #b98c31 100%);
+  background: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 34%, #b4b8c1 68%, #8c909a 100%);
   border-color: #9a7322;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .7),
@@ -374,7 +374,7 @@ img {
 .btn-danger {
   color: var(--red);
   background: var(--red-50);
-  border-color: #f3c9c5;
+  border-color: rgba(255, 74, 79, .32);
 }
 
 .iconbtn {
@@ -412,19 +412,19 @@ img {
 .chip-gold {
   background: var(--gold-50);
   color: var(--gold-lo);
-  border-color: #efdcae;
+  border-color: #34363d;
 }
 
 .chip-red {
   background: var(--red-50);
   color: var(--red);
-  border-color: #f6cfcb;
+  border-color: rgba(255, 74, 79, .32);
 }
 
 .chip-amber {
   background: var(--amber-50);
   color: #8a560a;
-  border-color: #f1d9a9;
+  border-color: #34363d;
 }
 
 .chip-dark {
@@ -659,7 +659,7 @@ img {
   color: #7a4c08;
   font-weight: 700;
   font-size: 14px;
-  border: 1px solid #f1d9a9;
+  border: 1px solid #34363d;
 }
 
 .toasts {
