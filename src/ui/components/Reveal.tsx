@@ -59,7 +59,7 @@ function Hero({ sale, stamp, grey, mine }: { sale: Sale; stamp: string; grey?: b
         <div className="rv-ink">
           <span>{stamp}</span>
           {mine && <em>لك</em>}
-          <small>سيارة رقم <span className="ltr">{sale.no}</span></small>
+          <small>سيارة رقم {sale.no}</small>
         </div>
       </div>
     </div>

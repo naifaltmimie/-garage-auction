@@ -105,6 +105,12 @@
   background: var(--rubber-2);
 }
 
+/* the stamp's small line is Arabic: joined letters, no tracking */
+.rv-stamp .rv-ink small {
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
 /* the plate chip is paper, like the plate */
 .chip.plate-chip {
   background: var(--plate);
