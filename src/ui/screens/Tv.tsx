@@ -512,7 +512,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
       ) : (
         <div className="tv-price-main">
           <div className="tv-label">{bid ? 'السوم الحالي' : preview ? 'تفتح على' : 'سعر الافتتاح'}</div>
-          <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`}>
+          <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`} data-len={money(bid ? bid.amount : core.opening || lot.opening).length}>
             <span className="ltr">{money(bid ? bid.amount : core.opening || lot.opening)}</span>
             <small>ريال</small>
           </div>
@@ -584,7 +584,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
             <b>{buyer?.name ?? ''}</b>
           </div>
           <div className="tv-label">بسعر</div>
-          <div className="tv-amount">
+          <div className="tv-amount" data-len={money(sale.hammer).length}>
             <span className="ltr">{money(sale.hammer)}</span>
             <small>ريال</small>
           </div>
