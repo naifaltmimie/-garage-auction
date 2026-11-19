@@ -3,7 +3,7 @@
    Logo.tsx / brand.css, so a new logo flows in untouched. */
 
 /* ---------------------------------------------------------------- loader
-   The same quiet gold sweep as the boot splash in index.html, so the first second and every later
+   The same quiet chalk sweep as the boot splash in index.html, so the first second and every later
    wait look like one product. CSS only: .spinner keeps its markup (one empty div). */
 
 .spinner {
@@ -24,7 +24,7 @@
   right: 0;
   width: 26px;
   border-radius: inherit;
-  background: var(--gold);
+  background: var(--ink);
   animation: idn-sweep 1.2s cubic-bezier(.65, 0, .35, 1) infinite;
 }
 
@@ -57,7 +57,7 @@
 }
 
 .idn-kicker {
-  color: var(--gold);
+  color: var(--mute);
   font-size: 13px;
   font-weight: 700;
 }
@@ -81,11 +81,11 @@
   border-radius: var(--r);
   background: var(--green-900);
   color: var(--card);
-  box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .45), var(--sh-2); /* --gold-hi ring */
+  box-shadow: inset 0 0 0 1px rgba(214, 218, 226, .45), var(--sh-2);
 }
 
 .idn-market small {
-  color: var(--gold-hi);
+  color: var(--ink);
   font-size: 12px;
   font-weight: 600;
 }
@@ -182,7 +182,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--gold);
+  background: var(--ink-2);
   transform-origin: right center;
   animation: idn-drain linear both;
 }
