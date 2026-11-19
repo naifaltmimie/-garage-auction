@@ -11,13 +11,20 @@ import { MiniPlate, Paddle } from '../components/Plate';
 import type { RoomView } from '../useRoom';
 import { useBack } from '../App';
 import { useEffect } from 'react';
-import { TireLoader } from '../components/TireLoader';
+import { Wheel } from '../components/Wheel';
 
-/** The room code on a rubber plate: a sunk well with tread cut in and two bolts, the letters in white. */
-export function CodePlate({ code, className }: { code: string; className?: string }) {
+/** The room code on a white paper plate, like a real number plate: black letters, a thin dark border, two screws. */
+export function CodePlate({ code, className, onClick }: { code: string; className?: string; onClick?: () => void }) {
+  const cls = ['code-plate', className].filter(Boolean).join(' ');
+  if (onClick)
+    return (
+      <button type="button" className={cls} onClick={onClick} aria-label={`كود الصالة ${code}، اضغط وانسخه`}>
+        <span className="code ltr">{code}</span>
+      </button>
+    );
   return (
-    <div className={['code-plate', className].filter(Boolean).join(' ')}>
-      <span className="code">{code}</span>
+    <div className={cls}>
+      <span className="code ltr">{code}</span>
     </div>
   );
 }
@@ -66,16 +73,14 @@ export function Lobby({ room }: { room: RoomView }) {
   return (
     <main className="shell" style={{ maxWidth: 980 }}>
       <div className="stack" style={{ gap: 14 }}>
-        <div className="rise" style={{ textAlign: 'center', paddingTop: 4 }}>
-          <span className="chip chip-live">
-            <i className="dot" /> الصالة مفتوحة
-          </span>
-          <h1 className="section-title" style={{ fontSize: 'clamp(32px, 9vw, 46px)', marginTop: 8 }}>{s.roomName || 'مزاد الكراج'}</h1>
+        <div className="rise lb-head">
+          <h1 className="lb-title">{host ? `مزاد ${host.name}` : s.roomName || 'مزاد الكراج'}</h1>
         </div>
 
         {!room.host && (
-          <section className="card lobby-wait" aria-label="بانتظار الدلال">
-            <TireLoader size={60} label="بانتظار الدلال يبدأ…" />
+          <section className="lobby-wait" aria-label="بانتظار الدلال">
+            <Wheel size={112} spin="slow" className="has-ground" />
+            <h2 className="lw-title">بانتظار الدلال يبدأ</h2>
             <p className="lw-sub">
               {host ? <><b>{host.name}</b> يفتح المزاد بأي لحظة، </> : null}جهّز نفسك
             </p>
@@ -83,7 +88,8 @@ export function Lobby({ room }: { room: RoomView }) {
               {active.map((p) => (
                 <span className="lw-seat" key={p.id}>
                   <Paddle n={p.paddle} me={p.id === room.myId} />
-                  <small>{p.id === room.myId ? 'أنت' : p.name}</small>
+                  <small>{p.name}</small>
+                  {p.id === room.myId && <em className="lw-me">أنت</em>}
                 </span>
               ))}
             </div>
@@ -91,12 +97,14 @@ export function Lobby({ room }: { room: RoomView }) {
         )}
 
         <div className="lobby-grid">
-          <section className="card codebox">
+          <section className="codebox lb-block">
             <div className="t-label">كود الصالة</div>
-            <CodePlate code={room.code} />
-            <QR text={link} />
+            <div className="cb-pair">
+              <CodePlate code={room.code} onClick={copy} />
+              <QR text={link} />
+            </div>
             <div className="share-row">
-              <button className="btn btn-primary" onClick={share}>
+              <button className={`btn ${room.host ? 'btn-ghost' : 'btn-primary'}`} onClick={share}>
                 <Icon name="share" /> أرسل الرابط للشباب
               </button>
               <button className="btn btn-ghost" onClick={copy} aria-label="انسخ الرابط">
@@ -112,7 +120,7 @@ export function Lobby({ room }: { room: RoomView }) {
           </section>
 
           <div className="stack" style={{ gap: 14 }}>
-            <section className="card card-pad">
+            <section className="lb-block">
               <div className="card-head">
                 <h2>المزايدين</h2>
                 <span className="chip">
@@ -127,11 +135,11 @@ export function Lobby({ room }: { room: RoomView }) {
                     <Paddle n={p.paddle} me={p.id === room.myId} />
                     <div className="grow">
                       <div className="name">
-                        {p.name} {p.id === room.myId && <span className="mute small">(أنت)</span>}
+                        {p.name} {p.id === room.myId && <em className="lw-me">أنت</em>}
                       </div>
                       <div className="row" style={{ gap: 6, marginTop: 2 }}>
                         <MiniPlate letters={p.plate} />
-                        {p.host && <span className="chip chip-gold">الدلال</span>}
+                        {p.host && <span className="chip chip-host">الدلال</span>}
                         {p.spectator && <span className="chip">متفرج</span>}
                       </div>
                     </div>
@@ -155,7 +163,6 @@ export function Lobby({ room }: { room: RoomView }) {
                 ))}
                 {active.length < 2 && (
                   <div className="empty-slot" role="status">
-                    <span className="es-tire" aria-hidden="true" />
                     <span className="es-tx">
                       <b>بانتظار الشباب يدخلون…</b>
                       <small>أرسل لهم الرابط، أو خلهم يصوّرون الكود</small>
@@ -165,7 +172,7 @@ export function Lobby({ room }: { room: RoomView }) {
               </div>
             </section>
 
-            <section className="card card-pad">
+            <section className="lb-block">
               <div className="card-head">
                 <h2>شروط المزاد</h2>
                 {room.host && (
@@ -217,8 +224,8 @@ export function Lobby({ room }: { room: RoomView }) {
         </div>
 
         {room.role === 'player' && !sound.prefs.voice && (
-          <div className="card card-pad row between">
-            <span className="mute" style={{ fontWeight: 700 }}>كل واحد ببيته؟ شغّل صوت الدلال على جوالك</span>
+          <div className="lb-block row between">
+            <span className="mute" style={{ fontWeight: 600 }}>كل واحد ببيته؟ شغّل صوت الدلال على جوالك</span>
             <button
               className="btn btn-ghost"
               onClick={() => {
