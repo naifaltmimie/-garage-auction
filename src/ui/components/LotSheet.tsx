@@ -231,6 +231,14 @@ export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: {
 
         <LotHead lot={lot} car={shown} revealed={!!revealed} />
 
+        {shown?.story && (
+          <p className="saga">
+            <small>سالفتها من ملف الدلال</small>
+            <span>{shown.story.owner}، {shown.story.use}.</span>
+            <span>ليش تنباع: {shown.story.why}.</span>
+          </p>
+        )}
+
         <div className="pricebar">
           <div>
             <small>تقدير الدلال</small>
@@ -340,6 +348,34 @@ const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car
               </div>
             ))}
           </div>
+
+          {car.checks && car.checks.length > 0 && (
+            <>
+              <h4>قراءات الفاحص</h4>
+              <dl className="checks">
+                {car.checks.map((r) => (
+                  <div key={r.k} className={`ck ck-${r.tone}`}>
+                    <dt>{r.k}</dt>
+                    <dd>
+                      <i aria-hidden="true" />
+                      {r.v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
+
+          {car.story && car.story.quirks.length > 0 && (
+            <>
+              <h4>شفنا بالمعاينة</h4>
+              <ul className="quirks">
+                {car.story.quirks.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            </>
+          )}
 
           {car.inspector.length > 0 && (
             <>

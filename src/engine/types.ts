@@ -140,6 +140,10 @@ export interface CarPub {
    */
   said?: string[];
   adUrl?: string;
+  /** The inspector's measured readings (tyres, pads, battery, paint gauge, fluids, idle, vents, underbody). */
+  checks?: { k: string; v: string; tone: 'good' | 'mid' | 'bad' }[];
+  /** The دلال's file on the car: who had it, how it lived, why it is out, what you notice at the viewing. */
+  story?: { owner: string; use: string; why: string; quirks: string[] };
 }
 
 export interface FeeRule {
