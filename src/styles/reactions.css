@@ -67,8 +67,8 @@
 .rx-f.t-good .rx-t { color: var(--green-700); }
 .rx-f.t-bad .rx-pop { background: var(--red-50); border-color: #f3c9c5; }
 .rx-f.t-bad .rx-t { color: var(--red); }
-.rx-f.t-gold .rx-pop { background: var(--gold-50); border-color: #ecd9a8; }
-.rx-f.t-gold .rx-t { color: var(--gold-lo); }
+.rx-f.t-gold .rx-pop { background: var(--rubber-3); border-color: var(--line-2); }
+.rx-f.t-gold .rx-t { color: var(--ink); }
 
 /* mine: same chip, a green ring and "أنت" */
 .rx-f.mine .rx-pop { box-shadow: 0 0 0 1.5px var(--green), 0 8px 18px -6px rgba(18, 18, 20, .28); }
@@ -162,11 +162,11 @@
 .rx-fab.open {
   background: var(--green-900);
   border-color: var(--green-900);
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 .rx-fab:focus-visible,
 .rx-chip:focus-visible {
-  outline: 2px solid var(--gold-hi);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -212,7 +212,7 @@
 .rx-chip:active { transform: scale(.9); }
 .rx-chip.t-good { color: var(--green-700); }
 .rx-chip.t-bad { color: var(--red); }
-.rx-chip.t-gold { color: var(--gold-lo); }
+.rx-chip.t-gold { color: var(--ink); }
 .rx-chip.emo { font-size: 23px; }
 @media (hover: hover) {
   .rx-chip:hover { background: var(--bg); border-color: var(--line-2); }
@@ -223,7 +223,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: var(--gold-hi);
+  background: var(--ink-2);
   transform: scaleX(0);
   transform-origin: 0 50%;
   pointer-events: none;

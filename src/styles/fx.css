@@ -14,7 +14,7 @@
   --fx-t3: 420ms;   /* entrances */
   --fx-t4: 700ms;   /* the big moments */
   --fx-stagger: 42ms;
-  --fx-gold-line: rgba(214, 218, 226, .55);
+  --fx-alloy-line: rgba(214, 218, 226, .55);
 }
 
 /* ---------- press, release, focus: the same touch everywhere ---------- */
@@ -75,7 +75,7 @@
 
 .btn-gold:focus-visible,
 .btn-top:focus-visible {
-  outline-color: var(--gold);
+  outline-color: var(--ink);
 }
 
 /* ---------- money that rolls ---------- */
@@ -90,7 +90,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- the CTA sheen: only on the bid button and the gold «big moment» buttons ---------- */
+/* ---------- the CTA sheen: only on the bid button and the alloy «big moment» buttons ---------- */
 
 .btn-primary.bid-main:not(:disabled),
 .btn-gold:not(:disabled) {
@@ -286,14 +286,6 @@
   100% { transform: none }
 }
 
-/* the buyer's own stamp is rimmed in gold */
-.fx-mine .rv-stamp {
-  box-shadow: 0 0 0 3px var(--gold-hi), 0 18px 40px rgba(0, 0, 0, .35);
-}
-
-.fx-mine .rv-hero::before {
-  border-color: var(--gold-hi);
-}
 
 .fx-leaf {
   position: fixed;
@@ -446,7 +438,7 @@
 }
 
 .fx-paths-a {
-  stroke: var(--fx-gold-line);
+  stroke: var(--fx-alloy-line);
   stroke-width: 1;
   opacity: .42;
   animation: fx-drift-a 18s var(--fx-in-out) infinite alternate;

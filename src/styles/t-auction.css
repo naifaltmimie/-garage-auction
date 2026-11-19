@@ -169,28 +169,28 @@
   z-index: 1;
 }
 
-/* the falling price's rail: red for the drop, never green */
+/* the falling price's rail: chalk while it falls, caliper red only for the last steps */
 .bidpanel.dutch-panel .dc-fill {
-  background: linear-gradient(270deg, var(--brand-lo), var(--brand));
+  background: var(--ink-2);
 }
 
 .bidpanel.dutch-panel[data-heat='3'] .dc-fill {
-  background: linear-gradient(270deg, var(--gold), var(--red));
+  background: var(--brand);
 }
 
 .bidpanel.dutch-panel .dc-est {
   color: var(--ink-2);
 }
 
-/* ================================================================ paddles stay paper; yours has a gold ring */
+/* ================================================================ paddles stay paper; yours has an alloy ring */
 
 .auction .paddle.me,
 .overlay .paddle.me,
 .bidpanel .bp-bidder.me .paddle {
   background: var(--plate);
   color: var(--plate-ink);
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(214, 218, 226, .45), var(--sh-1);
+  border-color: var(--alloy);
+  box-shadow: 0 0 0 2px var(--alloy-mid), var(--sh-1);
 }
 
 /* ================================================================ waiting inside the auction */
@@ -247,7 +247,7 @@
 
 .env-mine b {
   font-size: 17px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* between lots: where the bid buttons were, the next car is on its way */
@@ -286,11 +286,11 @@
 }
 
 .reveal.thinking .rv-line b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* ================================================================ the hammer: stamps that hit on dark
-   Sold: a black rubber stamp with a white rule. Yours: rim gold. Unsold: caliper red, set down quietly. */
+   Base stamp box; the red rubber stamp further down sets its final look. */
 
 .rv-stamp {
   background: linear-gradient(180deg, #1f2024, #0d0e10);
@@ -307,7 +307,7 @@
   background: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 40%, #b4b8c1 75%, #8c909a 100%);
   border-color: #0c0d0f;
   color: #0c0d0f;
-  box-shadow: 0 0 0 3px var(--gold-hi), 0 18px 40px rgba(0, 0, 0, .6);
+  box-shadow: none;
 }
 
 .fx-mine .rv-stamp small {
@@ -325,7 +325,7 @@
   filter: grayscale(1) brightness(.6);
 }
 
-/* the buyer's row: gold when it's yours */
+/* the buyer's row */
 .fx-mine .rv-buyer {
   border-color: rgba(214, 218, 226, .45);
   background: linear-gradient(180deg, rgba(214, 218, 226, .14), rgba(214, 218, 226, .04)), var(--card);
@@ -333,7 +333,7 @@
 
 .fx-mine .rv-buyer b,
 .fx-mine .rv-hammer b {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .rv-hammer small {
@@ -441,7 +441,7 @@
 
 .rx-f.t-gold .rx-t,
 .rx-chip.t-gold {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* ================================================================ gallery arrows (hover devices): rubber knobs, not paper */

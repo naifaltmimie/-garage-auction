@@ -19,7 +19,7 @@ function Emblem() {
  * A Saudi private plate as it sits on the car (long format): numbers on the left — Arabic-Indic
  * over Latin — letters on the right with every Latin letter under its Arabic one (so the Latin
  * reads backwards, exactly like the real plate), and the KSA strip with the emblem at the edge.
- * Special plates get a gold rim and their tag.
+ * Special plates get an alloy rim and their tag.
  */
 export function CarPlate({ plate, size = 'md', showValue }: { plate: PlatePub; size?: 'sm' | 'md' | 'lg'; showValue?: boolean }) {
   const sp = plate.special;
