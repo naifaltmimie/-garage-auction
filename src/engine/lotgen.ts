@@ -238,9 +238,9 @@ function plateOf(letters: (readonly [string, string])[], num: string, special?: 
 
 /** Clean, positive words and names the 17 plate letters can spell (read right to left). */
 export const PLATE_WORDS: readonly string[] = [
-  'ملك', 'صقر', 'بدر', 'حرب', 'سعد', 'كرم', 'نصر', 'عدل', 'حلا', 'سما', 'ورد', 'صدق', 'بطل', 'حسن', 'نور', 'هلا',
+  'ملك', 'صقر', 'بدر', 'سعد', 'كرم', 'نصر', 'عدل', 'حلا', 'سما', 'ورد', 'صدق', 'بطل', 'حسن', 'نور', 'هلا',
   'قمر', 'دار', 'سلم', 'حكم', 'امل', 'نبل', 'عسل', 'برق', 'رعد', 'بحر', 'نهر', 'سهل', 'نسر', 'اسد', 'حمد', 'عود',
-  'درب', 'قلب', 'صبر', 'قصر', 'ربح', 'سور', 'كحل', 'حلم', 'ملح', 'عمر', 'سحر', 'بسم', 'حصن', 'ركن',
+  'درب', 'قلب', 'صبر', 'قصر', 'ربح', 'سور', 'كحل', 'حلم', 'عمر', 'حصن', 'ركن',
 ];
 const wordKey = (letters: readonly string[]) => letters.map((l) => (l === 'هـ' ? 'ه' : l)).join('');
 const WORD_SET = new Set(PLATE_WORDS);
@@ -293,7 +293,9 @@ export function gradePlate(letters: readonly string[], num: string): PlateGrade 
   if (len === 4 && sameD) return g('special', 'رقم مميز', `أربع ${DIG_PL[+num[0]]}`, 0.2);
   if (len === 3 && sameD) return g('special', 'رقم مميز', `ثلاث ${DIG_PL[+num[0]]}`, 0.1);
   if (n === 3 && twins) return g('special', 'رقم مميز', `رقمين متشابهة (${DIG_AR[+num[0]]})`, 0.3);
-  if (n === 3 && len === 2) return g('special', 'رقم مميز', word ? `رقمين واسم (${word})` : 'رقمين بس', word ? 0.15 : 0);
+  if (n === 3 && len === 2 && word) return g('special', 'رقم مميز', `رقمين واسم (${word})`, 0.15);
+  // two plain digits under three unrelated letters: liked, never called مميزة
+  if (n === 3 && len === 2) return g('nice', 'رقم حلو', 'رقمين', 0.7);
   if (word) return g('special', 'حروف مميزة', `اسم (${word})`, 0);
   if (n === 3 && sameL) return g('special', 'حروف مميزة', 'ثلاث حروف متشابهة', 0.1);
   if ((len === 3 || len === 4) && round) return g('nice', 'رقم حلو', len === 4 ? 'رقم ألفي' : 'رقم مئوي', 0.2);
@@ -376,12 +378,12 @@ export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
     special: [
       [() => [three(), d().repeat(4)], 22],
       [() => [three(), d().repeat(3)], 18],
-      [() => [three(), d().repeat(2)], 18],
-      [() => [three(), plain(10, 99)], 12],
-      [() => [word(), plain(1000, 9999)], 20],
-      [() => [same(3), plain(1000, 9999)], 10],
+      [() => [three(), d().repeat(2)], 22],
+      [() => [word(), plain(1000, 9999)], 26],
+      [() => [same(3), plain(1000, 9999)], 12],
     ],
     nice: [
+      [() => [three(), plain(10, 99)], 22],
       [() => [three(), `${d()}000`], 30],
       [() => [three(), `${d()}00`], 30],
       [() => [three(), '1234'], 15],
