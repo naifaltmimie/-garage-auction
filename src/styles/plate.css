@@ -1,2 +1,141 @@
 /* ================================================================ the Saudi number plate
-   Styles for <CarPlate/> (src/ui/components/Plate.tsx). Imported after every screen sheet. */
+   Styles for <CarPlate/> (src/ui/components/Plate.tsx). Imported after every screen sheet.
+   A photograph of the real private plate: white retro-reflective face, thin black border,
+   four cells ruled in black (Arabic over Latin, digits left, letters right) and the KSA strip
+   at the right edge. Characters and border are pressed aluminium: hairline light edge above-left,
+   soft dark edge below-right. */
+
+.kplate {
+  --pw: 180px;
+  --ph: 42px;
+  --fa: 17px;
+  --fe: 14px;
+  --band: 19px;
+  --rule: 1.2px;
+  --ink-plate: #111214;
+  --emboss: 0 -0.5px 0 rgba(255, 255, 255, .9), 0 .7px .4px rgba(0, 0, 0, .28);
+}
+
+.kplate.sm { --pw: 150px; --ph: 36px; --fa: 14.5px; --fe: 12px; --band: 15px; --rule: 1px; }
+.kplate.lg { --pw: 256px; --ph: 60px; --fa: 25px; --fe: 20px; --band: 27px; --rule: 1.5px; }
+
+.kplate .kp-face {
+  grid-template-columns: 1fr 1fr var(--band);
+  border: 1.6px solid var(--ink-plate);
+  border-radius: 4px;
+  color: var(--ink-plate);
+  background:
+    /* retro-reflective sheeting: a faint honeycomb-ish diagonal weave */
+    repeating-linear-gradient(60deg, rgba(0, 0, 0, .035) 0 .6px, transparent .6px 3px),
+    repeating-linear-gradient(-60deg, rgba(0, 0, 0, .03) 0 .6px, transparent .6px 3px),
+    /* very slight vertical sheen */
+    linear-gradient(180deg, #ffffff 0%, #fafaf9 40%, #f1f1ef 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 0 0 1px rgba(255, 255, 255, .6),
+    inset 0 -1px 1px rgba(0, 0, 0, .08),
+    0 1px 0 rgba(0, 0, 0, .35),
+    0 3px 6px -1px rgba(0, 0, 0, .45);
+}
+.kplate.sm .kp-face {
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f2 100%);
+}
+
+/* the rules: thin black lines, the vertical one runs full height, the horizontal one across both blocks */
+.kplate .kp-num,
+.kplate .kp-let { border-right: var(--rule) solid var(--ink-plate); }
+.kplate .kp-c.ar { border-bottom: var(--rule) solid var(--ink-plate); }
+
+.kplate .kp-c { text-shadow: var(--emboss); }
+
+.kplate .kp-num.ar,
+.kplate .kp-num.en {
+  font-family: var(--f-num);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-stretch: condensed;
+  padding: 0;
+}
+/* each digit in its own equal cell so every Arabic-Indic digit sits exactly above its Latin twin */
+.kplate .kp-num { gap: 0; letter-spacing: 0; }
+.kplate .kp-num i {
+  display: inline-block;
+  width: calc(var(--pw) * .088);
+  text-align: center;
+  font-style: normal;
+}
+.kplate .kp-num.ar { font-size: var(--fa); padding-top: 1px; }
+.kplate .kp-num.en { font-size: var(--fe); }
+
+.kplate .kp-let { gap: .32em; direction: rtl; }
+.kplate .kp-let i { min-width: .9em; }
+.kplate .kp-let.ar i {
+  font-family: var(--f-ui);
+  font-weight: 700;
+  font-size: calc(var(--fa) * .98);
+  transform: translateY(-.06em);
+}
+.kplate .kp-let.en { gap: .5em; }
+.kplate .kp-let.en i {
+  font-family: var(--f-num);
+  font-weight: 800;
+  font-size: var(--fe);
+}
+
+/* the KSA strip: same white face, emblem on top, K S A stacked */
+.kplate .kp-band {
+  background: transparent;
+  color: var(--ink-plate);
+  grid-template-rows: 1.25fr 1fr 1fr 1fr;
+  padding: 1px 0 2px;
+  text-shadow: var(--emboss);
+}
+.kplate .kp-emblem {
+  width: calc(var(--band) * .92);
+  height: calc(var(--band) * .92);
+  color: var(--ink-plate);
+  filter: drop-shadow(0 .5px .3px rgba(0, 0, 0, .25));
+}
+.kplate .kp-band b {
+  font-size: calc(var(--band) * .42);
+  font-weight: 800;
+}
+
+/* special plates: the plate stays a plain real plate; legend and rare get one alloy hairline frame */
+.kplate.special .kp-face { border-color: var(--ink-plate); }
+.kplate.special .kp-face,
+.kplate.legend .kp-face {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 0 0 1px rgba(255, 255, 255, .6),
+    inset 0 -1px 1px rgba(0, 0, 0, .08),
+    0 1px 0 rgba(0, 0, 0, .35),
+    0 3px 6px -1px rgba(0, 0, 0, .45);
+}
+.kplate.rare .kp-face,
+.kplate.legend .kp-face {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 0 0 1px rgba(255, 255, 255, .6),
+    inset 0 -1px 1px rgba(0, 0, 0, .08),
+    0 0 0 2px #0c0d0f,
+    0 0 0 3px var(--alloy-mid),
+    0 3px 6px -1px rgba(0, 0, 0, .45);
+}
+
+.kplate .kp-tag,
+.kplate.rare .kp-tag,
+.kplate.legend .kp-tag {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.kplate .kp-tag .ltr {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
