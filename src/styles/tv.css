@@ -149,8 +149,8 @@ html.tv-mode body {
   color: #fff;
 }
 
-.tv-phase.tone-gold {
-  background: var(--gold-hi);
+.tv-phase.tone-alloy {
+  background: var(--ink);
   color: var(--green-950);
 }
 
@@ -209,7 +209,7 @@ html.tv-mode body {
   font-weight: 700;
   letter-spacing: 0.14em;
   line-height: 1.1;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 /* ------------------------------------------------------------------ waiting / lobby / intro */
@@ -252,7 +252,7 @@ html.tv-mode body {
 .tv-kicker {
   font-size: 30px;
   font-weight: 600;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-lobby {
@@ -313,7 +313,7 @@ html.tv-mode body {
   margin-top: 30px;
   font-size: 34px;
   font-weight: 500;
-  color: var(--gold-hi);
+  color: var(--ink);
   text-align: right;
 }
 
@@ -420,7 +420,7 @@ html.tv-mode body {
 .tv-joined li em {
   font-style: normal;
   font-size: 18px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-joined-wait {
@@ -588,7 +588,7 @@ html.tv-mode body {
   padding: 10px 22px;
   border-radius: 999px;
   background: var(--green-950);
-  color: var(--gold-hi);
+  color: var(--ink);
   font-size: 24px;
   font-weight: 600;
 }
@@ -674,7 +674,7 @@ html.tv-mode body {
 }
 
 .tv-specs .tv-year {
-  color: var(--gold-hi);
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -758,8 +758,8 @@ html.tv-mode body {
   margin-inline-start: auto;
   padding: 6px 14px;
   border-radius: 999px;
-  background: var(--gold-50);
-  color: var(--gold-lo);
+  background: var(--alloy-50);
+  color: var(--alloy-lo);
   font-size: 20px;
   font-weight: 600;
 }
@@ -870,7 +870,7 @@ html.tv-mode body {
 .tv-feed li em {
   font-style: normal;
   font-size: 20px;
-  color: var(--gold);
+  color: var(--alloy);
 }
 
 .tv-feed li.empty {
@@ -887,7 +887,7 @@ html.tv-mode body {
 }
 
 .tv-verdict.sold {
-  box-shadow: inset 0 10px 0 var(--gold-hi);
+  box-shadow: inset 0 10px 0 var(--ink);
 }
 
 .tv-verdict.unsold {
@@ -899,7 +899,7 @@ html.tv-mode body {
   font-size: 88px;
   font-weight: 700;
   line-height: 1;
-  color: var(--gold);
+  color: var(--alloy);
   animation: tv-stamp 0.55s var(--ease) both;
 }
 
@@ -1010,7 +1010,7 @@ html.tv-mode body {
 
 .tv-ticker li.lead {
   background: rgba(214, 218, 226, 0.16);
-  box-shadow: inset 0 0 0 2px var(--gold-hi);
+  box-shadow: inset 0 0 0 2px var(--ink);
 }
 
 .tv-rank {
@@ -1018,7 +1018,7 @@ html.tv-mode body {
   align-self: center;
   font-size: 30px;
   font-weight: 700;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-tk-name {
@@ -1054,14 +1054,14 @@ html.tv-mode body {
   line-height: 1.35;
   border-radius: var(--r-lg);
   background: var(--tv-tile);
-  border-inline-start: 4px solid var(--gold-hi);
+  border-inline-start: 4px solid var(--ink);
   animation: tv-in 0.5s var(--ease) both;
 }
 
 .tv-last small {
   font-size: 19px;
   font-weight: 600;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-last b {
@@ -1115,7 +1115,7 @@ html.tv-mode body {
 }
 
 .tv-champ {
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-table {
@@ -1188,7 +1188,7 @@ html.tv-mode body {
 
 .tv-award {
   background: rgba(214, 218, 226, 0.2);
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-cars {
@@ -1265,14 +1265,14 @@ html.tv-mode body {
   padding: 16px 22px;
   border-radius: var(--r-lg);
   background: var(--tv-tile);
-  border-top: 4px solid var(--gold-hi);
+  border-top: 4px solid var(--ink);
   animation: tv-in 0.5s var(--ease) both;
   animation-delay: 0.5s;
 }
 
 .tv-awards b {
   font-size: 24px;
-  color: var(--gold-hi);
+  color: var(--ink);
 }
 
 .tv-awards span {
@@ -1298,7 +1298,7 @@ html.tv-mode body {
   transform: translateX(-50%);
   padding: 14px 34px;
   border-radius: 999px;
-  background: var(--amber);
+  background: var(--ink-2);
   color: #fff;
   font-size: 28px;
   font-weight: 700;
@@ -1404,4 +1404,396 @@ html.tv-mode body {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ================================================================== the colour law, last word
+   Rubber surfaces with hairlines, chalk-white prices and names, the alloy for the leader and the
+   champion, red only for the hot clock and the «بيعت» stamp, green small for money gained.
+   Scoped html body .tv so it beats t-tv.css (.tv .x, html .tv .x) and the rules above. */
+
+html body .tv .tv-top {
+  background: var(--rubber-1);
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+}
+html body .tv .tv-wordmark,
+html body .tv .tv-wait-mark {
+  filter: none;
+}
+html body .tv .tv-phase,
+html body .tv .tv-phase.tone-live,
+html body .tv .tv-phase.tone-seal,
+html body .tv .tv-phase.tone-calm,
+html body .tv .tv-phase.tone-red {
+  background: var(--rubber-3);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+  text-shadow: none;
+  border-radius: 12px;
+}
+html body .tv .tv-phase.tone-alloy {
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  box-shadow: none;
+  text-shadow: none;
+  border-radius: 12px;
+}
+html body .tv .tv-live-dot {
+  display: none;
+}
+html body .tv .tv-kicker {
+  color: var(--mute);
+}
+html body .tv .tv-kicker::before {
+  display: none;
+}
+html body .tv .tv-lotno {
+  display: none;
+}
+html body .tv .tv-joinchip {
+  background: none;
+  box-shadow: none;
+}
+
+/* attract screens: the real wheel in a corner under a soft top light */
+html body .tv .tv-wait,
+html body .tv .tv-lobby {
+  position: relative;
+  isolation: isolate;
+}
+html body .tv .tv-hero {
+  position: absolute;
+  z-index: -1;
+  inset-inline-start: -120px;
+  bottom: -200px;
+  width: 760px;
+  height: 760px;
+  pointer-events: none;
+}
+html body .tv .tv-hero::before {
+  content: '';
+  position: absolute;
+  inset: -12% 0 40%;
+  background: radial-gradient(50% 60% at 50% 0%, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0) 70%);
+}
+html body .tv .tv-hero img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+html body .tv .tv-lobby .tv-hero {
+  inset-inline-start: auto;
+  inset-inline-end: -220px;
+  bottom: -260px;
+  width: 640px;
+  height: 640px;
+  opacity: .9;
+}
+html body .tv .tv-waitline {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 8px 0 0;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+html body .tv .tv-joined .tv-waitline {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 28px;
+}
+html body .tv .tv-code,
+html body .tv .tv-wait-code {
+  box-shadow:
+    inset 0 0 0 6px var(--plate),
+    inset 0 0 0 10px #16171a;
+}
+html body .tv .tv-qr {
+  background: var(--plate);
+  color: var(--plate-ink);
+  border-radius: 14px;
+  box-shadow: none;
+}
+html body .tv .tv-qr small {
+  color: var(--plate-ink);
+}
+html body .tv .tv-joined,
+html body .tv .tv-facts span,
+html body .tv .tv-intro-names li,
+html body .tv .tv-joined li {
+  background: none;
+  box-shadow: none;
+}
+html body .tv .tv-joined {
+  border-inline-start: 1px solid var(--line);
+  border-radius: 0;
+}
+html body .tv .tv-facts span {
+  border-inline-start: 1px solid var(--line);
+  border-radius: 0;
+}
+html body .tv .tv-facts b,
+html body .tv .tv-intro h1,
+html body .tv .tv-lobby-title {
+  color: var(--ink);
+}
+
+/* the lot board: the photo is the stage, the price is the biggest thing on screen */
+html body .tv .tv-photo {
+  border-radius: 14px;
+  box-shadow: none;
+}
+html body .tv .tv-photo::after {
+  box-shadow: inset 0 -160px 140px -80px rgba(0, 0, 0, .6);
+}
+html body .tv .tv-sticker {
+  position: absolute;
+  z-index: 3;
+  top: 22px;
+  inset-inline-start: 22px;
+  display: grid;
+  justify-items: center;
+  min-width: 112px;
+  padding: 8px 14px 10px;
+  border-radius: 8px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  transform: rotate(-3deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+  line-height: 1;
+}
+html body .tv .tv-sticker b {
+  font-size: 72px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+html body .tv .tv-sticker small {
+  font-size: 20px;
+  font-weight: 600;
+}
+html body .tv .tv-sticker small:first-child {
+  margin-bottom: 4px;
+}
+html body .tv .tv-sticker small:last-child {
+  margin-top: 6px;
+  opacity: .7;
+}
+html body .tv .tv-covered-tag {
+  color: var(--ink);
+  background: var(--rubber-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+html body .tv .tv-price,
+html body .tv .tv-price.is-bidding,
+html body .tv .tv-price.is-sealed,
+html body .tv .tv-price.is-dutch,
+html body .tv .tv-verdict,
+html body .tv .tv-verdict.sold,
+html body .tv .tv-verdict.unsold {
+  background: var(--rubber-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: none;
+}
+html body .tv .tv-amount {
+  font-size: 150px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.03em;
+  color: var(--ink);
+}
+html body .tv .tv-amount.sealed {
+  color: var(--ink);
+}
+html body .tv .tv-amount small {
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--mute);
+}
+html body .tv .tv-leader {
+  color: var(--ink-2);
+}
+html body .tv .tv-leader b {
+  font-size: 50px;
+  font-weight: 800;
+  color: var(--alloy-hi);
+}
+html body .tv .tv-leader-tag {
+  background: none;
+  color: var(--mute);
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 8px;
+}
+html body .tv .tv-clock-n b {
+  font-variant-numeric: tabular-nums;
+}
+html body .tv .tv-bar i {
+  background: var(--ink-2);
+}
+html body .tv .tv-clock.hot .tv-bar i {
+  background: var(--brand);
+}
+html body .tv .tv-feed li.top b,
+html body .tv .tv-feed li b {
+  font-variant-numeric: tabular-nums;
+}
+html body .tv .tv-feed li.top b {
+  color: var(--ink);
+}
+html body .tv .tv-feed li em {
+  color: var(--mute);
+}
+
+/* «بيعت»: a red rubber stamp that slams once */
+html body .tv .tv-stamp {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 4px 0 22px;
+  padding: 6px 30px 12px;
+  border: 7px solid var(--brand);
+  border-radius: 12px;
+  background: none;
+  color: var(--brand);
+  font-size: 104px;
+  font-weight: 800;
+  line-height: 1;
+  transform: rotate(-7deg);
+  text-shadow: none;
+  box-shadow: none;
+  animation: tv-slam .42s cubic-bezier(.3, 1.5, .5, 1) both;
+}
+html body .tv .tv-unsold-h {
+  margin: 4px 0 18px;
+  font-size: 76px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink-2);
+}
+@keyframes tv-slam {
+  from {
+    opacity: 0;
+    transform: rotate(-7deg) scale(1.6);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-7deg) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-7deg) scale(1);
+  }
+}
+html body .tv .tv-verdict .tv-buyer b {
+  color: var(--alloy-hi);
+}
+html body .tv .tv-verdict .tv-amount {
+  font-size: 110px;
+}
+html body .tv .tv-v,
+html body .tv .tv-v.v-steal,
+html body .tv .tv-v.v-good,
+html body .tv .tv-v.v-fair,
+html body .tv .tv-v.v-over,
+html body .tv .tv-v.v-robbed {
+  background: none;
+  box-shadow: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--ink-2);
+}
+html body .tv .tv-v b {
+  color: var(--ink);
+}
+html body .tv .tv-v.v-steal b,
+html body .tv .tv-v.v-good b {
+  color: var(--ok);
+}
+html body .tv .tv-roast {
+  color: var(--ink-2);
+  background: none;
+  box-shadow: none;
+}
+
+/* standings, ticker, results */
+html body .tv .tv-ticker li,
+html body .tv .tv-last,
+html body .tv .tv-table li {
+  background: none;
+  box-shadow: none;
+}
+html body .tv .tv-ticker li,
+html body .tv .tv-table li {
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+html body .tv .tv-ticker li.lead .tv-tk-name,
+html body .tv .tv-table li.first .tv-who b,
+html body .tv .tv-table li.first .tv-rank,
+html body .tv .tv-champ {
+  color: var(--alloy-hi);
+}
+html body .tv .tv-table li.first {
+  box-shadow: inset 4px 0 0 var(--alloy);
+}
+html body .tv .tv-tk-cash,
+html body .tv .tv-cash,
+html body .tv .tv-val {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+html body .tv .tv-val.gain {
+  color: var(--ok);
+}
+html body .tv .tv-val.loss {
+  color: var(--ink-2);
+}
+html body .tv .tv-award,
+html body .tv .tv-voted {
+  background: none;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+html body .tv .tv-awards li {
+  background: none;
+  box-shadow: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+html body .tv .tv-awards li b {
+  color: var(--ink);
+}
+html body .tv .tv-ticker li.lead {
+  background: none;
+  box-shadow: inset 0 -3px 0 var(--alloy);
+}
+html body .tv .tv-lobby-mark {
+  margin-bottom: 18px;
+}
+html body .tv .tv-verdict .tv-stamp {
+  margin-top: 22px;
+  font-size: 92px;
+}
+/* the price steps down by its length so 7 digits and «ريال» always fit the panel */
+html body .tv .tv-amount[data-len='7'] {
+  font-size: 120px;
+}
+html body .tv .tv-amount[data-len='9'],
+html body .tv .tv-amount[data-len='10'],
+html body .tv .tv-amount[data-len='11'] {
+  font-size: 92px;
+}
+html body .tv .tv-verdict .tv-amount[data-len='7'] {
+  font-size: 104px;
+}
+html body .tv .tv-verdict .tv-amount[data-len='9'],
+html body .tv .tv-verdict .tv-amount[data-len='10'],
+html body .tv .tv-verdict .tv-amount[data-len='11'] {
+  font-size: 88px;
+}
+html body .tv .tv-last small {
+  color: var(--mute);
 }

@@ -9,6 +9,7 @@ import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
 import { Icon, QR } from '../components/Bits';
 import { TireLoader } from '../components/TireLoader';
+import { Wheel } from '../components/Wheel';
 import { Wordmark } from '../components/Logo';
 import { Photo } from '../components/Gallery';
 import { specLine } from '../components/LotSheet';
@@ -23,7 +24,7 @@ const num = (n: number | string) => String(n);
 const W = 1920;
 const H = 1080;
 
-const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'gold' | 'red' }> = {
+const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'alloy' | 'red' }> = {
   lobby: { t: 'الصالة مفتوحة', tone: 'calm' },
   intro: { t: 'المزاد بيبدأ', tone: 'calm' },
   preview: { t: 'معاينة', tone: 'calm' },
@@ -31,11 +32,11 @@ const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'gold' 
   sealed: { t: 'الظرف المختوم', tone: 'seal' },
   approval: { t: 'بانتظار البايع', tone: 'seal' },
   dutch: { t: 'المزاد الهولندي', tone: 'live' },
-  sold: { t: 'بيعت', tone: 'gold' },
-  unsold: { t: 'ما انباعت', tone: 'red' },
+  sold: { t: 'بيعت', tone: 'calm' },
+  unsold: { t: 'ما انباعت', tone: 'calm' },
   showcase: { t: 'الكراجات', tone: 'calm' },
   voting: { t: 'التصويت', tone: 'calm' },
-  results: { t: 'النتايج', tone: 'gold' },
+  results: { t: 'النتايج', tone: 'alloy' },
 };
 
 const VERDICT: Record<Sale['verdict'], string> = {
@@ -232,14 +233,29 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
   );
 }
 
+/** The real wheel's 3/4 render, large in a bottom corner of the attract screens under a soft top light. */
+function HeroWheel() {
+  const [gone, setGone] = useState(false);
+  if (gone) return null;
+  return (
+    <div className="tv-hero" aria-hidden="true">
+      <img src="/brand/wheel/hero-960.webp" alt="" width={960} height={960} decoding="async" onError={() => setGone(true)} />
+    </div>
+  );
+}
+
 function Waiting({ code, status }: { code: string; status: ViewerStatus }) {
   return (
     <div className="tv-wait">
       <Wordmark size={150} className="tv-wait-mark" />
       <div className="tv-code-label">كود الصالة</div>
       <div className="tv-wait-code ltr">{code}</div>
-      <TireLoader size={92} className="tv-wait-tire" label={status.connected ? 'ننتظر المضيف يفتح الصالة…' : 'نتصل بالصالة…'} />
+      <p className="tv-waitline">
+        <Wheel size={72} spin="slow" />
+        {status.connected ? 'ننتظر المضيف يفتح الصالة' : 'نتصل بالصالة'}
+      </p>
       <small>شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</small>
+      <HeroWheel />
     </div>
   );
 }
@@ -254,6 +270,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
   return (
     <div className="tv-lobby">
       <section className="tv-lobby-main">
+        <Wordmark size={110} className="tv-lobby-mark" />
         <div className="tv-kicker">ادخل من جوالك</div>
         <h1 className="tv-lobby-title">{s.roomName || 'مزاد الكراج'}</h1>
         <div className="tv-code-label">كود الصالة</div>
@@ -303,10 +320,15 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
               </li>
             ))}
           </ul>
-          {players.length < 2 && <p className="tv-joined-wait">ننتظر الشباب يدخلون…</p>}
+          {players.length < 2 && <p className="tv-joined-wait">ننتظر الشباب يدخلون</p>}
+          <p className="tv-waitline">
+            <Wheel size={72} spin="slow" />
+            بانتظار الدلال يبدأ
+          </p>
           <p className="tv-full-hint">دبل كلك على الشاشة أو اضغط F عشان تملا الشاشة</p>
         </div>
       </section>
+      <HeroWheel />
     </div>
   );
 }
@@ -353,7 +375,7 @@ function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null;
   return (
     <div className="tv-lot" key={lot.id}>
       <div className="tv-lot-main">
-        <Stage lot={lot} sale={done ? sale : null} phase={core.phase} />
+        <Stage lot={lot} sale={done ? sale : null} phase={core.phase} lotNo={core.lotNo} lotsTotal={core.lotsTotal} />
         <CarHead lot={lot} sale={done ? sale : null} />
       </div>
       <aside className="tv-lot-side">{done && sale ? <Verdict core={core} sale={sale} /> : <PricePanel core={core} lot={lot} offset={offset} />}</aside>
@@ -366,7 +388,7 @@ function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null;
 }
 
 /** The car's photo, slowly cycling through the ad's first shots; a studio silhouette when there's none. */
-function Stage({ lot, sale, phase }: { lot: LotPub; sale: Sale | null; phase: Phase }) {
+function Stage({ lot, sale, phase, lotNo, lotsTotal }: { lot: LotPub; sale: Sale | null; phase: Phase; lotNo: number; lotsTotal: number }) {
   const car = lot.car ?? sale?.car ?? null;
   const covered = !car;
   // keyed by the URLs, not the object: a fresh snapshot of the same car must not restart the slideshow
@@ -402,6 +424,13 @@ function Stage({ lot, sale, phase }: { lot: LotPub; sale: Sale | null; phase: Ph
       ) : (
         <div className="tv-studio">
           <Silhouette body={body} color={car?.colorHex} mono={covered} />
+        </div>
+      )}
+      {lotNo > 0 && (
+        <div className="tv-sticker">
+          <small>لوت</small>
+          <b>{num(lotNo)}</b>
+          <small>من {num(lotsTotal)}</small>
         </div>
       )}
       {covered && !sale && <div className="tv-covered-tag">سيارة مغطاة، تنكشف بعد البيع</div>}
@@ -483,7 +512,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
       ) : (
         <div className="tv-price-main">
           <div className="tv-label">{bid ? 'السوم الحالي' : preview ? 'تفتح على' : 'سعر الافتتاح'}</div>
-          <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`}>
+          <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`} data-len={money(bid ? bid.amount : core.opening || lot.opening).length}>
             <span className="ltr">{money(bid ? bid.amount : core.opening || lot.opening)}</span>
             <small>ريال</small>
           </div>
@@ -546,7 +575,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
   const buyer = core.players.find((p) => p.id === sale.buyer);
   return (
     <div className={`tv-verdict ${sold ? 'sold' : 'unsold'}`}>
-      <div className="tv-stamp">{sold ? 'بيعت' : 'ما انباعت'}</div>
+      {sold ? <div className="tv-stamp">بيعت</div> : <div className="tv-unsold-h">ما انباعت</div>}
       {sold ? (
         <>
           <div className="tv-label">على</div>
@@ -555,7 +584,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
             <b>{buyer?.name ?? ''}</b>
           </div>
           <div className="tv-label">بسعر</div>
-          <div className="tv-amount">
+          <div className="tv-amount" data-len={money(sale.hammer).length}>
             <span className="ltr">{money(sale.hammer)}</span>
             <small>ريال</small>
           </div>
