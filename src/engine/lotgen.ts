@@ -5,6 +5,7 @@ import { Rng } from '../lib/rng';
 import { SELLER, fill } from './lines';
 import { SELLER_LINES } from './realism_lines';
 import { historyFor, micronsFor, rollSurprise, scanFor } from './realism';
+import { checksFor, faultPool, moreFeatures, rememberNight, serviceLines, storyFor } from './story_lines';
 import { TRANSFER_FEE, increment, roundToStep } from './rules';
 import { marketOf } from './markets';
 import { dutchPlan } from './dutch';
@@ -558,7 +559,13 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   const fines = rng.chance(0.12) ? rng.int(3, 60) * 100 : 0;
 
   const tires = Math.min(NOW_YEAR, Math.max(m.year, NOW_YEAR - rng.int(0, 4)));
-  const extras = ad ? (ad.feats ?? []).slice(0, 6) : rng.sample(FEATURES[m.tier] ?? FEATURES.daily, rng.int(2, 4));
+  const extras = ad ? (ad.feats ?? []).slice(0, 6) : (() => {
+        const pool = [...new Set([...(FEATURES[m.tier] ?? FEATURES.daily), ...moreFeatures(m.tier)])];
+        const fresh = pool.filter((x) => !used.has(x));
+        const got = rng.sample(fresh.length >= 4 ? fresh : pool, rng.int(2, 4));
+        for (const x of got) used.add(x);
+        return got;
+      })();
   const modsPicked = !ad && rng.chance(0.55) ? rng.sample(MODS, rng.int(1, 2)) : [];
   for (const [label] of modsPicked) extras.push(label);
   const warranty = age <= 3 && service === 'dealer' && specKind === 'saudi' && rng.chance(0.75) ? `ضمان وكالة ساري حتى ${m.year + 5}` : undefined;
@@ -658,14 +665,17 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
     notes.push(x);
   };
   if (mode === 'asis') notes.push('فحص خارجي فقط، العيوب الخفية ما تنضمن');
-  if (mech.engine === 'minor') say(['تهريب زيت خفيف من غطا البلوف', 'تكتكة خفيفة وهي باردة', 'رجفة بسيطة على الفاضي', 'أثر زيت تحت المكينة', 'صوت سير خفيف أول التشغيل', 'المكينة تبي صيانة بواجي وفلاتر']);
-  if (mech.engine === 'major') say(['دخان أزرق مع الدعسة', 'ضغط المكينة ضعيف في سلندر', 'صوت طقطقة من تحت الغطا', 'المكينة تسخن مع الوقفة', 'تهريب ماء من الرديتر وأثر حرارة']);
-  if (mech.gearbox === 'minor') say(['نتعة خفيفة بين الأول والثاني', 'القير يتأخر شوي وهو بارد', 'رفسة بسيطة على الريوس', 'زيت القير يبي تغيير', 'تعشيق الثالث فيه تردد بسيط']);
-  if (mech.gearbox === 'major') say(['تأخير تعشيق واضح', 'القير يفصل على السرعات العالية', 'صوت صفير من القير مع الدعسة', 'القير ينتع بقوة بين الثاني والثالث']);
-  if (mech.susp === 'minor') say(['صوت جلب من قدام', 'المساعدات الخلفية تعبانة شوي', 'ميزانية تبي ضبط، تسحب يمين', 'صوت طقطقة مع اللف من المقص', 'جلد المقصات متشقق']);
-  if (mech.ac === 'weak') say(['المكيف يبرد على خفيف', 'المكيف يبي تعبئة فريون', 'مروحة المكيف ضعيفة', 'المكيف يبرد بعد ما تمشي فيها']);
-  if (body.chassis === 'repaired') say(['أثر لحام على القائمة الأمامية', 'الشاصي الخلفي مسحوب ومعدل', 'أثر تعديل على الدعامة الأمامية', 'برغي القائمة مفكوك ومعاد']);
-  if (cls === 'clean' && service === 'dealer' && rng.chance(0.6)) say(['السيارة بحالة وكالة', 'البودي وكالة والسجل منتظم', 'محركاتها وكالة ما انفكت', 'نظيفة ومخدومة عند الوكيل']);
+  if (mech.engine === 'minor') say(faultPool('engine_minor'));
+  if (mech.engine === 'major') say(faultPool('engine_major'));
+  if (mech.gearbox === 'minor') say(faultPool('gearbox_minor'));
+  if (mech.gearbox === 'major') say(faultPool('gearbox_major'));
+  if (mech.susp === 'minor') say(faultPool('susp_minor'));
+  if (mech.ac === 'weak') say(faultPool('ac_weak'));
+  if (body.chassis === 'repaired') say(faultPool('chassis'));
+  if (cls === 'clean' && service === 'dealer' && rng.chance(0.6)) say(faultPool('dealer_clean'));
+  if (mech.susp === 'major') say(faultPool('susp_major'));
+  // a clean car gets the inspector's plain findings, worded differently from car to car
+  if (mode !== 'asis' && notes.length === 0 && mech.ac === 'cold') say(faultPool('positive'));
   // the model's own known weak spots, as a Saudi inspector would flag them
   const freshIssues = m.issues.filter((x) => !used.has(x));
   if (freshIssues.length && rng.chance(cls === 'clean' ? 0.3 : 0.6)) {
@@ -742,7 +752,7 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   };
   const truth: CarPub = { ...car, panels: body.panels, mech, microns: truthMicrons, inspector: notes };
   truth.scan = scanFor(rng, truth);
-  truth.history = historyFor(rng, truth, NOW_YEAR);
+  truth.history = [...historyFor(rng, truth, NOW_YEAR), ...serviceLines(rng, truth, NOW_YEAR, used)];
   car.scan = mode === 'asis' ? { status: 'none', codes: [] } : truth.scan;
   car.history = truth.history;
   return { car, truth, value: v, tags, mode, seller, adText: ad?.text ?? undefined, ad, used };
@@ -1066,6 +1076,7 @@ export function buildDeck(
     tierCount.set(c.m.tier, (tierCount.get(c.m.tier) ?? 0) + 1);
     deck.push(makeLot(rng, c.m, kind, i + 1, settings, c.ad, used));
   }
+  rememberNight();
   return deck;
 }
 
@@ -1095,6 +1106,14 @@ export function makeLot(
     b.car.inspector = [...b.car.inspector, rolled.tell];
     b.truth.inspector = [...b.truth.inspector, rolled.tell];
   }
+  // the دلال's file and the inspector's readings, drawn after the surprise so the tells can follow it
+  const sctx = { car: b.car, truth: b.truth, seller: b.seller, surprise, nowYear: NOW_YEAR, asis: b.mode === 'asis' };
+  const story = storyFor(rng, sctx, used);
+  const checks = checksFor(rng, sctx);
+  b.car.story = story;
+  b.car.checks = checks;
+  b.truth.story = story;
+  b.truth.checks = checks;
   const v = b.value;
   let opening: number;
   if (kind === 'covered') {

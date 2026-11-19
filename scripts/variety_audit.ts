@@ -6,6 +6,10 @@ import { loadMarket, CATALOGUE as CAT } from '../src/data/market';
 import type { LotFull } from '../src/engine/types';
 
 const COND: Record<string, string> = {};
+// one host phone's storage, so the across-night memory works as on the device
+const mem = new Map<string, string>();
+(globalThis as any).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => mem.set(k, v) };
+const DUPS = new Map<string, number>();
 function strings(l: LotFull): { all: string[]; story: string[]; sheet: string } {
   const c = l.car;
   if (!c) return { all: [], story: [], sheet: '' };
@@ -25,29 +29,33 @@ function night(seed: number, mix: string) {
 }
 
 function audit(mix: string, nights: number) {
+  let prevNight = new Set<string>(), repPrev = 0;
   let dupWithin = 0, lots = 0, sameSheet = 0, storyTotal = 0, storyRepeat = 0;
   const seenStory = new Set<string>();
   for (let n = 0; n < nights; n++) {
     const deck = night(1000 + n * 7919, mix);
     const counts = new Map<string, number>();
+    const thisNight = new Set<string>();
     const sheets = new Map<string, number>();
     for (const l of deck) {
       if (!l.car) continue;
       lots++;
       const st = strings(l);
       for (const x of new Set(st.all)) counts.set(x, (counts.get(x) ?? 0) + 1);
+      for (const x of st.story) thisNight.add(x);
       sheets.set(st.sheet, (sheets.get(st.sheet) ?? 0) + 1);
       for (const x of st.story) {
         storyTotal++;
         if (seenStory.has(x)) storyRepeat++;
       }
-      for (const x of st.story) seenStory.add(x);
+      for (const x of st.story) { seenStory.add(x); if (prevNight.has(x)) repPrev++; }
     }
-    for (const [, k] of counts) if (k > 1) dupWithin += k - 1;
+    for (const [x, k] of counts) if (k > 1) { dupWithin += k - 1; DUPS.set(x, (DUPS.get(x) ?? 0) + k - 1); }
+    prevNight = thisNight;
     for (const [, k] of sheets) if (k > 1) sameSheet += k;
   }
   console.log(
-    `${mix.padEnd(9)} nights=${nights} lots=${lots} dupStringsWithinNight=${dupWithin} lotsWithIdenticalSheet=${sameSheet} (${((100 * sameSheet) / Math.max(1, lots)).toFixed(1)}%) storyLines=${storyTotal} storyRepeatAcrossNights=${((100 * storyRepeat) / Math.max(1, storyTotal)).toFixed(1)}%`,
+    `${mix.padEnd(9)} nights=${nights} lots=${lots} dupStringsWithinNight=${dupWithin} lotsWithIdenticalSheet=${sameSheet} (${((100 * sameSheet) / Math.max(1, lots)).toFixed(1)}%) storyLines=${storyTotal} storyRepeatVsPrevNight=${((100 * repPrev) / Math.max(1, storyTotal)).toFixed(1)}% storyEverSeenBefore=${((100 * storyRepeat) / Math.max(1, storyTotal)).toFixed(1)}%`,
   );
 }
 
@@ -55,4 +63,5 @@ loadMarket().then(() => {
   audit('balanced', 20);
   audit('luxury', 1);
   audit('street', 1);
+  console.log([...DUPS].sort((a, b) => b[1] - a[1]).slice(0, 12));
 });
