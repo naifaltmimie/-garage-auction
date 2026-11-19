@@ -1,6 +1,6 @@
-/* ================================================================ the wait: a tyre on the road
-   The tyre (the same drawing as .spinner, --tex-tire in theme.css) turns and bobs on its springs,
-   the lane marks slide past underneath, and the line under it says what we're waiting for. */
+/* ================================================================ the wait: the real wheel turning on the spot
+   The wheel (<Wheel/>, wheel.css) turns over its contact shadow, two or three thin streaks slide past
+   on the ground, and the line under it says what we're waiting for. */
 
 .tire-loader {
   display: grid;
@@ -11,75 +11,86 @@
 
 .tl-stage {
   position: relative;
-  width: calc(var(--tl, 54px) * 2.6);
-  height: calc(var(--tl, 54px) + 14px);
+  display: grid;
+  place-items: center;
+  width: calc(var(--tl, 54px) * 2.4);
+  height: calc(var(--tl, 54px) + 10px);
 }
 
-.tl-tire {
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  width: var(--tl, 54px);
-  height: var(--tl, 54px);
-  margin-left: calc(var(--tl, 54px) / -2);
-  background: var(--tex-tire) center / contain no-repeat;
-  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, .55));
-  animation: tl-turn .7s linear infinite, tl-bob .35s ease-in-out infinite alternate;
+.tl-wheel {
+  position: relative;
+  z-index: 1;
 }
 
-/* the road: a strip of tarmac with lane marks sliding right to left (we drive the way we read) */
-.tl-road {
+/* speed streaks: thin chalk lines on the ground, sliding right to left (we drive the way we read) */
+.tl-streak {
   position: absolute;
-  inset: auto 0 0;
-  height: 8px;
-  border-radius: 99px;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, .55) 0 14px, transparent 14px 30px) 0 50% / 100% 2px no-repeat,
-    linear-gradient(180deg, #24262b, #141517);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-  animation: tl-lane .42s linear infinite;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 1px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+}
+
+.tl-streak::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34%;
+  height: 100%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .5));
+  animation: tl-streak .9s linear infinite;
+}
+
+.tl-streak:nth-child(2) {
+  bottom: 9px;
+  left: 14%;
+  right: 6%;
+}
+
+.tl-streak:nth-child(2)::before {
+  width: 22%;
+  animation-duration: .7s;
+  animation-delay: -.35s;
+  opacity: .6;
+}
+
+.tl-streak:nth-child(3) {
+  bottom: 1px;
+  left: 4%;
+  right: 18%;
+}
+
+.tl-streak:nth-child(3)::before {
+  width: 18%;
+  animation-duration: 1.1s;
+  animation-delay: -.6s;
+  opacity: .45;
 }
 
 .tl-label {
   margin: 0;
   max-width: 280px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-2);
 }
 
-@keyframes tl-turn {
-  to {
-    rotate: -360deg;
-  }
-}
-
-@keyframes tl-bob {
+@keyframes tl-streak {
   from {
-    translate: 0 0;
+    transform: translateX(300%);
   }
   to {
-    translate: 0 -2px;
-  }
-}
-
-@keyframes tl-lane {
-  from {
-    background-position: 0 50%, 0 0;
-  }
-  to {
-    background-position: -30px 50%, 0 0;
+    transform: translateX(-110%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tl-tire {
-    animation: tl-turn 3s linear infinite;
-  }
-
-  .tl-road {
-    animation: none;
+  .tl-streak {
+    display: none;
   }
 }
