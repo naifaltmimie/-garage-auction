@@ -1,0 +1,101 @@
+/* ================================================================ the law's last word
+   Imported last. Where an older sheet still disagrees with docs/DESIGN.md, this settles it:
+   ruled lines instead of boxes, chalk instead of warm tints, one red at a time. */
+
+/* the inspector's notes: a ruled list */
+.notes {
+  gap: 0;
+}
+
+.notes li {
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.notes li:last-child {
+  border-bottom: 0;
+}
+
+/* the records: label on one side, the fact on the other, a hairline between rows */
+.records {
+  gap: 0;
+}
+
+.records li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.records li:last-child {
+  border-bottom: 0;
+}
+
+.records li b {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.records li span {
+  min-width: 0;
+  font-weight: 600;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+/* a bad record is said in chalk with a small red mark */
+.records li.warn {
+  background: none;
+  border-color: var(--line);
+}
+
+.records li.warn span {
+  color: var(--ink);
+}
+
+.records li.warn span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-end: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  vertical-align: 2px;
+}
+
+/* the grade boxes: one hairline, the figure in chalk */
+.vbox.tone-mid,
+.vbox.tone-bad,
+.vbox.tone-good {
+  border-color: var(--line);
+}
+
+.vbox.tone-mid b {
+  color: var(--ink);
+}
+
+/* the sale-kind tag on the photo is a dark label, whatever the kind */
+.g-kind.gold {
+  background: rgba(9, 9, 11, .82);
+}
+
+/* the plate chip is paper, like the plate */
+.chip.plate-chip {
+  background: var(--plate);
+  border-color: transparent;
+  color: var(--plate-ink);
+}
