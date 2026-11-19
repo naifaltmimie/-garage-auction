@@ -4,17 +4,13 @@ import { LogoMark } from './Logo';
 import { store } from '../../lib/util';
 
 /** Bumped with each release that has something worth announcing; a phone sees each one once. */
-const RELEASE = '2026-11-05';
+const RELEASE = '2026-11-19';
 const SEEN_KEY = 'mzk:news';
 
-const ITEMS: { title: string; body: string }[] = [
-  { title: 'المزاد الهولندي', body: 'السعر يبدأ فوق وينزل، وأول واحد يقول «أبيها» ياخذها. تأخرت؟ راحت عليك.' },
-  { title: 'شاشة العرض', body: 'افتح المزاد على التلفزيون أو اللابتوب للمجلس كله، والشباب يسومون من جوالاتهم.' },
-  { title: 'ردود فعل على الهواء', body: 'لقطة، غالية، يا سلام… تطير على شاشات الكل، والجوال يهتز لما أحد يزاود عليك.' },
-  { title: 'جوائز الليلة وسجلّك', body: 'صفقة الليلة وأغلى غلطة والحوت، وسجلّك من ليلة لليلة محفوظ في جوالك.' },
-  { title: 'شارك كراجك', body: 'صورة مرتبة لكراجك ولقطاتك، جاهزة ترسلها للقروب.' },
-  { title: 'ثيم الكفرات', body: 'شعار «بطاقة السعر»، واللعبة كلها بلون الكفرات ودعستها. الأزرار تنضغط تحت إصبعك، والانتظار كفر يلف على الطريق.' },
-  { title: 'أسرع وأسلس', body: 'اللعبة تفتح عند اللاعب بثلث الحجم، السوم يحس فوري، وزر الرجوع ما يطلّعك من الصالة بالغلط.' },
+const ITEMS: { title: string; body?: string }[] = [
+  { title: 'ألوان جديدة: أسود وأبيض وأحمر' },
+  { title: 'كفر حقيقي: مصوّر ثلاثي الأبعاد' },
+  { title: 'كل سيارة لها سالفتها وقراءات فحصها' },
 ];
 
 /** Whether this phone hasn't seen the current release notes yet. */
@@ -53,7 +49,6 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
             <LogoMark size={40} />
           </span>
           <div>
-            <span className="news-kicker">إصدار جديد</span>
             <h2 id="news-title">الجديد في الصالة</h2>
           </div>
         </header>
@@ -63,7 +58,7 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
               <span className="news-num ltr">{String(i + 1).padStart(2, '0')}</span>
               <span>
                 <b>{it.title}</b>
-                <small>{it.body}</small>
+                {it.body && <small>{it.body}</small>}
               </span>
             </li>
           ))}

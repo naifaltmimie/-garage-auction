@@ -144,11 +144,10 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
         </button>
       )}
       {inGame && core.lotNo > 0 && (
-        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`اللوت ${core.lotNo} من ${core.lotsTotal}`}>
-          <small>{live ? <span className="live"><i />مباشر</span> : 'اللوت'}</small>
-          <span className="tb-lot-n">
-            <b className="ltr">{String(core.lotNo).padStart(2, '0')}</b>
-            <span className="ltr">/{core.lotsTotal}</span>
+        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`${live ? 'مباشر، ' : ''}اللوت ${core.lotNo} من ${core.lotsTotal}`}>
+          {live && <i className="tb-live" aria-hidden="true" />}
+          <span className="tb-lot-n ltr">
+            <b>{String(core.lotNo).padStart(2, '0')}</b>/{core.lotsTotal}
           </span>
         </div>
       )}
@@ -169,10 +168,6 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
             </span>
           </div>
           <b className="ltr">{money(me.cash)}</b>
-          {/* a fuel gauge: what's left of the night's budget */}
-          <i className="w-gauge" aria-hidden="true">
-            <i style={{ ['--f' as string]: Math.min(1, Math.max(0, me.cash / Math.max(1, core.settings.budget))) }} />
-          </i>
         </div>
       )}
       <button

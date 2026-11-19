@@ -134,8 +134,8 @@
 .rm-inline {
   padding: 12px;
   border-radius: var(--r);
-  background: var(--red-50);
-  border: 1px solid #f3cfcb;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--line-2, var(--line));
   animation: rm-in .2s var(--ease) both;
 }
 
@@ -203,11 +203,11 @@
   width: 8px;
   height: 8px;
   border-radius: 99px;
-  background: var(--gold-hi);
+  background: var(--ink-2);
 }
 
 .room-status.net .rs-pill i {
-  background: var(--amber);
+  background: var(--ink-2);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
@@ -218,8 +218,8 @@
   padding: 0 14px;
   border: 0;
   border-radius: 99px;
-  background: var(--gold-hi);
-  color: var(--green-950);
+  background: var(--ink);
+  color: var(--rubber-1, #111214);
   font: inherit;
   font-weight: 800;
   cursor: pointer;

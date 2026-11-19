@@ -46,14 +46,14 @@
   width: 56px;
   height: 56px;
   flex: none;
-  color: var(--gold);
-  background: var(--gold-50);
-  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
   border-radius: 50%;
 }
 .news-kicker {
   display: block;
-  color: var(--gold);
+  color: var(--mute);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -116,7 +116,7 @@
 }
 .news-classic:focus-visible,
 .news-card .btn:focus-visible {
-  outline: 2px solid var(--gold-hi);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 .home-news-dot {
@@ -125,7 +125,7 @@
   height: 7px;
   margin-inline-start: 6px;
   border-radius: 50%;
-  background: var(--gold-hi);
+  background: var(--ink);
   vertical-align: middle;
 }
 @media (min-width: 720px) {
