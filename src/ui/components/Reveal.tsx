@@ -148,7 +148,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
         {stage >= 1 && (
           <div className="rv-sec slip">
             <h4>
-              <span>كشف التسوية</span>
+              <span>الحساب</span>
               <span className="ltr mute">#{String(sale.no).padStart(4, '0')}</span>
             </h4>
             <dl>
@@ -180,7 +180,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
 
         {stage >= 2 && (
           <div className={`rv-truth tone-${tone}`}>
-            <small>القيمة الحقيقية بالسوق</small>
+            <small>سعرها الصدق بالسوق</small>
             <b className="t-money"><CountUp target={shownValue} run={stage >= 2} /></b>
             {plateVal > 0 && <span className="mute small">منها اللوحة {money(plateVal)}</span>}
             <span className={`verdict tone-${tone} ${profitShown >= 0 ? 'up' : 'down'}`}>

@@ -38,7 +38,7 @@ export function Home() {
           <img className="hero-logo" src={LOGO.stack} width={300} height={263} alt="مزاد الكراج" draggable={false} />
         </h1>
         <p className="hero-line">مزاد سيارات على أصوله</p>
-        <p className="hero-sub">سيارات حقيقية من حراج بصورها وتقرير فحصها ولوحاتها. سُم مع الشباب، وابنِ أقوى كراج قبل ما تنزل المطرقة.</p>
+        <p className="hero-sub">سيارات حقيقية من حراج بصورها وتقرير فحصها ولوحاتها. سُم مع الشباب، وابنِ أقوى كراج قبل ما يرسي السوم.</p>
 
         <div className="hero-cta">
           <button
@@ -119,7 +119,7 @@ export function Home() {
             </li>
             <li>
               <span>
-                <b>بعد المطرقة.</b> تنكشف القيمة الحقيقية: يا لقطة يا انقصّ عليك، ومرات تطلع مفاجأة.
+                <b>إذا رست.</b> تنكشف القيمة الحقيقية: يا لقطة يا انقصّ عليك، ومرات تطلع مفاجأة.
               </span>
             </li>
           </ol>

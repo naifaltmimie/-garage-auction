@@ -43,7 +43,7 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
     const cheap = [...sold].sort((a, b) => a.paid - b.paid)[0];
     add({ key: 'cheap', title: 'أبو لقطة', who: cheap.buyer!, name: '', line: `أرخص شروة بالليلة: ${carName(cheap)} ${cheap.car.year}`, figure: money(cheap.paid), figureLabel: 'دفع' }, 6, 1);
     const big = [...sold].sort((a, b) => b.paid - a.paid)[0];
-    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة نزلت عليها المطرقة: ${carName(big)} ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
+    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة رست بالليلة:${carName(big)} ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
   }
   if (buyers.size >= 2) {
     const most = uniqueTop(rows.filter((r) => r.cars >= 2), (r) => r.cars);
