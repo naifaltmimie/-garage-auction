@@ -209,7 +209,7 @@ export function Lobby({ room }: { room: RoomView }) {
                   <dd>{s.fee > 0 ? <><span className="ltr">{s.fee}%</span> وضريبتها</> : 'بدون'}</dd>
                 </div>
                 <div>
-                  <dt>أنواع اللوتات</dt>
+                  <dt>طرق البيع</dt>
                   <dd>{['علني', s.covered ? 'تحت الغطا' : null, s.sealed ? 'ظرف مختوم' : null, s.dutch !== false ? 'هولندي' : null].filter(Boolean).join('، ')}</dd>
                 </div>
                 <div>

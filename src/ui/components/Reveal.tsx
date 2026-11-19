@@ -59,7 +59,7 @@ function Hero({ sale, stamp, grey, mine }: { sale: Sale; stamp: string; grey?: b
         <div className="rv-ink">
           <span>{stamp}</span>
           {mine && <em>لك</em>}
-          <small className="ltr">LOT {String(sale.no).padStart(2, '0')}</small>
+          <small>سيارة رقم <span className="ltr">{sale.no}</span></small>
         </div>
       </div>
     </div>
@@ -101,7 +101,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
     );
   }
   return (
-    <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة اللوت">
+    <div className={`overlay ${mine ? 'fx-mine' : ''}`} role="dialog" aria-label="نتيجة السيارة">
       <div className="reveal">
         {sealed && (
           <div className="rv-sec">
@@ -148,7 +148,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
         {stage >= 1 && (
           <div className="rv-sec slip">
             <h4>
-              <span>كشف التسوية</span>
+              <span>الحساب</span>
               <span className="ltr mute">#{String(sale.no).padStart(4, '0')}</span>
             </h4>
             <dl>
@@ -180,7 +180,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
 
         {stage >= 2 && (
           <div className={`rv-truth tone-${tone}`}>
-            <small>القيمة الحقيقية بالسوق</small>
+            <small>سعرها الصدق بالسوق</small>
             <b className="t-money"><CountUp target={shownValue} run={stage >= 2} /></b>
             {plateVal > 0 && <span className="mute small">منها اللوحة {money(plateVal)}</span>}
             <span className={`verdict tone-${tone} ${profitShown >= 0 ? 'up' : 'down'}`}>

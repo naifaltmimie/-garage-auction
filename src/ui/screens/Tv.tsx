@@ -216,7 +216,7 @@ function TopBar({ core, code }: { core: Core | null; code: string }) {
       <div className="tv-top-end">
         {inLots && (
           <div className="tv-lotno">
-            <small>اللوت</small>
+            <small>السيارة</small>
             <b>
               {num(core!.lotNo)} <span>من {num(core!.lotsTotal)}</span>
             </b>
@@ -288,7 +288,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
             <b className="ltr">{money(s.budget)}</b>
           </span>
           <span>
-            <small>عدد اللوتات</small>
+            <small>عدد السيارات</small>
             <b>{num(lotsFor(s, Math.max(2, players.length)))}</b>
           </span>
           <span>
@@ -340,7 +340,7 @@ function IntroBoard({ core }: { core: Core }) {
       <div className="tv-kicker">الليلة في الصالة</div>
       <h1>{core.settings.roomName || 'مزاد الكراج'}</h1>
       <p className="tv-sep">
-        <span>{num(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} لوت</span>
+        <span>{num(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} سيارات</span>
         <span>{num(players.length)} مزايدين</span>
         <span>
           كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
@@ -368,7 +368,7 @@ function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null;
   if (!lot) {
     return (
       <div className="tv-lot-wait">
-        <TireLoader size={92} className="tv-wait-tire" label="اللوت الجاي على الطريق…" />
+        <TireLoader size={92} className="tv-wait-tire" label="السيارة الجاية على الطريق" />
       </div>
     );
   }
@@ -428,7 +428,7 @@ function Stage({ lot, sale, phase, lotNo, lotsTotal }: { lot: LotPub; sale: Sale
       )}
       {lotNo > 0 && (
         <div className="tv-sticker">
-          <small>لوت</small>
+          <small>رقم</small>
           <b>{num(lotNo)}</b>
           <small>من {num(lotsTotal)}</small>
         </div>

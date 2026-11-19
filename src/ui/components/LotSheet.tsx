@@ -179,7 +179,7 @@ const LotHead = memo(function LotHead({ lot, car, revealed }: { lot: LotPub; car
         <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
         <div className="car-year">
           <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
-          <span>الغطا ما ينشال إلا بعد ما تنزل المطرقة</span>
+          <span>الغطا ما ينشال إلا بعد ما يرسي السوم</span>
         </div>
         <div className="hints">
           {lot.cover?.hints.map((h) => (
@@ -208,7 +208,7 @@ export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: {
   const shown = covered || !car ? null : car;
 
   return (
-    <article className="lot" key={lot.id} aria-label={`لوت ${lot.no}`}>
+    <article className="lot" key={lot.id} aria-label={`السيارة ${lot.no}`}>
       <LotGallery lot={lot} car={shown} />
 
       <div className="lot-card">

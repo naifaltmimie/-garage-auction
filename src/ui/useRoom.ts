@@ -61,7 +61,7 @@ export interface RoomView {
 }
 
 const REASONS: Record<string, string> = {
-  late: 'وصل سومك متأخر، المطرقة نزلت',
+  late: 'وصل سومك متأخر، السوم رسا',
   low: 'سبقك أحد على هالسعر، زوّد',
   cash: 'رصيدك ما يغطي السوم مع السعي',
   full: 'كراجك فل',
