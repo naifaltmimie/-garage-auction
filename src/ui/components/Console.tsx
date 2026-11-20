@@ -794,10 +794,10 @@ export function Console({
     );
   } else if (spectator) {
     kind = 'calm';
-    body = <Calm icon="eye" title="أنت متفرج بهالجولة" sub="تابع السوم وتفاعل مع الشباب" />;
+    body = <Calm icon="eye" title="أنت متفرج بهالجولة" sub="تابع السوم وعلّق مع الشباب" />;
   } else if (garageFull) {
     kind = 'calm';
-    body = <Calm icon="car" title="كراجك فل" sub="تفرّج وقيّم السيارات، والتفاعل شغّال" />;
+    body = <Calm icon="car" title="كراجك فل" sub="ما تقدر تشتري زيادة، تفرّج وعلّق مع الشباب" />;
   } else if (offline) {
     kind = 'calm';
     body = <Calm icon="info" title="مقطوع، نرجّع الخط…" sub="السوم يرجع لك أول ما يرجع الخط، والساعة ماشية" tone="off" />;
@@ -818,7 +818,7 @@ export function Console({
         title="رصيدك ما يكفي هالسيارة"
         sub={
           <>
-            تقدر لين <span className="ltr">{money(maxBid)}</span> · تفرّج وتفاعل لين تجي سيارة على قدك
+            تقدر لين <span className="ltr">{money(maxBid)}</span> · تفرّج وعلّق لين تجي سيارة على قدك
           </>
         }
       />
@@ -837,7 +837,7 @@ export function Console({
             <small>ريال</small>
           </span>
         </div>
-        <span className="cs-hold-s">لا أحد يزيد عليك لين تخلص الساعة</span>
+        <span className="cs-hold-s">إذا ما زاد أحد لين تخلص الساعة، صارت لك</span>
       </div>
     );
   } else {

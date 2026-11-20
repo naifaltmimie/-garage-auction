@@ -96,7 +96,7 @@ function Verdict({ sale, stage, mine, buyerName }: { sale: Sale; stage: SaleStag
   const word = shown.settled ? VERDICT_LABEL[sale.verdict] : up ? 'ربح' : 'خسارة';
   const s = stage >= 3 ? sale.surprise : null;
   return (
-    <section className="srv-verdict" aria-label="هل هي صفقة">
+    <section className="srv-verdict" aria-label="لقطة ولا لا">
       <p className={`srv-verdict-k${stage >= 1 ? ' is-on' : ''}`}>سعرها الصدق بالسوق</p>
       <div className="srv-value">
         {shown.value === null ? (
