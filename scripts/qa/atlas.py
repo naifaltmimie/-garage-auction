@@ -310,7 +310,10 @@ async def free_bid(pg, amount):
     """Opens the free-bid keypad, types the amount and sends it (an extreme amount asks a second time)."""
     if not await click(pg, '.cs-key.is-free:not(:disabled)', 900):
         return False
-    await type_amount(pg, amount)
+    try:
+        await type_amount(pg, amount)
+    except Exception:  # noqa: BLE001
+        return False  # the lot closed under the keypad
     if not await click(pg, '.cs-pad .bid-main:not(:disabled)', 900):
         return False
     await wait(0.25)
@@ -507,6 +510,10 @@ async def end_night(a, host, pages, tv=None, prefix=''):
                 await wait(0.35)
                 if first and i == 0:
                     await a.shot(pg, f'{prefix}voting-second-car')
+                continue
+            # a pick on a garage before the last moves on by itself after 400 ms: the last one may still be unrated
+            if not await pg.locator('.rate button[aria-checked="true"]').count():
+                await wait(0.3)
                 continue
             if first:
                 await a.shot(pg, f'{prefix}voting-last-before-send')
@@ -923,15 +930,18 @@ async def main_run(p):
             await until(saud, 'sealed', lot=n, limit=20)
             await wait(0.5)
             await a.shot(saud, 'sealed-before')
+            # with a full garage سعود only watches: the host and the envelope he seals are shot instead
+            sealer = host if await garage_full(saud) else saud
             try:
-                await saud.locator('.cs-env .cs-raise button:not(:disabled)').nth(1).click(timeout=1200)
+                await sealer.locator('.cs-env .cs-raise button:not(:disabled)').nth(1).click(timeout=1200)
                 await wait(0.2)
-                await a.shot(saud, 'sealed-amount-picked')
-                await need(a, saud, 'اختم الظرف')
+                await a.shot(sealer, 'sealed-amount-picked')
+                await need(a, sealer, 'اختم الظرف')
                 await wait(0.6)
-                await a.shot(saud, 'sealed-after')
-                await host.locator('.cs-env .cs-raise button:not(:disabled)').nth(0).click(timeout=1200)
-                await need(a, host, 'اختم الظرف')
+                await a.shot(sealer, 'sealed-after')
+                if sealer is saud:
+                    await host.locator('.cs-env .cs-raise button:not(:disabled)').nth(0).click(timeout=1200)
+                    await need(a, host, 'اختم الظرف')
             except Exception as ex:  # noqa: BLE001
                 a.miss('sealed envelope', ex)
             await until(saud, ['sold', 'unsold', 'approval'], lot=n, limit=40)
