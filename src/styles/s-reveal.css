@@ -27,12 +27,19 @@
 .srv.is-full { height: 94dvh; }
 @keyframes srv-up { from { transform: translateY(24px); opacity: 0; } }
 
-/* the reactions switch sits in the sheet's bottom corner: the sheet ends with room for it */
-[data-rxdock='sheet'] .srv:not(.srv-wait)::after {
-  content: '';
-  display: block;
-  height: 58px;
+/* the foot bar: always in reach, content scrolls under it; the reactions switch docks in its end slot, so it
+   never sits over the receipt or the listings */
+.srv:not(.srv-wait) { padding-bottom: 0; }
+.srv-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: auto -16px 0;
+  padding: 10px 16px max(12px, var(--safe-b));
+  background: var(--bg);
+  border-top: 1px solid var(--line);
 }
+[data-rxdock='sheet'] .srv-bar { padding-inline-end: 74px; }
 
 .srv-sr {
   position: absolute;
@@ -360,7 +367,7 @@
 }
 
 /* ---------------------------------------------------------------- the buttons */
-.srv-see { margin-top: 2px; touch-action: manipulation; }
+.srv-see { min-height: 48px; touch-action: manipulation; }
 .srv-back {
   position: fixed;
   z-index: 61;
@@ -375,6 +382,7 @@
 @media (max-width: 359px) {
   .srv { gap: 12px; padding-inline: 14px; }
   .srv-photo { margin-inline: -14px; }
+  .srv-bar { margin-inline: -14px; padding-inline: 14px; }
   .srv-value-n { font-size: 46px; }
   .srv-verdict-k.is-on { opacity: 1; }
 .srv-value { min-height: 50px; }

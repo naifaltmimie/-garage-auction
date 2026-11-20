@@ -51,7 +51,9 @@ function Buyer({ sale, buyer, mine }: { sale: Sale; buyer: PlayerPub | undefined
     : sale.kind === 'dutch'
       ? 'قال أبيها قبل الكل'
       : sale.sealedBids?.length
-        ? `أعلى ظرف من ${sale.sealedBids.length}`
+        ? sale.sealedBids.length === 1
+          ? 'الظرف الوحيد'
+          : `أعلى ظرف من ${sale.sealedBids.length}`
         : `بعد ${sale.bids} سوم`;
   return (
     <div className={`srv-buyer${mine ? ' is-mine' : ''}`}>
@@ -228,9 +230,12 @@ function Sheet({ label, mine, full, live, children }: { label: string; mine?: bo
           {live}
         </p>
         {children}
-        <button type="button" className="btn btn-ghost btn-block srv-see" onClick={() => setHidden(true)}>
-          شوف السيارة
-        </button>
+        {/* the way out stays in reach: a bar stuck to the sheet's foot, with a slot kept for the reactions switch */}
+        <div className="srv-bar">
+          <button type="button" className="btn btn-ghost btn-block srv-see" onClick={() => setHidden(true)}>
+            شوف السيارة
+          </button>
+        </div>
       </div>
     </div>
   );
