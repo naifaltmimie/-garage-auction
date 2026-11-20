@@ -7,7 +7,7 @@ import { PLATE_LETTERS, buildDeck } from './lotgen';
 import { dutchDuration, dutchPriceAt, dutchProgress } from './dutch';
 import {
   CLOSE_GRACE_MS, DROP_FACTOR, MAX_DROPS, SPEEDS, dealScore, extensionFor, feesOf, increment, lotsFor,
-  minNextBid, roundToStep, saleLeadInMs, verdictOf,
+  NAME_MAX, minNextBid, roundToStep, saleLeadInMs, verdictOf,
 } from './rules';
 import type {
   Award, BidState, Callout, CalloutKey, CarModel, Core, FinalResults, Hist, LogEntry, LotFull, LotPub,
@@ -124,7 +124,7 @@ export class HostEngine {
     const seed = (Math.random() * 2 ** 32) >>> 0;
     const rng = new Rng(seed);
     const host: HostPlayer = {
-      id: opts.hostId, sec: opts.hostSec, name: opts.hostName.trim().slice(0, 18) || 'الدلال', paddle: 1,
+      id: opts.hostId, sec: opts.hostSec, name: opts.hostName.trim().slice(0, NAME_MAX) || 'الدلال', paddle: 1,
       plate: plateFor(opts.hostName, rng), host: true, cash: opts.settings.budget, garage: [], online: true,
       spectator: false, bids: 0, lastSeen: opts.now,
     };
@@ -188,7 +188,7 @@ export class HostEngine {
   // ------------------------------------------------------------------ joining
 
   join(pid: string, sec: string, name: string, now: number): { ok: boolean; reason?: Nack; spectator?: boolean; changes: Changes } {
-    const clean = name.trim().slice(0, 18) || 'لاعب';
+    const clean = name.trim().slice(0, NAME_MAX) || 'لاعب';
     const ex = this.player(pid);
     if (ex) {
       if (ex.sec !== sec) return { ok: false, reason: 'auth', changes: {} };

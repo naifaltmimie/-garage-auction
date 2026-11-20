@@ -1,5 +1,8 @@
 import type { Settings, Speed, Verdict } from './types';
 
+/** The longest a player's name may be; the name fields use the same number. */
+export const NAME_MAX = 24;
+
 // Bid ladder in SAR. Mirrors how Gulf auction houses step bids by price band
 // (small steps for cheap cars, big steps once you are in luxury territory).
 export function increment(price: number): number {
