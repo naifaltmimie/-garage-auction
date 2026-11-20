@@ -1,16 +1,16 @@
 // The دلال's file on each car: who had it, how it lived, why it is out, what you notice at the viewing,
 // and the inspector's measured readings. Everything is drawn on the host from the lot's seeded rng,
-// so every phone shows the same file. Lines carry tags that must all hold for the car:
-//   hi / lo        km above 180,000 / under 80,000
-//   old / new      10+ years / 4 years or less
-//   lux / eco      luxury, sport or exotic tier / any other tier
-//   work           pickup, van or work tier        fam   suv, van or sedan
-//   x4             4WD or AWD                      own   private owner
-//   co             company, rental or government   hot   engine fault
-//   ac             weak or broken AC               sus   suspension fault
-//   P              a painted or replaced panel     T:id  the hidden surprise is `id`
+// so every phone shows the same file. The lines are built from the fragments in `story_pools.ts`
+// (a persona and a habit, a route and a frame, a cause and what follows, a thing and its state) mixed
+// with whole hand-written lines. The host phone remembers what it dealt (fragment ids and whole lines)
+// in `mzk:said`, so a persona or a quirk does not come back the next night with a different tail.
 import type { Rng } from '../lib/rng';
 import type { CarPub, PanelStatus, Seller, Surprise } from './types';
+import {
+  BOOT_BITS, CAUSES, FLEETS, FRAMES, FRESH_FRAMES, MORE_THINGS, HABITS, NEEDS, OWNER_WHOLE, PAINT_TELLS, PANEL_NAME, PERSONAS, ROUTES, TELLS, THINGS,
+  USE_WHOLE, WHY_WHOLE,
+} from './story_pools';
+import type { Cls, Frag, Persona, Role, Whole } from './story_pools';
 
 export interface StoryCtx {
   car: CarPub;
@@ -21,321 +21,416 @@ export interface StoryCtx {
   asis: boolean;
 }
 
-type Line = readonly [string, string?];
+// ---------------------------------------------------------------- the host's memory across nights
 
-const OWNER: Line[] = [
-  ['كانت عند معلّم متقاعد، مشاويره مسجد وبقالة', 'old'],
-  ['مع مندوب مبيعات، خط الرياض القصيم كل أسبوع', 'hi'],
-  ['سيارة استراحة، ما تطلع إلا الخميس', 'lo'],
-  ['عند موظف شركة، دوام ورجعة على خط واحد', ''],
-  ['عند طبيب مناوب، تنام في مواقف المستشفى أكثر من البيت', ''],
-  ['سيارة بيت، عليها توصيل المدارس سنين', 'fam'],
-  ['كانت أول سيارة لشاب، وأول سيارة تنعرف من شكلها', 'eco'],
-  ['عند مهندس موقع، نص عمرها بين الكسارات والمشاريع', 'work'],
-  ['عند أبو عيال، الكرسي الخلفي شاف كل شي', 'fam'],
-  ['كانت سيارة الوالد الثانية، الأولى للمشاوير والثانية للزينة', 'lo'],
-  ['مع موظف بنك، تطلع الصبح وترجع المغرب ولا غير', ''],
-  ['عند صاحب محل قطع غيار، يعرف وش يغيّر قبل لا يخرب', ''],
-  ['سيارة مزرعة، تعرف طريق الخبت أكثر من الأسفلت', 'x4'],
-  ['عند هاوي، يغسلها أكثر مما يمشيها', 'lux'],
-  ['مع طالب جامعة، أربع سنين بين السكن والكلية', ''],
-  ['عند مقاول صغير، الحوض شال بلك وأسمنت وعفش', 'work'],
-  ['سيارة شركة، تنقلت بين أكثر من سواق', 'co'],
-  ['من أسطول تأجير، رقمها كان على لوحة المكتب', 'co'],
-  ['عند رجل أعمال، السواق يسوقها وهو ورا', 'lux'],
-  ['عند محاسب، يسجل كل فاتورة بنزين في دفتر', ''],
-  ['عند مدرب نادي، الشنطة فيها كور وأقماع دايم', ''],
-  ['كانت سيارة كشتات، طلعت البر كل شتا', 'x4'],
-  ['عند موظف حكومي، دوامه قريب والسيارة أغلب وقتها واقفة', 'lo'],
-  ['عند جدّ، يسوقها على 80 ولا يتعداها', 'old'],
-  ['عند صاحب مطعم، يشيل فيها خضار الصبح', 'work'],
-  ['عند مصوّر، الشنطة كانت استوديو متنقل', ''],
-  ['عند عسكري، تنقلت معه بين أكثر من مدينة', 'hi'],
-  ['عند مدير مدرسة، مواقفها محجوزة باسمه سنين', ''],
-  ['كانت هدية تخرج، وصاحبها سافر بعثة', 'lo'],
-  ['عند موظف مطار، تنتظر في المواقف الطويلة أسبوع أسبوع', ''],
-  ['عند مهندس اتصالات، يلف على الأبراج في الطرق الفرعية', 'hi'],
-  ['عند صاحب ورشة، يصلح فيها اللي يخرب أول بأول', ''],
-  ['كانت عند عائلة كبيرة، كل ولد ساقها سنة', 'old'],
-  ['عند مدرّس، المشوار بين بيته والمدرسة عشر دقايق', 'lo'],
-  ['عند فني تكييف، الشنطة فيها عدة وأسطوانات', 'work'],
-  ['عند موظف مستشفى في الشفت الليلي، طرقها فاضية دايم', ''],
-  ['عند هاوي معارض، تحضر كل تجمّع سيارات', 'lux'],
-  ['عند مسوّق عقار، يوري الزباين الأراضي فيها', 'hi'],
-  ['عند ممرض، دوامه في مدينة ثانية ويرجع آخر الأسبوع', 'hi'],
-  ['كانت سيارة البيت الاحتياط، تشتغل لين تخرب الثانية', 'lo'],
-  ['عند مدرب سواقة، الفرامل شافت كل أنواع الدعسات', 'eco'],
-  ['عند صاحب مكتب سفريات، توصل وتجيب من المطار', 'hi'],
-  ['عند مصمم داخلي، يشيل عيّنات رخام وسيراميك', ''],
-  ['عند لاعب بلوت محترف، مشاويره دايم للاستراحات', ''],
-  ['عند رجل كبير وقف عن السواقة، والعيال يشغلونها كل جمعة', 'lo'],
-  ['عند مهندس كهرباء، يدور فيها على المحطات', 'hi'],
-  ['عند مالك واحد مرتب، الأوراق كلها في ملف بلاستيك', 'own'],
-  ['عند موظف في شركة نقل، يطلع فيها للمستودعات', 'work'],
-  ['عند صياد، الكشافات والحبال كانت عدتها', 'x4'],
-  ['عند مدير مشاريع، تنقل بين المواقع والاجتماعات', ''],
-  ['جات من مزاد شركة، وعليها ملصق الأسطول للحين في الزجاج', 'co'],
-  ['عند واحد يجمع ساعات، يدلعها مثل ساعاته', 'lux'],
-  ['عند موظف جوازات، المسافة بين البيت والمنفذ طويلة', 'hi'],
-  ['عند أب شاب، الكرسي حق الطفل ما فارقها', 'fam'],
-  ['عند شاب يحب التعديل، بعدين ملّ ورجعها أصلية', 'eco'],
-  ['عند خياط، يوصل الطلبات بنفسه', ''],
-  ['عند مزارع نخل، موسم الصرام يشيل فيها كراتين', 'work'],
-  ['عند مدرس قرآن، دربه بين الحلقة والبيت', 'lo'],
-  ['كانت عند معقب، يعرف كل مكتب حكومي في البلد', 'hi'],
-  ['عند موظف في الهيئة الملكية، شوارع واسعة وسرعات محترمة', ''],
-  ['عند مالك ثاني اشتراها من الأول وما طولت عنده', ''],
-  ['عند فنان خط عربي، الشنطة فيها لوحات ملفوفة', ''],
-  ['عند مدرب لياقة، يطلع الفجر ويرجع المغرب', ''],
+const SAID_KEY = 'mzk:said';
+const MEM_MAX = 1600;
+let mem: string[] | null = null;
+let memAt: Map<string, number> | null = null;
+function memory(): Map<string, number> {
+  if (memAt) return memAt;
+  mem = [];
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SAID_KEY) : null;
+    if (raw) mem = (JSON.parse(raw) as unknown[]).filter((x): x is string => typeof x === 'string');
+  } catch {
+    /* storage blocked: nothing remembered */
+  }
+  memAt = new Map(mem.map((k, i) => [k, i]));
+  return memAt;
+}
+const dealt: string[] = [];
+/** stores tonight's fragment ids and lines after the deck is built (oldest drop off first) */
+export function rememberNight() {
+  memory();
+  const now = new Set(dealt);
+  const all = [...mem!.filter((k) => !now.has(k)), ...now].slice(-MEM_MAX);
+  mem = all;
+  memAt = new Map(all.map((k, i) => [k, i]));
+  dealt.length = 0;
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(SAID_KEY, JSON.stringify(all));
+  } catch {
+    /* storage full or blocked */
+  }
+}
+
+/** what each lot's file was built from, for the variety audit */
+export interface StoryTrace {
+  owner: string[];
+  use: string[];
+  why: string[];
+  quirks: string[];
+  persona: string;
+}
+const traces: StoryTrace[] = [];
+export function takeStoryTraces(): StoryTrace[] {
+  return traces.splice(0, traces.length);
+}
+
+/** picks an item never said on this phone, else one said longest ago; `keys` are what is remembered */
+function choose<T>(rng: Rng, items: T[], keys: (t: T) => string[], weight?: (t: T) => number): T | null {
+  if (!items.length) return null;
+  const at = memory();
+  const last = (t: T) => Math.max(-1, ...keys(t).map((k) => at.get(k) ?? -1));
+  let src = items.filter((t) => last(t) < 0);
+  if (!src.length) {
+    const sorted = [...items].sort((a, b) => last(a) - last(b));
+    src = sorted.slice(0, Math.max(1, Math.ceil(sorted.length / 4)));
+  }
+  return weight ? rng.weighted(src.map((t) => [t, weight(t)] as const)) : rng.pick(src);
+}
+
+// ---------------------------------------------------------------- what the car is
+
+function panelTouched(c: CarPub): boolean {
+  return Object.values(c.panels).some((s: PanelStatus) => s === 'paint' || s === 'replaced' || s === 'spot');
+}
+
+/** the class a persona must fit; a private-plated pickup is a family's, a blue-plated one worked */
+function clsOf(x: StoryCtx): Cls {
+  const c = x.truth;
+  if (c.tier === 'exotic') return 'top';
+  if (c.tier === 'luxury') return 'lux';
+  if (c.tier === 'sport') return 'sport';
+  if (c.tier === 'classic') return 'classic';
+  if (c.tier === 'junk') return 'junk';
+  const kind = c.plate.kind ?? 'private';
+  if (c.body === 'pickup' || c.body === 'van') return kind === 'transport' ? 'work' : 'fam';
+  if (c.tier === 'work') return 'work';
+  if (c.tier === 'family') return 'fam';
+  return 'daily';
+}
+
+function tagHolds(t: string, x: StoryCtx, cls: Cls): boolean {
+  const c = x.truth;
+  const age = x.nowYear - c.year;
+  switch (t) {
+    case 'hi': return c.km > 180_000;
+    case 'lo': return c.km < 80_000;
+    case 'old': return age >= 10;
+    case 'new': return age <= 4;
+    case 'n15': return age <= 15;
+    case 'lux': return c.tier === 'luxury' || c.tier === 'sport' || c.tier === 'exotic';
+    case 'eco': return !(c.tier === 'luxury' || c.tier === 'sport' || c.tier === 'exotic');
+    case 'work': return cls === 'work';
+    case 'fam': return c.body === 'suv' || c.body === 'van' || c.body === 'sedan';
+    case 'tall': return c.body === 'suv' || c.body === 'pickup' || c.body === 'van';
+    case 'small': return c.body === 'sedan' || c.body === 'hatch' || c.body === 'coupe' || c.body === 'convertible';
+    case 'x4': return c.drive === '4WD' || c.drive === 'AWD';
+    case 'own': return x.seller === 'owner';
+    case 'co': return x.seller === 'company' || x.seller === 'rental' || x.seller === 'gov';
+    case 'rent': return x.seller === 'rental';
+    case 'cmp': return x.seller === 'company';
+    case 'gov': return x.seller === 'gov';
+    case 'o1': return c.owners === 1;
+    case 'o2': return c.owners >= 2;
+    case 'd4': return c.doors === 4;
+    case 'k1': return c.keys === 1;
+    case 'k2': return c.keys === 2;
+    case 'clean': return !panelTouched(c) && c.najm === 0;
+    case 'dealer': return c.service === 'dealer';
+    case 'comp': return c.insurance === 'comp';
+    default: return true;
+  }
+}
+
+function fits(f: { g?: string; cls?: Cls[] }, x: StoryCtx, cls: Cls): boolean {
+  if (f.cls && !f.cls.includes(cls)) return false;
+  for (const raw of (f.g ?? '').split(' ')) {
+    if (!raw || isTell(raw)) continue;
+    const neg = raw.startsWith('!');
+    if (tagHolds(neg ? raw.slice(1) : raw, x, cls) === neg) return false;
+  }
+  return true;
+}
+
+const clash = (a?: 'R' | 'D', b?: 'R' | 'D') => !!a && !!b && a !== b;
+
+interface Draw {
+  x: StoryCtx;
+  cls: Cls;
+  used: Set<string>;
+  topics: Set<string>;
+  q?: 'R' | 'D';
+  role: Role;
+  trace: StoryTrace;
+}
+
+function free(f: { k?: string }, d: Draw) {
+  return !f.k || !d.topics.has(f.k);
+}
+function take(d: Draw, slot: keyof Omit<StoryTrace, 'persona'>, f: { k?: string; q?: 'R' | 'D' } | null, key: string) {
+  d.used.add(key);
+  dealt.push(key);
+  d.trace[slot].push(key);
+  if (f?.k) d.topics.add(f.k);
+  if (f?.q) d.q = f.q;
+}
+
+function wholeLine(rng: Rng, pool: Whole[], d: Draw, slot: 'owner' | 'use' | 'why'): string | null {
+  const ok = pool.filter((w) => fits(w, d.x, d.cls) && free(w, d) && !clash(w.q, d.q) && !d.used.has(w.t));
+  const at = memory();
+  const fresh = ok.filter((w) => !at.has(w.t));
+  if (!fresh.length) return null;
+  const w = rng.pick(fresh);
+  take(d, slot, w, w.t);
+  return w.t;
+}
+
+// ---------------------------------------------------------------- owner
+
+const LEADS = ['كانت عند {p}', 'صاحبها {p}', 'عند {p}', 'كانت مع {p}'];
+const GROUP_LEADS = ['كانت عند {p}', 'عند {p}'];
+
+/** lines that a plate's own kind decides: a taxi and an embassy car say so */
+const KIND_OWNER: Record<string, string[]> = {
+  taxi: ['كانت ليموزين، لوحتها صفرا وتشتغل الليل والنهار', 'كانت أجرة عند سواق يشتغل عليها شفتين', 'كانت ليموزين عند مكتب أجرة'],
+  diplomatic: ['كانت سيارة سفارة، يسوقها سواق السفارة', 'كانت تحت تصرف سفارة، ما تطلع إلا بمشوار رسمي'],
+};
+const KIND_USE: Record<string, string[]> = {
+  taxi: ['تمشي في شوارع المدينة من الفجر لين نص الليل', 'أغلب ممشاها مشاوير زباين، وقوف وطلوع طول اليوم'],
+  diplomatic: ['ممشاها بين السفارة والمطار والفنادق', 'أغلب عمرها واقفة في مواقف السفارة'],
+};
+const KIND_WHY: Record<string, string[]> = {
+  taxi: ['السواق ترك الأجرة واشترى ثانية', 'المكتب يبدّل سياراته القديمة'],
+  diplomatic: ['السفارة تجدد سياراتها', 'انتهت مهمة السفير والسيارة تنباع'],
+  temporary: ['توه طالعها من الوكالة وغيّر رايه', 'جته سيارة ثانية هدية وهذي زادت', 'شراها للتجارة وقال المزاد أسرع'],
+};
+
+function ownerLine(rng: Rng, d: Draw): string {
+  const kind = d.x.truth.plate.kind ?? 'private';
+  if (KIND_OWNER[kind]) {
+    d.role = 'fleet';
+    d.q = kind === 'taxi' ? 'D' : 'R';
+    const t = choose(rng, KIND_OWNER[kind].filter((s) => !d.used.has(s)), (s) => [s]) ?? KIND_OWNER[kind][0];
+    take(d, 'owner', null, t);
+    d.trace.persona = `kind:${kind}`;
+    return t;
+  }
+  const co = tagHolds('co', d.x, d.cls);
+  const transport = kind === 'transport';
+  if (!co && rng.chance(0.25)) {
+    const w = wholeLine(rng, OWNER_WHOLE.filter((o) => !transport || (o.cls ?? []).includes('work')), d, 'owner');
+    if (w) {
+      d.role = 'pro';
+      d.trace.persona = `w:${w}`;
+      return w;
+    }
+  }
+  const pool: Persona[] = (co ? FLEETS : PERSONAS).filter(
+    (p) => fits(p, d.x, d.cls) && !d.used.has(`p:${p.id}`) && (!transport || p.role === 'trade' || p.role === 'fleet'),
+  );
+  const fallback = co ? FLEETS.filter((p) => fits(p, d.x, d.cls)) : PERSONAS.filter((p) => !p.cls || p.cls.includes(d.cls));
+  const p = choose(rng, pool.length ? pool : fallback.length ? fallback : co ? FLEETS : PERSONAS, (p) => [`p:${p.id}`])!;
+  d.role = p.role;
+  d.trace.persona = `p:${p.id}`;
+  take(d, 'owner', p, `p:${p.id}`);
+  const habits = HABITS.filter(
+    (h) => h.who.includes(p.role) && !h.not?.includes(p.id) && fits(h, d.x, d.cls) && free(h, d) && !clash(h.q, d.q) && !d.used.has(`h:${h.id}`),
+  );
+  const h = choose(rng, habits, (h) => [`h:${h.id}`]);
+  const head = p.role === 'fleet' ? p.t : rng.pick(p.role === 'group' ? GROUP_LEADS : LEADS).replace('{p}', p.t);
+  if (!h) return head;
+  take(d, 'owner', h, `h:${h.id}`);
+  return `${head}، ${h.t}`;
+}
+
+// ---------------------------------------------------------------- use
+
+function useLine(rng: Rng, d: Draw): string {
+  const kind = d.x.truth.plate.kind ?? 'private';
+  if (KIND_USE[kind]) {
+    const t = choose(rng, KIND_USE[kind].filter((s) => !d.used.has(s)), (s) => [s]) ?? KIND_USE[kind][0];
+    take(d, 'use', null, t);
+    return t;
+  }
+  if (rng.chance(0.22)) {
+    const w = wholeLine(rng, USE_WHOLE, d, 'use');
+    if (w) return w;
+  }
+  // a car that has barely been driven has no routine yet
+  const fresh = d.x.truth.km < 15_000 && d.x.nowYear - d.x.truth.year <= 2;
+  if (fresh && rng.chance(0.3)) {
+    const t = choose(rng, FRESH_USE.filter((s) => !d.used.has(s)), (s) => [s]);
+    if (t) {
+      take(d, 'use', null, t);
+      return t;
+    }
+  }
+  const persona = d.trace.persona.startsWith('p:') ? d.trace.persona.slice(2) : '';
+  // strict first; then a route or frame already dealt tonight may serve again in a new pairing
+  for (const strict of [true, false]) {
+    const routes = ROUTES.filter(
+      (r) =>
+        fits(r, d.x, d.cls) && free(r, d) && !clash(r.q, d.q) && (!r.who || r.who.includes(d.role)) &&
+        (!r.only || r.only.includes(persona)) && (!strict || !d.used.has(`r:${r.id}`)),
+    );
+    while (routes.length) {
+      const r = choose(rng, routes, (r) => [`r:${r.id}`], (r) => (r.like?.includes(persona) ? 6 : 1))!;
+      const frames = (fresh ? FRESH_FRAMES : FRAMES).filter(
+        (f) =>
+          f.kinds.includes(r.kind) && fits(f, d.x, d.cls) && free(f, d) && (!f.k || f.k !== r.k) && !clash(f.q, d.q) && !clash(f.q, r.q) &&
+          (!f.roles || f.roles.includes(d.role)) && (!f.person || (d.role !== 'fleet' && d.role !== 'group')) && (!f.group || d.role === 'fleet' || d.role === 'group') &&
+          (!strict || !d.used.has(`f:${f.id}`)) && !d.used.has(f.t.replace('{w}', r.t)),
+      );
+      const f = choose(rng, frames, (f) => [`f:${f.id}`]);
+      if (!f) {
+        routes.splice(routes.indexOf(r), 1);
+        continue;
+      }
+      const t = f.t.replace('{w}', r.t);
+      take(d, 'use', r, `r:${r.id}`);
+      take(d, 'use', f, `f:${f.id}`);
+      d.used.add(t);
+      return t;
+    }
+  }
+  return wholeLine(rng, USE_WHOLE, d, 'use') ?? 'ممشاها بين البيت والدوام';
+}
+
+const FRESH_USE = [
+  'توها ما مشت إلا مشاوير قليلة',
+  'ما كمّلت شهرين عند صاحبها',
+  'من الوكالة للبيت وللمعرض بس',
+  'ممشاها مشاوير تجربة حول البيت',
+  'ما شافت طريق سفر للحين',
+  'مشت مشوارين للاستراحة وبس',
+  'أغلب وقتها واقفة في الكراج بغطاها',
+  'ما تعدّت حدود المدينة',
 ];
 
-const USE: Line[] = [
-  ['أغلب ممشاها طرق سريعة، وهذا يبان في هدوء القير', 'hi'],
-  ['مشاوير داخل المدينة، إشارات وزحمة ومطبات', ''],
-  ['ممشاها خفيف، أغلبه نهاية الأسبوع', 'lo'],
-  ['تنام في مظلة، الطبلون ما شاف شمس الظهر كثير', ''],
-  ['واقفة في الشمس سنين، والطبلون يشهد', 'old'],
-  ['طلعت البر كثير، الرمل للحين في زوايا الشنطة', 'x4'],
-  ['تسافر كل عيد بين مدينتين، والباقي واقفة', ''],
-  ['استعمال يومي من غير راحة، تشتغل الفجر وتطفي الليل', 'hi'],
-  ['تحمّلت عفش وأغراض أكثر من طاقتها أحياناً', 'work'],
-  ['ساقها أكثر من شخص، كل واحد بطريقته', ''],
-  ['مخدومة على الموعد، حتى لو ما مشت المسافة', 'lo'],
-  ['صاحبها يغيّر الزيت بالتقويم مو بالعداد', ''],
-  ['ممشى سفر، تعرف محطات طريق الشمال بالاسم', 'hi'],
-  ['تعيش في مواقف مكيفة تحت الأرض', 'lux'],
-  ['أغلب عمرها على الأسفلت، ما شافت رمل', ''],
-  ['ساحلية، رطوبة البحر حولها طول السنة', ''],
-  ['تقطع خط الجنوب الجبلي كل صيف', ''],
-  ['مشاوير مدارس الصبح والظهر، تشغيل وطفي كثير', 'fam'],
-  ['واقفة أشهر وصاحبها مسافر، ثم رجعت للشغل', ''],
-  ['أغلب ممشاها مع المكيف على الآخر', ''],
-  ['تمشي على مهلها، صاحبها ما يحب السرعة', ''],
-  ['استعمال شغل، تحميل وتنزيل كل يوم', 'work'],
-  ['طلعات بر في الربيع، والباقي دوام', 'x4'],
-  ['ممشاها مقسوم بين المدينة وطريق القرية', ''],
-  ['مشت كثير بس على طرق نظيفة', 'hi'],
-  ['صاحبها يدفّيها دقايق قبل كل مشوار', 'old'],
-  ['دوام شفتات، تشتغل في كل ساعة من اليوم', 'hi'],
-  ['تطلع للاستراحة والبحر، مشاوير طويلة ومتباعدة', ''],
-  ['قضت شتاها في البر وصيفها في المظلة', 'x4'],
-  ['ما تطلع من الحي إلا نادر', 'lo'],
-  ['تنقل الوالدة بين المستشفى والبيت كل أسبوع', 'fam'],
-  ['ممشاها كله توصيل، وقوف وطلوع كل خمس دقايق', 'hi'],
-  ['استعمال خفيف، العداد يمشي ببطء', 'lo'],
-  ['شافت سيول مرة أو مرتين في الشارع، وطلعت منها', ''],
-  ['تمشي يومياً على طريق الدائري في الذروة', ''],
-  ['شغلها بين المستودع والسوق، حمولات خفيفة', 'work'],
-  ['سفر مع العايلة كل إجازة، الشنطة دايم مليانة', 'fam'],
-  ['ممشى مستأجرين متعاقبين، كل واحد أسبوع', 'co'],
-  ['استعمال إداري، بين المكاتب والفروع', 'co'],
-  ['تعيش في كراج مسكّر، وتطلع للتجمعات', 'lux'],
-  ['دعسات قوية على الإشارات، وصاحبها يحب الصوت', 'lux'],
-  ['تطلع الصبح بدري قبل الحر وترجع قبل الظهر', ''],
-  ['عاشت في مدينة جبلية، طلعات ونزلات كل يوم', ''],
-  ['استعمال هادي، صاحبها يرتاح على 100', ''],
-  ['أغلبها مشاوير قصيرة، والمكينة ما تلحق تسخن', 'lo'],
-  ['ممشاها قديم وهادي، السنين أكثر من الكيلوات', 'old'],
-  ['عاشت بين الشركة والبيت، دوام ثابت', ''],
-  ['ركبها الضيوف أكثر من أهلها، سيارة استقبال', 'lux'],
-  ['تطلع المزرعة كل جمعة على طريق ترابي', 'x4'],
-  ['ممشى مختلط، نص سفر ونص مدينة', ''],
-  ['استعمال ثقيل في الصيف، وخفيف بقية السنة', ''],
-];
+// ---------------------------------------------------------------- why
 
-const WHY: Line[] = [
-  ['صاحبها اشترى عائلية بعد ما زاد العيال', ''],
-  ['نقل وظيفته برا المدينة وما يبي يشحنها', ''],
-  ['شرى الموديل الجديد وما له مكان في الحوش', ''],
-  ['يبي يسدد قسط الأرض', ''],
-  ['الورثة يبون يقسمون', 'old'],
-  ['الشركة تجدد أسطولها، وهذي من الدفعة', 'co'],
-  ['انتهى عقد التأجير ورجعت للمكتب', 'co'],
-  ['صاحبها مسافر دراسة سنتين', ''],
-  ['عنده سيارتين والتأمين على الثنتين يوجع', ''],
-  ['يبي يغير لهايبرد، البنزين صار حديث المجلس', ''],
-  ['الزوجة تبي شي أعلى من الأرض', 'eco'],
-  ['ما عاد يطلع البر مثل أول', 'x4'],
-  ['تقاعد وما عاد يحتاج سيارتين', ''],
-  ['مل منها، يقول يبي شي يحرك القلب', ''],
-  ['الولد كبر وأخذ سيارة، والبيت فيه زيادة', ''],
-  ['صاحبها يبي يفتح مشروع ويجمع راس مال', ''],
-  ['المواقف في العمارة الجديدة ما تكفي', ''],
-  ['قرر يعتمد على التطبيقات ويرتاح من الصيانة', ''],
-  ['يبيعها قبل لا يجي موعد الصيانة الكبيرة', 'hi'],
-  ['تخلّص من الشغل اللي كان يحتاجها له', 'work'],
-  ['سكّر المحل، والسيارة كانت للمحل', 'work'],
-  ['يبي شي أصغر للمدينة', 'fam'],
-  ['يبي شي أكبر للسفر', ''],
-  ['صاحبها يقول خلاص عطتني اللي عندها', 'hi'],
-  ['المعرض يدوّر البضاعة قبل نهاية الربع', ''],
-  ['استلمها من دين، وهو أصلاً ما يحبها', ''],
-  ['يبي يكمّل مهر', 'eco'],
-  ['زوجته ما ترتاح في كراسيها', ''],
-  ['صار عنده سواق والسيارة الثانية تكفي', 'lux'],
-  ['اشترى بيت والميزانية تحتاج ترتيب', ''],
-  ['قالوا له مزاد يجيب سعر أحسن من الحراج', ''],
-  ['مكتب الإيجار يصفّي القديم', 'co'],
-  ['الجهة باعت فائض السيارات بالمزاد', 'co'],
-  ['ملّ من صيانة الأوروبي', 'lux'],
-  ['يقول يبي يجرب ياباني ويرتاح', 'lux'],
-  ['جاه عرض نقل لدولة ثانية', ''],
-  ['السيارة كبرت عليه، يقول ما يبي يدفّ موقف', ''],
-  ['الضمان خلص وما يبي يغامر', 'new'],
-  ['رجع لسيارة الشركة وهذي زادت', ''],
-  ['يبي يجمع للعرس', ''],
-  ['التأمين زاد عليه بعد حادث بسيط', ''],
-  ['يبي يبيع قبل لا ينزل سعرها أكثر', 'new'],
-  ['ما يبي يجدد الفحص ويتعب في الحجز', 'old'],
-  ['عنده كلاسيك ثانية تاخذ وقته كله', 'lux'],
-  ['اكتشف إنه يمشي على رجوله أكثر', 'lo'],
-];
+function whyLine(rng: Rng, d: Draw): string {
+  const kind = d.x.truth.plate.kind ?? 'private';
+  if (KIND_WHY[kind]) {
+    const t = choose(rng, KIND_WHY[kind].filter((s) => !d.used.has(s)), (s) => [s]) ?? KIND_WHY[kind][0];
+    take(d, 'why', null, t);
+    return t;
+  }
+  const co = tagHolds('co', d.x, d.cls);
+  if (!co && rng.chance(0.25)) {
+    const w = wholeLine(rng, WHY_WHOLE, d, 'why');
+    if (w) return w;
+  }
+  const causeOk = (c: Frag & { cat: string }) => (co ? c.cat === 'fleet' : c.cat !== 'fleet') && fits(c, d.x, d.cls) && !d.used.has(`c:${c.id}`);
+  let causes = CAUSES.filter(causeOk);
+  if (!causes.length) causes = CAUSES.filter((c) => (co ? c.cat === 'fleet' : c.cat !== 'fleet'));
+  for (let i = 0; i < 6; i++) {
+    const c = choose(rng, causes, (c) => [`c:${c.id}`]);
+    if (!c) break;
+    // the pairing matters more than the need alone: a fresh pairing first
+    const combo = (n: { t: string }) => [`${c.t}، ${n.t}`];
+    let needs = NEEDS.filter((n) => n.cat === c.cat && fits(n, d.x, d.cls) && !d.used.has(`n:${n.id}`));
+    if (!needs.length) needs = NEEDS.filter((n) => n.cat === c.cat && fits(n, d.x, d.cls) && !d.used.has(`${c.t}، ${n.t}`));
+    const n = choose(rng, needs, combo);
+    if (!n) {
+      causes = causes.filter((x) => x !== c);
+      continue;
+    }
+    take(d, 'why', c, `c:${c.id}`);
+    take(d, 'why', n, `n:${n.id}`);
+    take(d, 'why', null, `${c.t}، ${n.t}`);
+    return `${c.t}، ${n.t}`;
+  }
+  return wholeLine(rng, WHY_WHOLE, d, 'why') ?? 'صاحبها يبي يغيّر';
+}
 
-// quirks: small things a person notices at the viewing; tells carry T:<surprise>, P, hot, ac or sus
-const QUIRKS: Line[] = [
-  // cabin
-  ['مسند اليد في النص مكسور القفل ويفتح لحاله', ''],
-  ['جلد الكرسي الأيمن أنعم من الأيسر، الراكب قليل', ''],
-  ['دواسة البنزين ماسحة من كثر الدعس', 'hi'],
-  ['الدركسون عليه غطا جلد مخيوط باليد', ''],
-  ['السجاد أصلي وعليه سجاد ثاني فوقه', ''],
-  ['فتحة كوب القهوة فيها أثر حلقات قديمة', ''],
-  ['الكرسي الخلفي عليه أثر كرسي أطفال', 'fam'],
-  ['غطاء الشمس الأيسر يطيح لحاله', 'old'],
-  ['جيب الباب السواق فيه كاسات وأقلام ومناديل من سنين', ''],
-  ['الفرش الداخلي مغطى بكسوة جلد مفصلة', ''],
-  ['زر النافذة الخلفية اليمين يحتاج دعستين', ''],
-  ['السقف الداخلي نازل شوي عند الزجاج الخلفي', 'old'],
-  ['حزام الأمان الخلفي ما ينسحب إلا بهدوء', ''],
-  ['الكونسول فيه شاحن لاسلكي مركّب برا', ''],
-  // smell
-  ['ريحة عود خفيفة باقية في الفرش', ''],
-  ['معطر شجرة معلق في المراية، ريحته ماتت من زمان', ''],
-  ['ريحة جديد خفيفة للحين، الأكياس على الكراسي الخلفية', 'new'],
-  ['ريحة قهوة عربية في الكابينة', ''],
-  ['ريحة رطوبة خفيفة تحت دواسات الأرض', 'T:flood'],
-  ['تحت السجاد الخلفي ملمس رطب وطين ناشف في الزوايا', 'T:flood'],
-  ['ريحة شي محروق خفيفة بعد المشوار', 'hot'],
-  ['ريحة بخور قوية، كأن أحد يبي يغطي شي', ''],
-  ['ريحة سجاير قديمة رغم إن صاحبها يقول ما يدخن', ''],
-  // sound
-  ['صوت رنة خفيفة من الدرج إذا مرت على مطب', ''],
-  ['الهرن صوته أعلى من الأصلي، مغيّر', ''],
-  ['صوت صفير بسيط من السير أول دقيقة', 'hot'],
-  ['طقطقة من قدام يمين مع اللف الكامل', 'sus'],
-  ['صوت دق خفيف من الخلف على المطبات', 'sus'],
-  ['صوت المروحة يعلى ويوطى بدون سبب واضح', 'hot'],
-  ['صوت الاشتمان أهدى من المتوقع لعمرها', ''],
-  ['هدير خفيف من الكفرات فوق 100', ''],
-  ['صرير من الباب الخلفي اليسار مع الفتح', 'old'],
-  ['صوت ونّة من القير مع الدعسة القوية', 'T:gearbox'],
-  ['المكينة تقرقع ثانيتين أول التشغيل البارد', 'T:oil'],
-  // glass and stickers
-  ['ملصق موقف جامعة قديم في الزجاج الأمامي', ''],
-  ['ملصق أسطول مقلوع وباقي أثر الغراء', 'T:rental'],
-  ['أثر ملصق رقم جانبي على الباب، اللون حوله أغمق', 'T:taxi'],
-  ['تظليل الزجاج الخلفي فيه فقاعات صغيرة', 'old'],
-  ['شرخ صغير في الزاوية السفلية للزجاج الأمامي', ''],
-  ['ملصق ورشة تغيير زيت على الزجاج، آخر تاريخ قديم', 'T:oil'],
-  ['ملصق شركة حكومية مقشور من على الزجاج', 'T:gov'],
-  ['الزجاج الأمامي مو أصلي، الختم مختلف', 'P'],
-  ['ملصق وكالة بأول صيانة في زاوية الزجاج', ''],
-  ['تظليل أمامي خفيف ما يبان إلا من قريب', ''],
-  // keys
-  ['المفتاح الاحتياطي في علبته الأصلية مع الكتيب', ''],
-  ['المفتاح مغلّف بجراب جلد قديم', ''],
-  ['زر الريموت مطفي من كثر الضغط', 'hi'],
-  ['المفتاح منسوخ عند خراط، مو من الوكالة', ''],
-  ['ميدالية مفتاح معرض قديم في مدينة ثانية', ''],
-  ['بطارية الريموت ضعيفة، يفتح من قريب بس', ''],
-  // tyres
-  ['الإطار الاحتياطي ما استخدم، للحين عليه الشعيرات', ''],
-  ['تآكل الكفرات الأمامية من الحافة الداخلية', 'sus'],
-  ['جنوط مقاس أكبر من الأصلي بإنش', ''],
-  ['الإطار الاحتياطي مو مقاسها، من سيارة ثانية', ''],
-  ['الكفرات عليها شقوق خفيفة من الشمس', 'T:tyres_old'],
-  ['غطيان البلوف في الكفرات ناقصة اثنين', ''],
-  // boot
-  ['في الشنطة طفاية ومثلث وشنطة إسعاف كاملة', ''],
-  ['تحت أرضية الشنطة رمل ناعم في الزوايا', 'x4'],
-  ['أثر صدا وماي ناشف في حوض الإطار الاحتياطي', 'T:flood'],
-  ['الشنطة فيها عدة كاملة مرتبة في كيسها', ''],
-  ['في الشنطة كرتون فواتير صيانة مرتبة', ''],
-  ['حبل سحب وكابل اشتراك ما فارقوها', 'x4'],
-  ['سجادة شنطة مطاطية مفصلة', ''],
-  ['قفل الشنطة يحتاج ضغطة قوية', 'old'],
-  ['أثر حمولة ثقيلة على أرضية الحوض', 'work'],
-  ['حماية حوض بلاستيك وعليها خدوش شغل', 'work'],
-  // paint
-  ['الرفرف الأمامي لمعته غير عن الكبوت', 'P'],
-  ['الباب الخلفي لونه أفتح بدرجة في الشمس', 'P'],
-  ['أثر شريط تلبيس على حافة المطاط عند الباب', 'P'],
-  ['رذاذ صبغ خفيف على مطاط النافذة', 'P'],
-  ['البراغي اللي تمسك الكبوت عليها أثر مفتاح', 'T:chassis'],
-  ['الصدام الأمامي فيه نقش حصى كثير', 'hi'],
-  ['اللون صاحي، شكلها عاشت في مظلة', ''],
-  ['خدش طويل خفيف على الباب من مفتاح أحد', ''],
-  ['تلميع كرستال جديد يلمع أكثر من اللازم', ''],
-  ['السقف فيه بهتان من الشمس', 'old'],
-  ['تحت الأبواب أثر صدا خفيف على الحافة', 'T:rust'],
-  ['حرف الشنطة عليه فقاعات تحت الصبغ', 'T:rust'],
-  ['الأسفل كله ممسوح ومرشوش، نظيف أكثر من عمره', 'T:masked'],
-  ['حماية شفافة على الكبوت والمرايات', ''],
-  ['شبكة الهواء الأمامية مغسولة وفيها رمل محشور', 'T:desert'],
-  ['فلتر الهوا فيه رمل ناعم أكثر من الطبيعي', 'T:desert'],
-  // electronics
-  ['شاشة الوسط فيها خط ميت صغير', ''],
-  ['الكاميرا الخلفية ضبابية شوي', ''],
-  ['الساعة في الطبلون غلط ساعة، محد ضبطها', ''],
-  ['حساس الضغط في الكفرات ينور ويطفي', ''],
-  ['لمبة الإيرباق تطفي متأخرة شوي بعد التشغيل', 'T:airbags'],
-  ['غطاء الإيرباق في الدركسون لونه أجدد من الطبلون', 'T:airbags'],
-  ['عداد الممشى يبدأ بالميل في الإعدادات', 'T:miles'],
-  ['شاشة العداد فيها لغة إنجليزية وتحويل وحدات', 'T:miles'],
-  ['براغي العداد عليها أثر فك', 'T:odometer'],
-  ['ممسك الدركسون والدواسات تعبانة أكثر مما يقول العداد', 'T:odometer'],
-  ['لمبة المكينة تولع ثانية وتطفي', 'T:catalyst'],
-  ['صوت العادم فيه خشونة من تحت', 'T:catalyst'],
-  ['البلوتوث فيه أسماء جوالات كثيرة من ناس مختلفين', 'T:rental'],
-  ['جهاز تتبع مركّب تحت الطبلون، سلكه ظاهر', 'co'],
-  ['شاحن الولاعة فيه جهاز بلوتوث قديم', 'old'],
-  ['الإضاءة الداخلية مغيّرة لِد أبيض', ''],
-  ['المكيف الخلفي يطلع هوا بس ما يبرد', 'ac'],
-  ['حرارة الفتحات تنزل ببطء، تحتاج دقايق', 'ac'],
-  ['المساحات تشتغل بسرعة وحدة بس', 'old'],
-  ['كاميرا داش مثبتة بالشفاط ومعها شريحة', ''],
-  // accessories and engine bay
-  ['تحت الكبوت نظيف ومرشوش ملمّع', ''],
-  ['رديتر جديد ولونه يلمع وسط مكينة قديمة', 'hot'],
-  ['غطاء الرديتر عليه أثر بخار ناشف', 'hot'],
-  ['خزان الماي لونه بني من الداخل', 'hot'],
-  ['بطارية جديدة وتاريخها هالسنة', ''],
-  ['أسلاك إضافية تحت الكبوت مربوطة بشريط', ''],
-  ['حساسات ركن مركّبة برا، لونها مو مطابق', ''],
-  ['حماية أسفل المكينة معدن ومركّبة برا', 'x4'],
-  ['شبك حماية قدام الرديتر من الحصى', 'hi'],
-  ['ونش أمامي مركّب على الصدام', 'x4'],
-  ['عتبات جانبية مركّبة، وفيها حكة رمل', 'x4'],
-  ['ممسحة زجاج مركّبة على الباب الخلفي', ''],
-  ['كتيب الوكالة كامل وأختامه مرتبة', 'T:history'],
-  ['ملف فواتير الوكالة كامل، مرتب بالتاريخ', 'T:freeservice'],
-  ['شهادة الضمان في جيب الكتيب للحين', 'T:warranty'],
-  ['لاصق حماية شفاف على العتبات من يوم الشراء', 'T:ppf'],
-  ['قطعة حماية على الصدام الخلفي من التحميل', 'fam'],
-  ['قاعدة جوال مثبتة بالبراغي في الطبلون', ''],
-  ['ميزان ماي في الطبلون مركّب برا', ''],
-  ['غطاء كراسي قماش مطبوع عليه اسم شركة', 'co'],
-  ['رخصة السير في غلاف بلاستيك قديم من محل أوراق', ''],
-  ['دفتر صغير في الدرج فيه مواعيد تغيير الزيت بخط اليد', ''],
-  ['تراب تحت الكبوت أكثر من خارجها، مغسولة من برا بس', ''],
-  ['زيت الدركسون ناقص وأثر تهريب حول الخزان', 'sus'],
-];
+// ---------------------------------------------------------------- quirks
+
+function isTell(t: string): boolean {
+  return t.startsWith('T:') || t === 'P' || t === 'hot' || t === 'ac' || t === 'sus';
+}
+const tellsOf = (w: Whole) => (w.g ?? '').split(' ').filter(isTell);
+
+/** a tell holds when the hidden truth backs it */
+function tellHolds(tag: string, x: StoryCtx): boolean {
+  const c = x.truth;
+  if (tag.startsWith('T:')) return x.surprise?.key === tag.slice(2);
+  if (tag === 'P') return panelTouched(c);
+  if (tag === 'hot') return c.mech.engine === 'major' || c.mech.engine === 'minor';
+  if (tag === 'ac') return c.mech.ac === 'weak' || c.mech.ac === 'broken';
+  if (tag === 'sus') return c.mech.susp === 'minor' || c.mech.susp === 'major';
+  return false;
+}
+
+function paintTell(rng: Rng, d: Draw): string | null {
+  const touched = Object.entries(d.x.truth.panels).filter(([, s]) => s === 'paint' || s === 'replaced' || s === 'spot').map(([p]) => p);
+  if (!touched.length) return null;
+  const panel = PANEL_NAME[rng.pick(touched)];
+  const opts = PAINT_TELLS.map((t) => t.replace('{panel}', panel)).filter((t) => !d.used.has(t));
+  return opts.length ? rng.pick(opts) : null;
+}
+
+function fill(rng: Rng, t: string, x: StoryCtx): string {
+  const four = x.truth.doors === 4;
+  return t
+    .replace('{side}', () => rng.pick(['اليمين', 'اليسار']))
+    .replace('{door}', () => rng.pick(four ? ['الأمامي اليمين', 'الأمامي اليسار', 'الخلفي اليمين', 'الخلفي اليسار'] : ['اليمين', 'اليسار']))
+    .replace('{win}', () => rng.pick(four ? ['الأمامية اليمين', 'الأمامية اليسار', 'الخلفية اليمين', 'الخلفية اليسار'] : ['اليمين', 'اليسار']))
+    .replace('{boot}', () => rng.pick(BOOT_BITS));
+}
+
+const ALL_THINGS = [...THINGS, ...MORE_THINGS];
+
+function quirks(rng: Rng, d: Draw): string[] {
+  const x = d.x;
+  const out: string[] = [];
+  const usable = (w: Whole) => fits(w, x, d.cls) && !d.used.has(w.t);
+  const trueTells = TELLS.filter((w) => usable(w) && tellsOf(w).length > 0 && tellsOf(w).every((t) => tellHolds(t, x)));
+  const falseTells = TELLS.filter((w) => usable(w) && tellsOf(w).some((t) => t.startsWith('T:')) && !tellsOf(w).every((t) => tellHolds(t, x)) && !tellsOf(w).some((t) => !t.startsWith('T:')));
+  const takeTell = (pool: Whole[]) => {
+    const w = choose(rng, pool, (w) => [w.t]);
+    if (!w) return;
+    take(d, 'quirks', w, w.t);
+    out.push(w.t);
+  };
+  const n = rng.chance(0.55) ? 3 : 2;
+  // a surprise-backed tell shows most of the time, a visible-condition tell less often, a false alarm rarely
+  const surpriseTells = trueTells.filter((w) => tellsOf(w).some((t) => t.startsWith('T:')));
+  if (surpriseTells.length && rng.chance(0.7)) takeTell(surpriseTells);
+  else if (panelTouched(x.truth) && rng.chance(0.25)) {
+    const t = paintTell(rng, d);
+    if (t) {
+      take(d, 'quirks', null, t);
+      out.push(t);
+    }
+  } else if (trueTells.length && rng.chance(0.4)) takeTell(trueTells);
+  else if (falseTells.length && rng.chance(0.06)) takeTell(falseTells);
+  while (out.length < n) {
+    const things = ALL_THINGS.filter((q) => fits(q, x, d.cls) && free(q, d) && !d.used.has(`q:${q.id}`));
+    const q = choose(rng, things, (q) => [`q:${q.id}`]);
+    if (!q) break;
+    const states = q.s
+      .filter((s) => typeof s === 'string' || fits({ g: s[1] }, x, d.cls))
+      .map((s) => fill(rng, typeof s === 'string' ? s : s[0], x))
+      .filter((s) => !d.used.has(s) && !out.includes(s));
+    take(d, 'quirks', q, `q:${q.id}`);
+    if (!states.length) continue;
+    const s = choose(rng, states, (s) => [s])!;
+    d.used.add(s);
+    dealt.push(s);
+    out.push(s);
+  }
+  return out;
+}
+
+export function storyFor(rng: Rng, x: StoryCtx, used: Set<string>): NonNullable<CarPub['story']> {
+  const d: Draw = { x, cls: clsOf(x), used, topics: new Set(), role: 'pro', trace: { owner: [], use: [], why: [], quirks: [], persona: '' } };
+  const owner = ownerLine(rng, d);
+  const use = useLine(rng, d);
+  const why = whyLine(rng, d);
+  const q = quirks(rng, d);
+  traces.push(d.trace);
+  return { owner, use, why, quirks: q };
+}
 
 const POSITIVE: string[] = [
-  'العزوم ثابتة على الفاضي والمكينة ناعمة',
+  'المكينة ناعمة وثابتة على الفاضي',
   'القير يعشّق بسلاسة بارد وحار',
   'الشاصي سليم، القوايم أصلية بالبراغي',
-  'لا يوجد تهريب تحت السيارة',
+  'ما فيها تهريب من تحت',
   'المكيف يبرد من أول دقيقتين',
   'الفرامل تمسك بخط مستقيم بدون رجفة',
   'الدركسون مستقيم والميزانية مضبوطة',
@@ -343,11 +438,11 @@ const POSITIVE: string[] = [
   'العادم نظيف، لا دخان ولا ريحة',
   'البطارية قوية والتشغيل من أول مرة',
   'كل الأنوار والحساسات تشتغل',
-  'لا توجد أعطال مخزّنة في الكمبيوتر',
+  'الكمبيوتر ما فيه أعطال مخزّنة',
   'سيور المكينة نظيفة وما فيها شقوق',
   'زيت المكينة لونه نظيف ومستواه مضبوط',
   'الأبواب تسكّر بصوت واحد وفتحاتها متساوية',
-  'لا أثر لحام ولا تعديل تحت السجاد',
+  'ما فيه أثر لحام ولا تعديل تحت السجاد',
   'الجوانب البلاستيك تحت السيارة سليمة',
   'الماي في الرديتر نظيف بدون زيت',
   'الكراسي الكهربا كلها تشتغل',
@@ -365,7 +460,7 @@ const FAULTS: Record<string, string[]> = {
   ],
   engine_major: [
     'دخان أزرق مع الدعسة', 'ضغط المكينة ضعيف في سلندر', 'صوت طقطقة من تحت الغطا', 'المكينة تسخن مع الوقفة',
-    'تهريب ماء من الرديتر وأثر حرارة', 'زيت مختلط بالماي في الغطا', 'صوت دق من البستم وهي حارة', 'كمبريشن متفاوت بين السلندرات',
+    'تهريب ماء من الرديتر وأثر حرارة', 'زيت مختلط بالماي في الغطا', 'صوت دق من البستم وهي حارة', 'الضغط متفاوت بين السلندرات',
     'غطا الراس فيه أثر تسريب', 'دخان أبيض كثيف بعد التشغيل', 'صوت عمود الكامات عالي', 'ضغط الزيت ينزل مع الحرارة',
   ],
   gearbox_minor: [
@@ -399,15 +494,15 @@ const FAULTS: Record<string, string[]> = {
     'العارضة الخلفية مغيّرة', 'معجون على البرواز الأمامي', 'فتحات الأبواب مو متساوية', 'القائمة الوسطى فيها تموج',
   ],
   dealer_clean: [
-    'السيارة بحالة وكالة', 'البودي وكالة والسجل منتظم', 'محركاتها وكالة ما انفكت', 'نظيفة ومخدومة عند الوكيل',
+    'السيارة بحالة وكالة', 'البودي وكالة والسجل منتظم', 'المكينة والقير وكالة ما انفكت', 'نظيفة ومخدومة عند الوكيل',
     'أختام الوكالة على البراغي ما انفكت', 'الصيانات كلها في النظام عند الوكيل', 'ما فيها قطعة مو أصلية', 'التحديثات البرمجية من الوكالة كاملة',
     'القطع المغيّرة كلها أصلية بفواتيرها', 'جهاز الوكالة ما طلع ولا ملاحظة', 'زيوتها وكالة بالموعد', 'الفحص الدوري يطلع من أول مرة',
   ],
 };
 
 const FEATURES_MORE: Record<string, string[]> = {
-  basic: ['شاشة أندرويد مركّبة', 'كاميرا خلفية مركّبة', 'حساسات خلفية', 'مثبت سرعة', 'بلوتوث', 'زجاج كهربا', 'مرايات كهربا', 'قفل مركزي بالريموت', 'جنوط ألمنيوم', 'إضاءة نهارية', 'كشافات ضباب', 'تظليل حراري', 'مكيف خلفي', 'شاحن USB أمامي', 'كراسي قماش مكسوة جلد'],
-  mid: ['كاميرا 360', 'شاشة لمس كبيرة', 'آبل كاربلاي', 'تشغيل بصمة', 'دخول ذكي', 'كراسي جلد', 'مثبت سرعة متكيف', 'تنبيه النقطة العمياء', 'تحذير مغادرة المسار', 'فتحة سقف', 'شحن لاسلكي', 'كراسي مبردة', 'ذاكرة كرسي السواق', 'مكابح طوارئ', 'إضاءة لِد كاملة'],
+  basic: ['شاشة أندرويد مركّبة', 'كاميرا خلفية مركّبة', 'حساسات خلفية', 'مثبت سرعة', 'بلوتوث', 'زجاج كهربا', 'مرايات كهربا', 'قفل مركزي بالريموت', 'جنوط ألمنيوم', 'إضاءة نهارية', 'كشافات ضباب', 'تظليل حراري', 'مكيف خلفي', 'منفذ شحن قدام', 'كراسي قماش مكسوة جلد'],
+  mid: ['كاميرا 360', 'شاشة لمس كبيرة', 'ربط الجوال بالشاشة', 'تشغيل بصمة', 'دخول ذكي', 'كراسي جلد', 'مثبت سرعة متكيف', 'تنبيه النقطة العمياء', 'تحذير مغادرة المسار', 'فتحة سقف', 'شحن لاسلكي', 'كراسي مبردة', 'ذاكرة كرسي السواق', 'مكابح طوارئ', 'إضاءة لِد كاملة'],
   lux: ['سقف بانوراما', 'كراسي مساج', 'نظام صوت فاخر', 'شاشة عرض على الزجاج', 'تعليق هوائي', 'إضاءة محيطية', 'أبواب شفط', 'شاشات خلفية', 'تبريد وتدفئة الكراسي', 'ثلاجة في الكونسول', 'رؤية ليلية', 'ركن ذاتي', 'كراسي خلفية كهربا', 'زجاج عازل للصوت', 'مفتاح رقمي في الجوال'],
 };
 
@@ -418,126 +513,6 @@ export function moreFeatures(tier: string): string[] {
 export function faultPool(k: string): string[] {
   if (k === 'positive') return POSITIVE;
   return FAULTS[k] ?? [];
-}
-
-/** strings dealt in earlier nights on this phone; avoided while the pools allow */
-let said: Set<string> | null = null;
-const SAID_KEY = 'mzk:said';
-function remembered(): Set<string> {
-  if (said) return said;
-  said = new Set();
-  try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SAID_KEY) : null;
-    if (raw) for (const x of JSON.parse(raw) as string[]) said.add(x);
-  } catch {
-    /* storage blocked: nothing remembered */
-  }
-  return said;
-}
-const dealt: string[] = [];
-export function rememberNight() {
-  try {
-    if (typeof localStorage === 'undefined') return;
-    const prev = [...remembered()];
-    const all = [...prev.filter((x) => !dealt.includes(x)), ...dealt].slice(-400);
-    localStorage.setItem(SAID_KEY, JSON.stringify(all));
-    said = new Set(all);
-    dealt.length = 0;
-  } catch {
-    /* storage full or blocked */
-  }
-}
-
-function panelTouched(c: CarPub): boolean {
-  return Object.values(c.panels).some((s: PanelStatus) => s === 'paint' || s === 'replaced' || s === 'spot');
-}
-
-function fits(tags: string | undefined, x: StoryCtx): boolean {
-  if (!tags) return true;
-  const c = x.truth;
-  const age = x.nowYear - c.year;
-  const lux = c.tier === 'luxury' || c.tier === 'sport' || c.tier === 'exotic';
-  for (const t of tags.split(' ')) {
-    if (!t) continue;
-    if (t === 'hi' && !(c.km > 180_000)) return false;
-    if (t === 'lo' && !(c.km < 80_000)) return false;
-    if (t === 'old' && age < 10) return false;
-    if (t === 'new' && age > 4) return false;
-    if (t === 'lux' && !lux) return false;
-    if (t === 'eco' && lux) return false;
-    if (t === 'work' && !(c.body === 'pickup' || c.body === 'van' || c.tier === 'work')) return false;
-    if (t === 'fam' && !(c.body === 'suv' || c.body === 'van' || c.body === 'sedan')) return false;
-    if (t === 'x4' && !(c.drive === '4WD' || c.drive === 'AWD')) return false;
-    if (t === 'own' && x.seller !== 'owner') return false;
-    if (t === 'co' && !['company', 'rental', 'gov'].includes(x.seller)) return false;
-  }
-  return true;
-}
-
-/** a tell holds when the hidden truth backs it */
-function tellHolds(tag: string, x: StoryCtx): boolean | null {
-  const c = x.truth;
-  if (tag.startsWith('T:')) return x.surprise?.key === tag.slice(2);
-  if (tag === 'P') return panelTouched(c);
-  if (tag === 'hot') return c.mech.engine === 'major' || c.mech.engine === 'minor';
-  if (tag === 'ac') return c.mech.ac === 'weak' || c.mech.ac === 'broken';
-  if (tag === 'sus') return c.mech.susp === 'minor' || c.mech.susp === 'major';
-  return null;
-}
-
-function pickLine(rng: Rng, pool: Line[], x: StoryCtx, used: Set<string>): string {
-  const ok = pool.filter(([t, g]) => fits(g, x) && !used.has(t));
-  const prev = remembered();
-  const fresh = ok.filter(([t]) => !prev.has(t));
-  const src = fresh.length ? fresh : ok.length ? ok : pool.filter(([, g]) => fits(g, x));
-  const t = rng.pick(src.length ? src : pool)[0];
-  used.add(t);
-  dealt.push(t);
-  return t;
-}
-
-function storyQuirks(rng: Rng, x: StoryCtx, used: Set<string>): string[] {
-  const prev = remembered();
-  const usable = (q: Line) => !used.has(q[0]) && fits((q[1] ?? '').split(' ').filter((t) => !isTell(t)).join(' '), x);
-  const tellsOf = (q: Line) => (q[1] ?? '').split(' ').filter(isTell);
-  const plain = QUIRKS.filter((q) => usable(q) && tellsOf(q).length === 0);
-  const trueTells = QUIRKS.filter((q) => usable(q) && tellsOf(q).length > 0 && tellsOf(q).every((t) => tellHolds(t, x)));
-  const falseTells = QUIRKS.filter((q) => usable(q) && tellsOf(q).length > 0 && tellsOf(q).some((t) => !tellHolds(t, x)) && !tellsOf(q).some((t) => t === 'P' || t === 'hot' || t === 'ac' || t === 'sus'));
-  const out: string[] = [];
-  const take = (pool: Line[]) => {
-    const fresh = pool.filter((q) => !prev.has(q[0]) && !out.includes(q[0]));
-    const src = fresh.length ? fresh : pool.filter((q) => !out.includes(q[0]));
-    if (!src.length) return;
-    const t = rng.pick(src)[0];
-    out.push(t);
-    used.add(t);
-    dealt.push(t);
-  };
-  const n = rng.chance(0.55) ? 3 : 2;
-  // a surprise-backed tell shows most of the time; a visible-condition tell less so
-  const surpriseTells = trueTells.filter((q) => tellsOf(q).some((t) => t.startsWith('T:')));
-  if (surpriseTells.length && rng.chance(0.7)) take(surpriseTells);
-  else if (trueTells.length && rng.chance(0.45)) take(trueTells);
-  else if (falseTells.length && rng.chance(0.06)) take(falseTells);
-  while (out.length < n) {
-    const before = out.length;
-    take(plain);
-    if (out.length === before) break;
-  }
-  return out;
-}
-
-function isTell(t: string): boolean {
-  return t.startsWith('T:') || t === 'P' || t === 'hot' || t === 'ac' || t === 'sus';
-}
-
-export function storyFor(rng: Rng, x: StoryCtx, used: Set<string>): NonNullable<CarPub['story']> {
-  return {
-    owner: pickLine(rng, OWNER, x, used),
-    use: pickLine(rng, USE, x, used),
-    why: pickLine(rng, WHY, x, used),
-    quirks: storyQuirks(rng, x, used),
-  };
 }
 
 const TYRES = ['ميشلان', 'بريجستون', 'يوكوهاما', 'هانكوك', 'كومهو', 'كونتيننتال', 'بيريللي', 'دنلوب', 'تويو', 'فالكن', 'جوديير', 'نيتو'];

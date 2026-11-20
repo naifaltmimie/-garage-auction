@@ -2,7 +2,7 @@
 // Effects: "pct" is a fraction of the car's value, "sar" a fixed riyal amount (scaled by class).
 import type { Rng } from '../lib/rng';
 import { arDigits, money } from '../lib/util';
-import { PLATE_WORDS, gradePlate, wordLetters } from './lotgen';
+import { PLATE_LETTERS, PLATE_WORDS, gradePlate, wordLetters } from './lotgen';
 import type { CarModel, CarPub, PanelStatus, SaleMode, Seller, Surprise } from './types';
 
 export interface SurpriseCtx {
@@ -65,7 +65,7 @@ const DEFS: Def[] = [
       const mi = Math.round(c.car.km / 1000);
       return `طلع العداد بالميل مو بالكيلو، ${arDigits(mi)} ألف ميل يعني ${arDigits(Math.round(mi * 1.609))} ألف كم`;
     },
-    tells: ['العداد فيه علامة MPH', 'شاشة الحرارة بالفهرنهايت'],
+    tells: ['العداد مكتوب عليه ميل في الساعة', 'شاشة الحرارة بالفهرنهايت'],
   },
   {
     id: 'chassis', good: false, w: 2,
@@ -119,19 +119,19 @@ const DEFS: Def[] = [
     fits: (c) => c.seller !== 'rental' && (c.m.tier === 'daily' || c.m.tier === 'family') && c.age >= 2,
     effect: neg(pct(0.05, 0.12)),
     text: () => 'طلعت سيارة تأجير سابقة، مرّ عليها سواقين أكثر من ركاب باص',
-    tells: ['تفاويض كثيرة في موجز', 'ستيكر شركة تحت الزجاج'],
+    tells: ['تفاويض كثيرة في موجز', 'ملصق شركة تحت الزجاج'],
   },
   {
     id: 'gov', good: false, w: 3,
     fits: (c) => c.seller !== 'gov' && c.age >= 4,
     effect: neg(pct(0.1, 0.15)),
-    text: () => 'طلعت من مزاد حكومي، ساعات تشغيلها وهي واقفة تعادل نص عمرها',
+    text: () => 'طلعت من مزاد حكومي، ونص عمرها شغالة وهي واقفة',
     tells: ['فتحات بالسقف مسدودة', 'أسلاك زايدة تحت الطبلون'],
     cover: 'ex_government',
   },
   {
     id: 'taxi', good: false, w: 3,
-    fits: (c) => taxiish.has(c.m.modelEn) && c.age >= 3,
+    fits: (c) => taxiish.has(c.m.modelEn) && c.age >= 3 && (c.car.plate.kind ?? 'private') === 'private',
     effect: neg(pct(0.2, 0.3)),
     text: () => 'كانت ليموزين، لوحتها كانت صفراء والممشى الحقيقي فلكي',
     tells: ['آثار لاصق على الأبواب', 'الفرش الخلفي مستهلك'],
@@ -220,7 +220,7 @@ const DEFS: Def[] = [
     id: 'warranty', good: true, w: 6,
     fits: (c) => c.age <= 4 && !c.car.warranty,
     effect: pct(0.03, 0.06),
-    text: () => 'مفاجأة، باقي عليها ضمان وكالة سنة ونص',
+    text: () => 'باقي عليها ضمان وكالة سنة ونص، محد انتبه له',
   },
   {
     id: 'freeservice', good: true, w: 5,
@@ -238,7 +238,7 @@ const DEFS: Def[] = [
       if (r < 0.25) return rng.int(60, 120) * 1000;
       return rng.int(10, 40) * 1000;
     },
-    text: (_c, rng, d) => `اللوحة طلعت مميزة وما انتبه لها البائع: ${plateFor(rng, d)}`,
+    text: (_c, rng, d) => `اللوحة طلعت مميزة وصاحبها ما انتبه لها: ${plateFor(rng, d)}`,
   },
   {
     id: 'rare', good: true, w: 3,
@@ -298,13 +298,13 @@ const DEFS: Def[] = [
     id: 'family', good: true, w: 5,
     fits: (c) => c.car.owners >= 2 && c.m.tier !== 'sport',
     effect: pct(0.01, 0.03),
-    text: () => 'أول مالك فعلياً واستخدام عائلي، وموجز يؤكد',
+    text: () => 'الملاك اللي في موجز كلهم أهل بيت واحد، استعمال عائلي',
   },
 ];
 
 function plateFor(rng: Rng, delta: number): string {
   // names a plate that really grades at the claimed worth (same grader as the deck's plates)
-  const L = ['ا', 'ب', 'ح', 'د', 'ر', 'س', 'ص', 'ط', 'ع', 'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ى'];
+  const L = PLATE_LETTERS.map((l) => l[0]);
   const want = delta >= 1_000_000 ? 'legend' : delta >= 250_000 ? 'rare' : delta >= 60_000 ? 'top' : 'special';
   const d = () => String(rng.pick([1, 5, 7, 9, rng.int(1, 9)]));
   for (let i = 0; i < 80; i++) {
@@ -406,7 +406,7 @@ export function historyFor(rng: Rng, car: CarPub, nowYear: number): string[] {
   if (car.service === 'dealer') out.push('سجل الصيانة: منتظم بالوكالة');
   else if (car.service === 'workshop') out.push('سجل الصيانة: ورش خارجية، فواتير متفرقة');
   else out.push('سجل الصيانة: لا يوجد');
-  if (car.specKind === 'us_salvage') out.push('كارفاكس: Salvage title');
+  if (car.specKind === 'us_salvage') out.push('سجل الوارد: سلفج، مصدومة قبل الشحن');
   return out;
 }
 

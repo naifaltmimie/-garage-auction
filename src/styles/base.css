@@ -1,6 +1,6 @@
-/* مزاد الكراج — design system
-   Official-platform feel: stone paper, Saudi green, gold for what's special.
-   Type: IBM Plex Sans Arabic everywhere (the Saudi government digital standard), bundled from @fontsource. */
+/* مزاد الكراج: the base sheet
+   Resets, layout helpers and the first draft of every control. theme.css (imported later) dresses them in
+   حراج الليل and holds the three type roles; this sheet only names the text face. See docs/DESIGN.md. */
 
 :root {
   color-scheme: light;
@@ -41,8 +41,7 @@
   --plate-ink: #111;
 
   --f-ui: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
-  --f-display: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
-  --f-num: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  /* --f-display and --f-num are set to the voice and print roles in theme.css */
 
   --r-sm: 10px;
   --r: 14px;
@@ -67,6 +66,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  scrollbar-color: var(--rubber-5, #30323a) transparent;
+  scrollbar-width: thin;
+  caret-color: var(--ink);
 }
 
 body {
@@ -96,6 +98,26 @@ button {
   border: 0;
   background: none;
   padding: 0;
+  touch-action: manipulation;
+}
+
+/* controls are pressed, not selected; text the player may copy (the room code, a sentence) stays selectable */
+button,
+[role='switch'],
+[role='tab'],
+.seg,
+.stepper,
+.iconbtn {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+a,
+input,
+select,
+textarea,
+summary {
+  touch-action: manipulation;
 }
 
 img {
@@ -103,13 +125,51 @@ img {
   max-width: 100%;
 }
 
-:focus-visible {
-  outline: 2px solid var(--green-500);
+/* ---------------------------------------------------------------- browser surfaces, themed */
+
+/* the keyboard ring: chalk, 2px, held 2px off every interactive element */
+:focus-visible,
+.btn:focus-visible,
+.input:focus-visible,
+.seg > button:focus-visible,
+.stepper button:focus-visible,
+.iconbtn:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 ::selection {
-  background: var(--green-100);
+  background: var(--rubber-5, #30323a);
+  color: var(--ink);
+}
+
+input,
+textarea {
+  caret-color: var(--ink);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rubber-5, #30323a);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .ltr {
@@ -182,18 +242,24 @@ img {
   text-align: center;
 }
 
-/* ---------------------------------------------------------------- type */
+/* ---------------------------------------------------------------- type
+   --f-display is the voice (Lalezar, one weight: 400, never tracked) and --f-num is print
+   (Barlow Condensed 800, tabular). Sizes come from the role scale in theme.css. */
 
 .t-display {
   font-family: var(--f-display);
-  font-weight: 700;
-  line-height: 1.3;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .t-title {
   font-family: var(--f-display);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.2;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .t-label {
@@ -204,18 +270,20 @@ img {
 
 .t-money {
   font-family: var(--f-num);
-  font-weight: 700;
+  font-weight: 800;
   font-variant-numeric: tabular-nums lining-nums;
   direction: ltr;
   unicode-bidi: isolate;
-  letter-spacing: -.01em;
+  letter-spacing: .01em;
 }
 
 .section-title {
   font-family: var(--f-display);
-  font-weight: 700;
-  font-size: 28px;
-  line-height: 1.3;
+  font-weight: 400;
+  font-size: var(--t-voice-l, 34px);
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-wrap: balance;
   margin: 0;
 }
 
@@ -249,9 +317,10 @@ img {
 .card-head h3 {
   margin: 0;
   font-family: var(--f-display);
-  font-weight: 700;
-  font-size: 21px;
-  line-height: 1.2;
+  font-weight: 400;
+  font-size: var(--t-voice-s, 22px);
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .divider {
@@ -620,8 +689,10 @@ img {
 .drawer h3 {
   margin: 0 0 14px;
   font-family: var(--f-display);
-  font-weight: 900;
-  font-size: 24px;
+  font-weight: 400;
+  font-size: var(--t-voice-m, 26px);
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 
 .spinner {

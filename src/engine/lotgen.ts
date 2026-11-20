@@ -103,19 +103,19 @@ export function panelsFor(doors: 2 | 4): PanelId[] {
 
 const FEATURES: Record<Tier, string[]> = {
   junk: ['مسجل كاسيت', 'مكيف عادي', 'دركسون هيدروليك', 'زجاج كهرباء'],
-  daily: ['شاشة لمس', 'كاميرا خلفية', 'كروز كنترول', 'بلوتوث', 'حساسات خلفية', 'دخول ذكي'],
-  family: ['شاشة 10 إنش', 'كاميرا 360', 'فتحة سقف', 'مقاعد جلد', 'كروز كنترول', 'شاحن لاسلكي', 'تبريد مقاعد', 'صف ثالث'],
+  daily: ['شاشة لمس', 'كاميرا خلفية', 'مثبت سرعة', 'بلوتوث', 'حساسات خلفية', 'دخول ذكي'],
+  family: ['شاشة 10 إنش', 'كاميرا 360', 'فتحة سقف', 'مقاعد جلد', 'مثبت سرعة', 'شاحن لاسلكي', 'تبريد مقاعد', 'صف ثالث'],
   work: ['دبل', 'ونش أمامي', 'قفل دفرنس', 'مكيف قوي', 'رادار', 'شبك حماية'],
   luxury: ['بانوراما', 'تبريد وتدفئة مقاعد', 'شاشات خلفية', 'كاميرا 360', 'مثبت سرعة تكيفي', 'نظام صوت فاخر', 'ثلاجة', 'تعليق هوائي', 'إضاءة محيطية'],
-  sport: ['عادم رياضي', 'فرامل بريمبو', 'مقاعد رياضية', 'وضع حلبة', 'لانش كنترول', 'جنوط 20 إنش'],
-  exotic: ['كربون فايبر', 'فرامل سيراميك', 'رفع أمامي', 'نظام صوت فاخر', 'جلد حسب الطلب', 'سقف كربون'],
+  sport: ['عادم رياضي', 'فرامل رياضية', 'مقاعد رياضية', 'وضع حلبة', 'وضع الانطلاق', 'جنوط 20 إنش'],
+  exotic: ['قطع كربون', 'فرامل سيراميك', 'رفع أمامي', 'نظام صوت فاخر', 'جلد حسب الطلب', 'سقف كربون'],
   classic: ['أصلية من الوكالة', 'مكيف وكالة', 'جنوط أصلية', 'دليل المالك الأصلي'],
 };
 
 const MODS = [
-  ['تظليل حراري 30%', 0.0], ['نانو سيراميك', 0.004], ['حماية PPF كاملة', 0.01], ['شاشة أندرويد', 0],
+  ['تظليل حراري 30%', 0.0], ['نانو سيراميك', 0.004], ['تغليف حماية كامل', 0.01], ['شاشة أندرويد', 0],
   ['جنوط مقاس أكبر', -0.004], ['رفع 2 إنش', -0.01], ['عادم معدّل', -0.012], ['برمجة كمبيوتر', -0.02],
-  ['كفرات أوف رود', 0], ['إضاءة LED معدّلة', -0.002],
+  ['كفرات طين', 0], ['إضاءة لِد معدّلة', -0.002],
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -225,9 +225,11 @@ export interface Built {
 }
 
 // ---------------------------------------------------------------------------
-// Saudi plates. 17 letters; some numbers/letters are "مميزة" and trade for real money.
+// Saudi plates. 17 letters; a standard plate carries exactly four digits. One to three digits, repeated or
+// named letters and patterned digits are the distinguished numbers that trade for real money.
 
-const PLATE_LETTERS: readonly (readonly [string, string])[] = [
+/** the 17 plate letters and their official Latin equivalents (the plate writes ا for أ and ى for the last letter) */
+export const PLATE_LETTERS: readonly (readonly [string, string])[] = [
   ['ا', 'A'], ['ب', 'B'], ['ح', 'J'], ['د', 'D'], ['ر', 'R'], ['س', 'S'], ['ص', 'X'], ['ط', 'T'], ['ع', 'E'],
   ['ق', 'G'], ['ك', 'K'], ['ل', 'L'], ['م', 'Z'], ['ن', 'N'], ['هـ', 'H'], ['و', 'U'], ['ى', 'V'],
 ];
@@ -247,91 +249,121 @@ const WORD_SET = new Set(PLATE_WORDS);
 /** plate letters for a word (ه is written هـ on the plate) */
 export const wordLetters = (w: string) => [...w].map((c) => (c === 'ه' ? 'هـ' : c));
 
+export type PlateTier = 'legend' | 'rare' | 'top' | 'special' | 'nice';
+export const PLATE_TIERS: readonly PlateTier[] = ['nice', 'special', 'top', 'rare', 'legend'];
+
 export interface PlateGrade {
-  tier: 'legend' | 'rare' | 'top' | 'special' | 'nice';
+  tier: PlateTier;
   label: string;
   note: string;
   /** 0..1, where the plate sits inside its tier */
   score: number;
 }
 
-const DIG_AR = ['صفر', 'واحد', 'اثنين', 'ثلاث', 'أربع', 'خمس', 'ست', 'سبع', 'ثمان', 'تسع'];
 const DIG_PL = ['أصفار', 'واحدات', 'اثنينات', 'ثلاثات', 'أربعات', 'خمسات', 'ستات', 'سبعات', 'ثمانيات', 'تسعات'];
 const LIKED = new Set(['1', '5', '7', '9', '0']);
+const TIER_WORD: Partial<Record<PlateTier, string>> = { top: 'لوحة مميزة', rare: 'لوحة نادرة', legend: 'لوحة أسطورية' };
+
+/** an ordinary plate: exactly four digits 1000–9999 */
+export const isStandardNumber = (num: string) => /^[1-9]\d{3}$/.test(num);
 
 /**
- * Grades a plate the way the Saudi market does: fewer digits first, then repeated or named letters, then the
- * digits themselves. The ONLY thing that decides whether a plate is tagged, its tier, label and note.
+ * Grades a plate the way the Saudi market reads it, and is the ONLY judge of whether a plate is tagged, its tier,
+ * label and note. Fewer digits always count: three digits are at least `nice` («رقم ثلاثي»), two at least `special`
+ * («رقم ثنائي»), one at least `top` («رقم فردي»). Letters lift it (one letter, two of the same, three of the same,
+ * a word), and so do the digits (twins, three or four of a kind, a round hundred, the number one). Four digits are
+ * tagged only as four of a kind, a round thousand, a run with repeating letters, or under three identical letters
+ * or a word. Tiers `top`, `rare`, `legend` carry the tier words; `nice` and `special` carry the plain fact.
  */
 export function gradePlate(letters: readonly string[], num: string): PlateGrade | null {
   const n = letters.length;
   const len = num.length;
+  if (!/^[1-9]\d{0,3}$/.test(num) || n < 1 || n > 3) return null;
   const sameL = letters.every((l) => l === letters[0]);
   const repL = n === 3 && !sameL && new Set(letters).size < 3;
   const word = n === 3 && WORD_SET.has(wordKey(letters)) ? wordKey(letters) : null;
   const sameD = len >= 2 && /^(\d)\1+$/.test(num);
-  const round = /^[1-9]0+$/.test(num);
   const twins = len === 2 && sameD;
-  const stepped = num === '1234' || num === '4321' || num === '123' || num === '321';
-  const mirror = len === 4 && (/^(\d)(\d)\2\1$/.test(num) || /^(\d)(\d)\1\2$/.test(num)) && !sameD;
+  const round = len >= 3 && /^[1-9]0+$/.test(num);
+  const run = num === '1234' || num === '4321' || num === '123' || num === '321';
+  const facts: string[] = [];
+  let step = len === 1 ? 2 : len === 2 ? 1 : len === 3 ? 0 : -1;
+  // what the digits say
+  let digitFact = '';
+  if (len === 1) digitFact = num === '1' ? 'رقم واحد' : 'رقم فردي';
+  else if (len === 2) digitFact = twins ? 'رقم ثنائي متشابه' : 'رقم ثنائي';
+  else if (len === 3) digitFact = sameD ? `ثلاث ${DIG_PL[+num[0]]}` : round ? 'رقم مئوي' : run ? 'رقم ثلاثي متسلسل' : 'رقم ثلاثي';
+  else if (sameD) digitFact = `أربع ${DIG_PL[+num[0]]}`;
+  else if (round) digitFact = 'رقم ألفي';
+  else if (run) digitFact = 'أرقام متسلسلة';
+  if (len === 4) {
+    if (sameD) step = 1;
+    else if (round) step = 0;
+    else if (run && (repL || sameL)) step = 0;
+  }
+  if (num === '1') step += 1;
+  if (twins) step += 1;
+  if (len === 3 && (sameD || round)) step += 1;
+  // what the letters say
+  let letterFact = '';
+  if (n === 1) {
+    letterFact = 'حرف واحد';
+    step += 2;
+  } else if (n === 2 && sameL) {
+    letterFact = 'حرفين متشابهين';
+    step += 1;
+  } else if (n === 3 && sameL) {
+    letterFact = 'حروف متشابهة';
+    if (len === 4 && step < 0) step = 1;
+    else step += len === 1 ? 2 : 1;
+  } else if (word) {
+    letterFact = `اسم: ${word}`;
+    if (len === 4 && step < 0) step = 0;
+    else step += 1;
+  } else if (n === 2) {
+    letterFact = 'حرفين';
+    step += 1;
+  } else if (repL && step >= 0) letterFact = 'حرف مكرر';
+  if (step < 0) return null;
+  const tier = PLATE_TIERS[Math.min(4, step)];
+  if (letterFact) facts.push(letterFact);
+  if (digitFact) facts.push(digitFact);
   const liked = [...num].filter((c) => LIKED.has(c)).length / len;
-  const one = num === '1' ? 0.25 : 0;
-  const sc = (base: number) => Math.max(0, Math.min(1, base + 0.35 * liked + one));
-  const g = (tier: PlateGrade['tier'], label: string, note: string, base: number): PlateGrade => ({ tier, label, note, score: sc(base) });
-  const L = (tier: PlateGrade['tier']) =>
-    tier === 'legend' ? 'لوحة أسطورية' : tier === 'rare' ? 'لوحة نادرة' : tier === 'top' ? 'لوحة مميزة' : '';
-
-  if (n === 1 && len <= 2) return g('legend', L('legend'), len === 1 ? 'حرف واحد ورقم واحد' : 'حرف واحد ورقمين', len === 1 ? 0.4 : 0);
-  if (n === 3 && sameL && len === 1) return g('legend', L('legend'), 'ثلاث حروف متشابهة ورقم مفرد', 0);
-  if (n === 2 && sameL && len <= 2) return g('rare', L('rare'), len === 1 ? 'حرفين متشابهة ورقم مفرد' : twins ? 'حرفين متشابهة ورقمين متشابهة' : 'حرفين متشابهة ورقمين', len === 1 ? 0.4 : twins ? 0.25 : 0);
-  if (word && len === 1) return g('rare', L('rare'), `اسم (${word}) ورقم مفرد`, 0.1);
-  if (n === 3 && sameL && len === 2) return g('rare', L('rare'), twins ? 'ثلاث حروف متشابهة ورقمين متشابهة' : 'ثلاث حروف متشابهة ورقمين', twins ? 0.3 : 0);
-  if (n === 3 && sameL && len === 3 && round) return g('rare', L('rare'), `ثلاث حروف متشابهة ورقم ${num}`, 0);
-  if (n === 3 && len === 1) return g('top', L('top'), repL ? 'حروف مكررة ورقم مفرد' : 'رقم مفرد', repL ? 0.15 : 0);
-  if (word && (twins || (len === 3 && sameD))) return g('top', L('top'), `اسم (${word}) و${twins ? 'رقمين متشابهة' : `ثلاث ${DIG_PL[+num[0]]}`}`, twins ? 0.2 : 0);
-  if (n === 3 && sameL && len === 3 && (sameD || stepped)) return g('top', L('top'), sameD ? 'حروف متشابهة وأرقام متشابهة' : 'حروف متشابهة ورقم متسلسل', sameD ? 0.2 : 0);
-  if (len === 4 && sameD) return g('special', 'رقم مميز', `أربع ${DIG_PL[+num[0]]}`, 0.2);
-  if (len === 3 && sameD) return g('special', 'رقم مميز', `ثلاث ${DIG_PL[+num[0]]}`, 0.1);
-  if (n === 3 && twins) return g('special', 'رقم مميز', `رقمين متشابهة (${DIG_AR[+num[0]]})`, 0.3);
-  if (n === 3 && len === 2 && word) return g('special', 'رقم مميز', `رقمين واسم (${word})`, 0.15);
-  // two plain digits under three unrelated letters: liked, never called مميزة
-  if (n === 3 && len === 2) return g('nice', 'رقم حلو', 'رقمين', 0.7);
-  if (word) return g('special', 'حروف مميزة', `اسم (${word})`, 0);
-  if (n === 3 && sameL) return g('special', 'حروف مميزة', 'ثلاث حروف متشابهة', 0.1);
-  if ((len === 3 || len === 4) && round) return g('nice', 'رقم حلو', len === 4 ? 'رقم ألفي' : 'رقم مئوي', 0.2);
-  if (num === '1234') return g('nice', 'رقم حلو', 'أرقام متسلسلة', 0.1);
-  if (mirror && repL) return g('nice', 'رقم حلو', 'رقم مرايا وحرف مكرر', 0);
-  return null;
-}
-
-/** Does this plate look special to a Saudi eye? Exactly when the grader tags it (ordinary plates never do). */
-function looksSpecial(num: string, letters: readonly (readonly [string, string])[]): boolean {
-  return gradePlate(letters.map((l) => l[0]), num) !== null;
+  const score = Math.max(0, Math.min(1, 0.35 * liked + (num === '1' ? 0.25 : 0) + (step > 4 ? 0.3 : 0) + (sameD ? 0.15 : 0)));
+  // a plain-fact label: the digits' pattern when there is one, else how many digits, else the letters
+  const pattern = len >= 3 && (sameD || round || run);
+  const label = TIER_WORD[tier] ?? (pattern || len < 4 ? digitFact : letterFact);
+  return { tier, label, note: facts.filter((f) => f !== label).join('، '), score };
 }
 
 /** value ranges per tier, from real Absher/Haraj sales */
-const TIER_RANGE: Record<PlateGrade['tier'], [number, number, number]> = {
+const TIER_RANGE: Record<PlateTier, [number, number, number]> = {
   legend: [900_000, 4_500_000, 50_000],
   rare: [250_000, 1_500_000, 10_000],
   top: [60_000, 300_000, 5_000],
   special: [12_000, 90_000, 500],
   nice: [3_000, 18_000, 500],
 };
+/** the least a room must be able to pay for a tier to be dealt */
+export const tierFloor = (t: PlateTier) => TIER_RANGE[t][0];
+/** the logo plate's fee */
+export const LOGO_FEE = 800;
 
-/**
- * A Saudi private plate. Most are ordinary (three letters, four digits) and carry no tag at all. The special
- * ones follow what really trades: one letter and one digit (Absher sold «ع 1» for 21 million and «ط 1» for
- * 4.15 million), two letters and two digits («م م 22» 1.47 million), names in the letters («ص ق ر 7»),
- * three identical letters, three letters and one digit, four identical digits, and the cheaper «رقم حلو» patterns.
- * The tier and label always come from `gradePlate`. `cap` keeps a plate within what the room can pay.
- */
-export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
+type Letter = readonly [string, string];
+type Cand = [Letter[], string];
+
+function plateGens(rng: Rng) {
   const L = () => rng.pick(PLATE_LETTERS);
   const byAr = (c: string) => PLATE_LETTERS.find((l) => l[0] === c)!;
-  const three = () => [L(), L(), L()];
-  const same = (n: number) => {
+  const plain3 = (): Letter[] => {
+    for (;;) {
+      const t = [L(), L(), L()];
+      if (new Set(t).size > 1 && !WORD_SET.has(wordKey(t.map((l) => l[0])))) return t;
+    }
+  };
+  const same = (k: number) => {
     const l = L();
-    return Array.from({ length: n }, () => l);
+    return Array.from({ length: k }, () => l);
   };
   const word = () => wordLetters(rng.pick(PLATE_WORDS)).map(byAr);
   const rep = () => {
@@ -341,79 +373,171 @@ export function makePlate(rng: Rng, m: CarModel, cap = Infinity): PlatePub {
     return rng.pick([[a, a, b], [a, b, a], [b, a, a]]);
   };
   const d = () => String(rng.int(1, 9));
-  const dl = () => rng.pick(['1', '5', '7', '9', d()]);
-  const plain = (lo: number, hi: number) => String(rng.int(lo, hi));
-  const posh = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport';
-  const w = (normal: number, rich: number) => (posh ? rich : normal);
-  const tiers: [PlateGrade['tier'], number][] = [
-    ['legend', cap >= 900_000 ? w(0.0015, 0.006) : 0],
-    ['rare', cap >= 250_000 ? w(0.0035, 0.012) : 0],
-    ['top', cap >= 60_000 ? w(0.01, 0.025) : 0],
-    ['special', cap >= 12_000 ? w(0.03, 0.05) : 0],
-    ['nice', cap >= 3_000 ? w(0.05, 0.06) : 0],
-  ];
-  let roll = rng.next();
-  let tier: PlateGrade['tier'] | 'normal' = 'normal';
-  for (const [t, p] of tiers) {
-    if (roll < p) {
-      tier = t;
-      break;
+  const d29 = () => String(rng.int(2, 9));
+  const two = () => {
+    for (;;) {
+      const s = String(rng.int(10, 99));
+      if (s[0] !== s[1]) return s;
     }
-    roll -= p;
-  }
-
-  type Cand = [(readonly [string, string])[], string];
-  const gens: Record<PlateGrade['tier'], [() => Cand, number][]> = {
-    legend: [[() => [[L()], dl()], 55], [() => [[L()], plain(10, 99)], 20], [() => [same(3), dl()], 25]],
+  };
+  const three = () => {
+    for (;;) {
+      const s = String(rng.int(101, 999));
+      if (!/^(\d)\1\1$/.test(s) && !/^[1-9]00$/.test(s)) return s;
+    }
+  };
+  const four = () => {
+    for (;;) {
+      const s = String(rng.int(1000, 9999));
+      if (!/^(\d)\1{3}$/.test(s) && !/^[1-9]000$/.test(s) && s !== '1234' && s !== '4321') return s;
+    }
+  };
+  const gens: Record<PlateTier, [() => Cand, number][]> = {
+    legend: [[() => [[L()], d()], 45], [() => [[L()], d().repeat(2)], 15], [() => [same(3), d()], 25], [() => [word(), '1'], 15]],
     rare: [
-      [() => [same(2), rng.chance(0.5) ? dl() : rng.chance(0.5) ? d().repeat(2) : plain(10, 99)], 45],
-      [() => [word(), dl()], 35],
-      [() => [same(3), rng.chance(0.6) ? d().repeat(2) : `${d()}00`], 20],
+      [() => [same(2), d()], 25], [() => [same(2), d().repeat(2)], 15], [() => [word(), d29()], 25],
+      [() => [[L()], two()], 15], [() => [plain3(), '1'], 10], [() => [same(3), d().repeat(2)], 10],
     ],
     top: [
-      [() => [rng.chance(0.25) ? rep() : three(), dl()], 45],
-      [() => [word(), rng.chance(0.5) ? d().repeat(2) : d().repeat(3)], 35],
-      [() => [same(3), rng.chance(0.7) ? d().repeat(3) : rng.pick(['123', '321'])], 20],
+      [() => [rng.chance(0.25) ? rep() : plain3(), d29()], 35], [() => [plain3(), d().repeat(2)], 20], [() => [word(), two()], 15],
+      [() => [same(2), two()], 10], [() => [same(3), two()], 10], [() => [word(), d().repeat(3)], 10],
     ],
     special: [
-      [() => [three(), d().repeat(4)], 22],
-      [() => [three(), d().repeat(3)], 18],
-      [() => [three(), d().repeat(2)], 22],
-      [() => [word(), plain(1000, 9999)], 26],
-      [() => [same(3), plain(1000, 9999)], 12],
+      [() => [rng.chance(0.2) ? rep() : plain3(), two()], 34], [() => [plain3(), d().repeat(3)], 14], [() => [plain3(), `${d()}00`], 12],
+      [() => [plain3(), d().repeat(4)], 18], [() => [same(3), four()], 10], [() => [word(), three()], 12],
     ],
-    nice: [
-      [() => [three(), plain(10, 99)], 22],
-      [() => [three(), `${d()}000`], 30],
-      [() => [three(), `${d()}00`], 30],
-      [() => [three(), '1234'], 15],
-      [() => {
-        const a = d();
-        let b = d();
-        while (b === a) b = d();
-        return [rep(), rng.pick([`${a}${b}${b}${a}`, `${a}${b}${a}${b}`])];
-      }, 25],
-    ],
+    nice: [[() => [plain3(), three()], 50], [() => [plain3(), `${d()}000`], 20], [() => [rep(), rng.pick(['1234', '4321'])], 10], [() => [word(), four()], 20]],
   };
+  return { gens, plain3, four, L };
+}
 
-  if (tier !== 'normal') {
-    for (let i = 0; i < 60; i++) {
-      const [letters, num] = rng.weighted(gens[tier])();
-      const gr = gradePlate(letters.map((l) => l[0]), num);
-      if (!gr || gr.tier !== tier) continue;
-      const [lo, hi, step] = TIER_RANGE[tier];
-      const pos = Math.min(1, gr.score * 0.75 + rng.next() * 0.25);
-      let v = Math.round((lo + (hi - lo) * pos * pos) / step) * step;
-      if (tier === 'legend' || tier === 'rare' || tier === 'top') v = Math.round(Math.min(v, cap) / step) * step;
-      return plateOf(letters, num, { tier: gr.tier, label: gr.label, note: gr.note, value: v });
+/** a plate of exactly this tier (graded by `gradePlate`), or null when none came up */
+function platedAt(rng: Rng, tier: PlateTier, cap: number): PlatePub | null {
+  const { gens } = plateGens(rng);
+  for (let i = 0; i < 80; i++) {
+    const [letters, num] = rng.weighted(gens[tier])();
+    const gr = gradePlate(letters.map((l) => l[0]), num);
+    if (!gr || gr.tier !== tier) continue;
+    const [lo, hi, step] = TIER_RANGE[tier];
+    const pos = Math.min(1, gr.score * 0.75 + rng.next() * 0.25);
+    let v = Math.round((lo + (hi - lo) * pos * pos) / step) * step;
+    if (tier === 'legend' || tier === 'rare' || tier === 'top') v = Math.round(Math.min(v, cap) / step) * step;
+    return plateOf(letters, num, { tier: gr.tier, label: gr.label, note: gr.note, value: Math.max(lo, v) });
+  }
+  return null;
+}
+
+/** an ordinary plate: three letters that spell nothing and four plain digits; never tagged */
+export function plainPlate(rng: Rng): PlatePub {
+  const { plain3, four } = plateGens(rng);
+  for (;;) {
+    const letters = plain3();
+    const num = four();
+    if (!gradePlate(letters.map((l) => l[0]), num)) return plateOf(letters, num);
+  }
+}
+
+/**
+ * A Saudi private plate. Most are ordinary (three letters, four digits) and carry no tag. `want` deals exactly
+ * one tier (the night's plan) or none ('none'); without it the plate rolls its own luck, richer on a posh car.
+ * `cap` keeps a plate within what the room can pay.
+ */
+export function makePlate(rng: Rng, m: CarModel, cap = Infinity, want?: PlateTier | 'none'): PlatePub {
+  if (want === 'none') return plainPlate(rng);
+  let tier: PlateTier | 'normal' = 'normal';
+  if (want) tier = want;
+  else {
+    const posh = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport';
+    const w = (normal: number, rich: number) => (posh ? rich : normal);
+    const tiers: [PlateTier, number][] = [
+      ['legend', w(0.0015, 0.006)], ['rare', w(0.0035, 0.012)], ['top', w(0.01, 0.025)], ['special', w(0.03, 0.05)], ['nice', w(0.05, 0.06)],
+    ];
+    let roll = rng.next();
+    for (const [t, p] of tiers) {
+      if (roll < p) {
+        tier = t;
+        break;
+      }
+      roll -= p;
     }
   }
-  // an ordinary plate: nothing about it may look special
-  for (;;) {
-    const letters = three();
-    const num = rng.chance(0.9) ? plain(1000, 9999) : plain(101, 999);
-    if (!looksSpecial(num, letters)) return plateOf(letters, num);
+  // a room that can't pay for the tier gets the next one down
+  while (tier !== 'normal' && cap < tierFloor(tier)) tier = tier === 'nice' ? 'normal' : PLATE_TIERS[PLATE_TIERS.indexOf(tier) - 1];
+  if (tier !== 'normal') {
+    const p = platedAt(rng, tier, cap);
+    if (p) return p;
   }
+  return plainPlate(rng);
+}
+
+const EURO_MAKES = new Set([
+  'Mercedes-Benz', 'Mercedes', 'BMW', 'Audi', 'Porsche', 'Volkswagen', 'Maybach', 'Volvo', 'Land Rover', 'Jaguar', 'Peugeot',
+  'Renault', 'Fiat', 'MINI', 'Mini', 'Alfa Romeo', 'Ferrari', 'Lamborghini', 'Rolls-Royce', 'Bentley', 'McLaren', 'Aston Martin', 'Maserati', 'Citroen', 'Opel', 'Skoda',
+]);
+
+export interface PlateKindCtx {
+  m: CarModel;
+  km: number;
+  age: number;
+  isNew: boolean;
+  /** what a real ad says about the registration, when it does */
+  adSays: string;
+  mix?: string;
+}
+
+/**
+ * The plate's registration kind (its side strip): pickups and vans that worked carry the blue «نقل خاص», a few
+ * high-mileage cheap sedans in the popular markets were taxis, a very few low-mileage luxury cars come from an
+ * embassy, and a current-year car with almost no mileage may still wear a temporary plate.
+ */
+export function plateKind(rng: Rng, c: PlateKindCtx): NonNullable<PlatePub['kind']> {
+  const { m } = c;
+  const lux = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport' || m.tier === 'classic';
+  if (/نقل\s*خاص/.test(c.adSays)) return 'transport';
+  const said = /خصوصي/.test(c.adSays);
+  if (c.age === 0 && c.km <= 3000 && rng.chance(0.2)) return 'temporary';
+  if ((m.body === 'pickup' || m.body === 'van') && !lux && !said) return rng.chance(0.72) ? 'transport' : 'private';
+  if (m.tier === 'luxury' && (m.body === 'sedan' || m.body === 'suv') && c.km < 80_000 && c.age >= 1 && rng.chance(0.025)) return 'diplomatic';
+  const cheap = m.tier === 'daily' || m.tier === 'junk';
+  if (cheap && m.body === 'sedan' && (c.mix === 'street' || c.mix === 'balanced') && c.km > 220_000 && c.age >= 3 && rng.chance(0.09)) return 'taxi';
+  return 'private';
+}
+
+/** the plate's size and its logo, and the logo on a tagged number's note */
+export function dressPlate(rng: Rng, p: PlatePub, m: CarModel, kind: NonNullable<PlatePub['kind']>): PlatePub {
+  const out: PlatePub = { ...p, kind, format: 'us' };
+  if (kind === 'private' && rng.chance(EURO_MAKES.has(m.makeEn) ? 0.12 : 0.03)) out.format = 'eu';
+  const tagged = p.special && p.special.tier !== 'nice';
+  if (kind === 'private' && rng.chance(tagged ? 0.3 : 0.06)) {
+    out.logo = rng.weighted([['emblem', 50], ['hegra', 25], ['diriyah', 25]] as const);
+    if (out.special) {
+      const note = out.special.note ? `${out.special.note}، لوحة بشعار` : 'لوحة بشعار';
+      out.special = { ...out.special, note, value: out.special.value + LOGO_FEE };
+    }
+  }
+  return out;
+}
+
+export const REG_TYPE: Record<NonNullable<PlatePub['kind']>, string> = {
+  private: 'خصوصي', transport: 'نقل خاص', taxi: 'أجرة', diplomatic: 'دبلوماسي', temporary: 'مؤقتة',
+};
+
+/**
+ * The night's tagged plates: at least one and at most three; a night of eight or more cars has one of tier
+ * `special` or better; a rare plate turns up about one night in six and a legend about one in twenty, when the
+ * room can pay for them. Highest first.
+ */
+export function platePlan(rng: Rng, count: number, cap: number): PlateTier[] {
+  const out: PlateTier[] = [];
+  if (cap >= tierFloor('legend') && rng.chance(0.05)) out.push('legend');
+  if (cap >= tierFloor('rare') && rng.chance(0.15)) out.push('rare');
+  const k = Math.min(count, Math.max(out.length, rng.weighted([[1, 0.45], [2, 0.4], [3, 0.15]] as const)));
+  while (out.length < k) {
+    const t = rng.weighted([['top', 0.18], ['special', 0.42], ['nice', 0.4]] as const);
+    out.push(cap >= tierFloor(t) ? t : 'nice');
+  }
+  if (count >= 8 && !out.some((t) => t !== 'nice')) out[0] = cap >= tierFloor('top') && rng.chance(0.2) ? 'top' : 'special';
+  return out.sort((a, b) => PLATE_TIERS.indexOf(b) - PLATE_TIERS.indexOf(a));
 }
 
 const AD_COLORS: [RegExp, string][] = [
@@ -521,7 +645,17 @@ function adLines(text: string): string[] {
     .slice(0, 3);
 }
 
-export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: Set<string> = new Set(), plateCap = Infinity): Built {
+/** what the night's plate plan asks of this lot's plate */
+export interface PlateWant {
+  tier?: PlateTier | 'none';
+  /** the plan has run out of lots: the tier lands here whatever the car */
+  force?: boolean;
+  mix?: string;
+}
+
+export function buildCar(
+  rng: Rng, m: CarModel, ad: AdSet | null = null, used: Set<string> = new Set(), plateCap = Infinity, plateWant?: PlateWant,
+): Built {
   const age = ageOf(m);
   const tags: string[] = [];
   // the cab is what the ad says; a car with no ad keeps the catalogue's. A pickup whose ad doesn't say
@@ -696,8 +830,20 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
   const floor = m.body === 'suv' || m.body === 'pickup' ? 4000 : 2500;
   v = Math.max(floor, v);
   v = niceRound(v);
-  const plate = makePlate(rng, m, plateCap);
+  // the plate: its registration kind, then the number the night's plan asks for (tagged numbers sit on private
+  // plates, rarely a transport one; a legend never on a wreck), then its size and logo
+  let kind = plateKind(rng, { m, km: kmv, age, isNew: !!ad?.isNew, adSays, mix: plateWant?.mix });
+  let want = plateWant?.tier;
+  if (want && want !== 'none') {
+    if (!(kind === 'private' || (kind === 'transport' && rng.chance(0.15)))) {
+      if (plateWant?.force) kind = 'private';
+      else want = 'none';
+    }
+    if (want === 'legend' && (cls === 'wreck' || body.chassis === 'damaged')) want = plateWant?.force ? 'rare' : 'none';
+  } else if (!want && kind !== 'private' && kind !== 'transport') want = 'none';
+  const plate = dressPlate(rng, makePlate(rng, m, plateCap, want), m, kind);
   if (plate.special) v += plate.special.value;
+  else if (plate.logo) v += LOGO_FEE;
 
   // tags drive the seller's ad text
   const any = (s: PanelStatus) => Object.values(body.panels).includes(s);
@@ -754,7 +900,7 @@ export function buildCar(rng: Rng, m: CarModel, ad: AdSet | null = null, used: S
     used.add(x);
     notes.push(x);
   }
-  const regType = m.body === 'pickup' || m.body === 'van' ? 'نقل خاص' : 'خصوصي';
+  const regType = REG_TYPE[kind];
 
   const car: CarPub = {
     modelId: m.id,
@@ -903,7 +1049,7 @@ export function damageLine(c: CarPub): string {
 }
 
 export function feeRuleFor(seller: Seller, settings: Settings): FeeRule {
-  if (settings.fee <= 0) return { pct: 0, vat: false, transfer: 0, label: 'بدون رسوم' };
+  if (settings.fee <= 0) return { pct: 0, vat: false, transfer: 0, label: 'بدون سعي' };
   if (seller === 'gov') return { pct: 5, vat: false, transfer: TRANSFER_FEE, label: 'سعي 5% شامل الضريبة' };
   return { pct: settings.fee, vat: true, transfer: TRANSFER_FEE, label: `سعي ${settings.fee}% + ضريبة` };
 }
@@ -952,7 +1098,7 @@ function sellerNotes(rng: Rng, m: CarModel, b: Built, cover: string | null): str
   const vals = Object.values(t.panels);
   const hasPaint = vals.some((v) => v === 'paint' || v === 'spot');
   const hasBody = vals.some((v) => v === 'replaced' || v === 'damaged');
-  const mods = c.extras.some((e) => /تظليل|نانو|PPF|أندرويد|جنوط|رفع|عادم|برمجة|أوف رود/.test(e));
+  const mods = c.extras.some((e) => /تظليل|نانو|تغليف|أندرويد|جنوط|رفع|عادم|برمجة|كفرات طين/.test(e));
   const facts: Record<string, boolean> = {
     paint: hasPaint, body: hasBody, accident: t.najm > 0, najm: t.najm > 0, ac: t.mech.ac === 'cold',
     mileage: c.kmTag === 'low' || (c.kmTag === undefined && rng.chance(0.4)), service: c.service === 'dealer',
@@ -1132,6 +1278,10 @@ export function buildDeck(
 
   const deck: LotFull[] = [];
   const used = new Set<string>();
+  // the night's tagged plates, spread over the lots (a posh car is likelier to carry the best one,
+  // a covered car hides its plate so it rarely gets one)
+  const plateCap = budget * 0.5;
+  const pending = platePlan(rng, count, plateCap);
   for (let i = 0; i < count; i++) {
     const kind = kinds[i];
     let bucket: Bucket = rng.weighted(order.map((b) => [b, SPREAD[b]] as const));
@@ -1145,7 +1295,16 @@ export function buildDeck(
     recent.push(c.fam);
     if (recent.length > 3) recent.shift();
     tierCount.set(c.m.tier, (tierCount.get(c.m.tier) ?? 0) + 1);
-    deck.push(makeLot(rng, c.m, kind, i + 1, settings, c.ad, used));
+    const left = count - i;
+    const posh = c.m.tier === 'luxury' || c.m.tier === 'exotic' || c.m.tier === 'sport';
+    const force = pending.length >= left;
+    const p = force ? 1 : Math.min(0.9, (pending.length / left) * (kind === 'covered' ? 0.1 : posh ? 1.6 : 1));
+    let want: PlateWant = { tier: 'none', mix: settings.mix };
+    if (pending.length && rng.chance(p)) want = { tier: posh ? pending[0] : rng.pick(pending), force, mix: settings.mix };
+    const lot = makeLot(rng, c.m, kind, i + 1, settings, c.ad, used, want);
+    const got = lot.carFull.plate.special?.tier;
+    if (got && want.tier !== 'none') pending.splice(Math.max(0, pending.indexOf(want.tier === 'legend' && got === 'rare' ? 'legend' : got)), 1);
+    deck.push(lot);
   }
   rememberNight();
   return deck;
@@ -1165,9 +1324,10 @@ export function marketDepth(settings: Settings, catalogue: CarModel[]): number {
 
 export function makeLot(
   rng: Rng, m: CarModel, kind: LotKind, no: number, settings: Settings, ad: AdSet | null = null, used: Set<string> = new Set(),
+  plateWant?: PlateWant,
 ): LotFull {
   // a plate never costs more than half a player's money: the lot must stay biddable
-  const b = buildCar(rng, m, ad, used, settings.budget * 0.5);
+  const b = buildCar(rng, m, ad, used, settings.budget * 0.5, plateWant ?? { mix: settings.mix });
   const age = Math.max(0, NOW_YEAR - m.year);
   const rolled = rollSurprise(rng, { m, car: b.car, value: b.value, mode: b.mode, seller: b.seller, age }, kind === 'covered');
   const surprise = rolled.surprise;

@@ -81,6 +81,12 @@ export interface PlatePub {
   num: string; // '4821'
   /** a plate that trades for real money in Saudi (Absher auctions / Haraj): what makes it special and its worth */
   special?: { tier: 'legend' | 'rare' | 'top' | 'special' | 'nice'; label: string; note?: string; value: number };
+  /** the plate's registration type (its side strip): private white, transport blue, taxi yellow, diplomatic green, temporary silver */
+  kind?: 'private' | 'transport' | 'taxi' | 'diplomatic' | 'temporary';
+  /** us: the 335×155 mm national standard; eu: the long 550×110 mm plate issued on request */
+  format?: 'us' | 'eu';
+  /** the logo plate sold since 2022 (800 riyals): the national emblem, Hegra or At-Turaif in Diriyah */
+  logo?: 'emblem' | 'hegra' | 'diriyah';
 }
 
 export interface CarPub {
