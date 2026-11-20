@@ -4,3 +4,4 @@ public/fonts
 public/voice/*.mp3
 .DS_Store
 __pycache__/
+.impeccable/hook.cache.json
