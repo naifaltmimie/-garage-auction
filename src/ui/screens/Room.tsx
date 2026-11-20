@@ -8,7 +8,7 @@ import { isCode, money, normalizeCode, store } from '../../lib/util';
 import { go, goHome, useBack } from '../App';
 import { Icon, Toasts } from '../components/Bits';
 import { TireLoader } from '../components/TireLoader';
-import { LOGO, LogoMark } from '../components/Logo';
+import { LOGO } from '../components/Logo';
 import { HowToLines } from '../components/kit/HowToLines';
 import { ScreenTitle } from '../components/kit/ScreenTitle';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
@@ -467,11 +467,6 @@ function LateSheet({ onClose }: { onClose: () => void }) {
       <p className="shl-sheet-note">تقدر تعلّق وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة اللاعبين.</p>
     </ShellSheet>
   );
-}
-
-/** The price tag on its own (kept under its old name for any caller that still uses it). */
-export function GavelMark() {
-  return <LogoMark className="gavelmark" size={24} />;
 }
 
 function Room({ code, me }: { code: string; me: Me }) {

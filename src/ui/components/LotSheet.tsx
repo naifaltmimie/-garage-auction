@@ -69,26 +69,6 @@ function SpecLine({ car }: { car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'tran
   );
 }
 
-/** Make / model / trim / year block. */
-export function CarTitle({ car, compact }: { car: Pick<CarPub, 'makeAr' | 'makeEn' | 'modelAr' | 'trim' | 'year' | 'nick' | 'engine' | 'hp' | 'drive' | 'trans' | 'fuel'>; compact?: boolean }) {
-  return (
-    <div className={`car-title ${compact ? 'compact' : ''}`}>
-      <div className="car-make">
-        <span>{car.makeAr}</span>
-        {car.makeAr !== car.makeEn && <span className="en">{car.makeEn}</span>}
-        {car.nick && <span className="nick">«{car.nick}»</span>}
-      </div>
-      <h2 className="car-name">
-        {car.modelAr} {car.trim && <span className="trim">{car.trim}</span>}
-      </h2>
-      <div className="car-year">
-        <b className="ltr">{car.year}</b>
-        {!compact && <SpecLine car={car} />}
-      </div>
-    </div>
-  );
-}
-
 function gradeTone(g: number | null): 'good' | 'mid' | 'bad' {
   return g == null ? 'mid' : g >= 3.8 ? 'good' : g >= 2.5 ? 'mid' : 'bad';
 }

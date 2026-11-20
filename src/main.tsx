@@ -21,7 +21,6 @@ import './styles/loader.css';
 import './styles/t-auction.css';
 import './styles/t-room.css';
 import './styles/t-end.css';
-import './styles/t-tv.css';
 import './styles/wheel.css';
 import './styles/plate.css';
 import './styles/law.css';
@@ -36,8 +35,5 @@ import './styles/s-end.css';
 import './styles/s-shell.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
-import { installSpotlight } from './ui/components/fx/spotlight';
-
-installSpotlight();
 
 createRoot(document.getElementById('root')!).render(<App />);

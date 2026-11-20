@@ -45,25 +45,3 @@ export function Wordmark({ size = 40, layout = 'stack', className }: WordmarkPro
     />
   );
 }
-
-/** The tag on its own. `size` is its height in px. */
-export function LogoMark({ size = 28, className, title }: { size?: number | string; className?: string; title?: string }) {
-  const h = typeof size === 'number' ? size : undefined;
-  return (
-    <img
-      className={['logomark', className].filter(Boolean).join(' ')}
-      src={LOGO.tag}
-      height={h}
-      width={h ? Math.round(h * RATIO.tag) : undefined}
-      style={typeof size === 'string' ? { height: size, width: 'auto' } : undefined}
-      alt={title ?? ''}
-      aria-hidden={title ? undefined : true}
-      draggable={false}
-    />
-  );
-}
-
-/** The top-bar logo: tag beside the word, 40px tall (36 on small phones, from brand.css). */
-export function BrandLogo() {
-  return <img className="brand-logo" src={LOGO.row} width={120} height={40} alt="مزاد الكراج" draggable={false} />;
-}

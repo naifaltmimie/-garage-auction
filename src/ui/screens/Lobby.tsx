@@ -15,22 +15,6 @@ import type { RoomView } from '../useRoom';
 import { useBack } from '../App';
 import { openTv } from './Tv';
 
-/** The room code on a white paper plate, like a real number plate: black letters, a thin dark border, two screws. */
-export function CodePlate({ code, className, onClick }: { code: string; className?: string; onClick?: () => void }) {
-  const cls = ['code-plate', className].filter(Boolean).join(' ');
-  if (onClick)
-    return (
-      <button type="button" className={cls} onClick={onClick} aria-label={`كود الصالة ${code}، اضغط وانسخه`}>
-        <span className="code ltr">{code}</span>
-      </button>
-    );
-  return (
-    <div className={cls}>
-      <span className="code ltr">{code}</span>
-    </div>
-  );
-}
-
 /** A short "done" word that goes back after a moment (copied, sent). */
 function useFlash(ms = 1800): [string | null, (k: string) => void] {
   const [k, setK] = useState<string | null>(null);

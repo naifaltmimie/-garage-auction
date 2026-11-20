@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { REACTIONS, REACT_BY_KEY, REACT_COOLDOWN_MS, REACT_PHASES, reactBus, type ReactEvent } from '../../engine/reactions';
-import { HAPTIC, buzz, fxOn, onFx, setFx } from '../../lib/fx';
+import { HAPTIC, buzz, fxOn, onFx } from '../../lib/fx';
 import { randId } from '../../lib/util';
 import { timeLeft, useCut, useNow, type RoomView } from '../useRoom';
 
@@ -388,28 +388,4 @@ function LeadTicks({ room }: { room: RoomView }) {
     if (s > 5) last.current = 0;
   }, [s]);
   return null;
-}
-
-/** Top-bar switch for reactions + vibration on this device, beside the sound button. */
-export function FxToggle() {
-  const on = useFx();
-  return (
-    <button
-      type="button"
-      className="iconbtn tb-btn rx-toggle"
-      aria-pressed={on}
-      aria-label={on ? 'وقّف التعليقات والاهتزاز' : 'شغّل التعليقات والاهتزاز'}
-      title={on ? 'التعليقات والاهتزاز شغّالة' : 'التعليقات والاهتزاز طافية'}
-      onClick={() => {
-        setFx(!on);
-        if (!on) buzz(HAPTIC.send);
-      }}
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="8" y="3.5" width="8" height="17" rx="2" />
-        <path d="M11 17.2h2" />
-        {on ? <path d="M4.6 8.5v7M2.2 10v4M19.4 8.5v7M21.8 10v4" /> : <path d="M3.5 3.5l17 17" />}
-      </svg>
-    </button>
-  );
 }

@@ -123,32 +123,6 @@ export function Toasts({ items }: { items: Toast[] }) {
   );
 }
 
-export function Gavel({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 120 120" aria-hidden="true">
-      <defs>
-        <linearGradient id="gv-wood" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#8a5a2b" />
-          <stop offset=".5" stopColor="#5c3818" />
-          <stop offset="1" stopColor="#3a220d" />
-        </linearGradient>
-        <linearGradient id="gv-brass" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f0d48a" />
-          <stop offset="1" stopColor="#a87a32" />
-        </linearGradient>
-      </defs>
-      <g transform="rotate(-32 60 60)">
-        <rect x="28" y="22" width="56" height="26" rx="6" fill="url(#gv-wood)" />
-        <rect x="34" y="22" width="6" height="26" fill="url(#gv-brass)" />
-        <rect x="72" y="22" width="6" height="26" fill="url(#gv-brass)" />
-        <rect x="53" y="46" width="7" height="58" rx="3.5" fill="url(#gv-wood)" />
-      </g>
-      <ellipse cx="62" cy="104" rx="34" ry="7" fill="#2a1a0b" />
-      <rect x="32" y="96" width="60" height="9" rx="4" fill="url(#gv-wood)" />
-    </svg>
-  );
-}
-
 /* ------------------------------------------------------------------ icons
    One family: Phosphor Icons 2.1 (MIT, phosphoricons.com, @phosphor-icons/core), embedded as path data on
    Phosphor's 256 grid, painted in currentColor. `bold` is the weight for bars, buttons and lists; `fill` is

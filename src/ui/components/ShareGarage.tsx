@@ -385,19 +385,6 @@ export function useShareGarage(room: RoomView, badges: string[]): { make: () => 
   return { make, busy, can, dialog: im ? <SharePreview url={im.url} onShare={share} onSave={download} onClose={() => setIm(null)} /> : null };
 }
 
-/** The share button on its own, with its dialog. */
-export function ShareGarage({ room, badges, className = 'btn btn-ghost btn-block' }: { room: RoomView; badges: string[]; className?: string }) {
-  const s = useShareGarage(room, badges);
-  return (
-    <>
-      <button className={className} onClick={s.make} disabled={s.busy || !s.can}>
-        {s.busy ? 'نجهز الصورة…' : 'شارك كراجك'}
-      </button>
-      {s.dialog}
-    </>
-  );
-}
-
 function SharePreview({ url, onShare, onSave, onClose }: { url: string; onShare: () => void; onSave: () => void; onClose: () => void }) {
   const ref = useSheet<HTMLDivElement>(onClose);
   return (

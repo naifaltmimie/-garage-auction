@@ -5,31 +5,6 @@ import { Delta } from './Garage';
 import { Rows } from './kit/Rows';
 import { Portal, useSheet } from './Bits';
 
-export function CareerChip() {
-  const [open, setOpen] = useState(false);
-  const [nights, setNights] = useState(() => loadCareer().nights.length);
-  return (
-    <>
-      <button className="cr-chip" onClick={() => setOpen(true)}>
-        <span>سجلي</span>
-        {nights > 0 && (
-          <small>
-            {nights === 1 ? 'ليلة وحدة' : nights === 2 ? 'ليلتين' : <><span className="ltr">{nights}</span> {nights <= 10 ? 'ليالي' : 'ليلة'}</>}
-          </small>
-        )}
-      </button>
-      {open && (
-        <CareerPanel
-          onClose={() => {
-            setOpen(false);
-            setNights(loadCareer().nights.length);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
 /** «سجلي»: this phone's record across nights as ruled rows, then the badges (earned in chalk, the rest with how to
  *  earn them), then the last nights. */
 export function CareerPanel({ onClose }: { onClose: () => void }) {
