@@ -227,7 +227,7 @@ function ownerLine(rng: Rng, d: Draw): string {
   d.trace.persona = `p:${p.id}`;
   take(d, 'owner', p, `p:${p.id}`);
   const habits = HABITS.filter(
-    (h) => h.who.includes(p.role) && fits(h, d.x, d.cls) && free(h, d) && !clash(h.q, d.q) && !d.used.has(`h:${h.id}`),
+    (h) => h.who.includes(p.role) && !h.not?.includes(p.id) && fits(h, d.x, d.cls) && free(h, d) && !clash(h.q, d.q) && !d.used.has(`h:${h.id}`),
   );
   const h = choose(rng, habits, (h) => [`h:${h.id}`]);
   const head = p.role === 'fleet' ? p.t : rng.pick(p.role === 'group' ? GROUP_LEADS : LEADS).replace('{p}', p.t);
@@ -271,7 +271,7 @@ function useLine(rng: Rng, d: Draw): string {
       const frames = (fresh ? FRESH_FRAMES : FRAMES).filter(
         (f) =>
           f.kinds.includes(r.kind) && fits(f, d.x, d.cls) && free(f, d) && (!f.k || f.k !== r.k) && !clash(f.q, d.q) && !clash(f.q, r.q) &&
-          (!f.person || (d.role !== 'fleet' && d.role !== 'group')) && (!f.group || d.role === 'fleet' || d.role === 'group') &&
+          (!f.roles || f.roles.includes(d.role)) && (!f.person || (d.role !== 'fleet' && d.role !== 'group')) && (!f.group || d.role === 'fleet' || d.role === 'group') &&
           (!strict || !d.used.has(`f:${f.id}`)) && !d.used.has(f.t.replace('{w}', r.t)),
       );
       const f = choose(rng, frames, (f) => [`f:${f.id}`]);

@@ -32,6 +32,8 @@ export interface Persona extends Frag {
 export interface Habit extends Frag {
   /** roles this clause suits; a habit with a person subject never goes to a fleet or a family group */
   who: Role[];
+  /** personas it contradicts */
+  not?: string[];
 }
 /** a place phrase: B between two places, R a road, I inside town, O out of town */
 export interface Route extends Frag {
@@ -48,6 +50,8 @@ export interface Frame extends Frag {
   /** frames that speak of «صاحبها» need a person owner */
   person?: boolean;
   group?: boolean;
+  /** owner roles the frame suits (a working rhythm is not a retired man's) */
+  roles?: Role[];
 }
 export interface Cause extends Frag {
   cat: string;
@@ -197,7 +201,7 @@ export const HABITS: Habit[] = [
   { id: 'max110', t: 'ما يتعدى 110 أبد', who: ['old', 'pro', 'fam'], k: 'speed' },
   { id: 'dealerdates', t: 'يوديها الوكالة على كل موعد', who: ['rich', 'pro', 'fam'], g: 'dealer', k: 'service' },
   { id: 'fixnow', t: 'أي شي يخرب يصلحه أول بأول', who: ALLP, k: 'service' },
-  { id: 'fixlate', t: 'ما يوديها الورشة إلا إذا اشتكت', who: ['young', 'trade'], g: '!dealer', k: 'service' },
+  { id: 'fixlate', t: 'ما يوديها الورشة إلا إذا اشتكت', who: ['young', 'trade'], not: ['garage', 'parts', 'actech'], g: '!dealer', k: 'service' },
   { id: 'overload', t: 'يحمّلها فوق طاقتها أحياناً', who: ['trade'], g: 'work', k: 'boot' },
   { id: 'loud', t: 'يحب صوتها ويدعس على الإشارات', who: ['young', 'rich'], cls: ['sport', 'daily', 'top'], k: 'speed' },
   { id: 'carwash', t: 'يغسلها في المغسلة كل يومين', who: ['rich', 'young'], k: 'wash' },
@@ -293,7 +297,7 @@ export const ROUTES: Route[] = [
   { id: 'schools', t: 'بين المدارس والبيت', kind: 'B', who: ['fam', 'old', 'group', 'pro'], g: 'fam' },
   { id: 'ring', t: 'على الدائري وقت الزحمة', kind: 'R' },
   { id: 'farmmarket', t: 'بين المزرعة والسوق', kind: 'B', g: 'eco', who: ['trade', 'old', 'fam', 'group'], like: ['palms', 'nursery', 'camels'] },
-  { id: 'farmtracks', t: 'في الطرق الترابية حول المزرعة', kind: 'O', g: 'x4', like: ['palms', 'camels', 'horses'], k: 'sand' },
+  { id: 'farmtracks', t: 'في الطرق الترابية حول المزرعة', kind: 'O', g: 'x4 tall', like: ['palms', 'camels', 'horses'], k: 'sand' },
   { id: 'coast', t: 'على طريق الساحل', kind: 'R' },
   { id: 'sites', t: 'بين المواقع والمكتب', kind: 'B', g: 'eco', who: ['trade', 'pro', 'fleet'], like: ['site', 'smallbuild', 'cmp_sites'] },
   { id: 'depots', t: 'بين الفروع والمستودعات', kind: 'B', g: 'eco', who: ['fleet', 'trade'] },
@@ -305,7 +309,7 @@ export const ROUTES: Route[] = [
   { id: 'north', t: 'على طرق الشمال الطويلة', kind: 'R', g: '!lo' },
   { id: 'airportrun', t: 'بين المطار والفنادق', kind: 'B', who: ['fleet', 'pro'], like: ['rent_airport', 'airport'] },
   { id: 'campus', t: 'بين الجامعة والسكن', kind: 'B', only: ['student'] },
-  { id: 'dunes', t: 'في البر والنفود', kind: 'O', g: 'x4', k: 'sand' },
+  { id: 'dunes', t: 'في البر والنفود', kind: 'O', g: 'x4 tall', k: 'sand' },
   { id: 'majlis', t: 'بين المجالس والمناسبات', kind: 'B', who: ['rich', 'old', 'fam'] },
   { id: 'beach', t: 'في طلعات البحر والشاليهات', kind: 'O' },
   { id: 'makkah', t: 'على طريق مكة', kind: 'R' },
@@ -318,15 +322,15 @@ export const ROUTES: Route[] = [
   { id: 'quarries', t: 'بين الكسارات والمشاريع', kind: 'B', cls: ['work'], k: 'sand' },
   { id: 'dammam', t: 'على طريق الدمام الرياض', kind: 'R', g: '!lo' },
   { id: 'malls', t: 'بين المولات والمطاعم', kind: 'B', who: ['young', 'fam', 'rich'] },
-  { id: 'shortruns', t: 'في مشاوير قصيرة حول البيت', kind: 'I', g: '!hi' },
+  { id: 'shortruns', t: 'حول البيت', kind: 'I', g: '!hi' },
   { id: 'citytofarm', t: 'بين المدينة والمزرعة', kind: 'B', like: ['palms', 'horses', 'camels', 'shayeb'] },
   { id: 'newdistricts', t: 'في الأحياء الجديدة', kind: 'I' },
   { id: 'gym', t: 'بين البيت والنادي', kind: 'B', who: ['young', 'pro'] },
   { id: 'suppliers', t: 'بين المحل والموردين', kind: 'B', g: 'eco', who: ['trade'], like: ['parts', 'restaurant', 'plumber'] },
   { id: 'veg', t: 'بين البيت وسوق الخضار', kind: 'B', g: 'eco', who: ['old', 'trade', 'fam', 'group'] },
-  { id: 'spring', t: 'في مخيمات الربيع', kind: 'O', g: 'x4', k: 'sand' },
+  { id: 'spring', t: 'في مخيمات الربيع', kind: 'O', g: 'x4 tall', k: 'sand' },
   { id: 'warehouse', t: 'بين المستودع والسوق', kind: 'B', g: 'eco', who: ['trade', 'fleet'] },
-  { id: 'camps', t: 'في مشاوير الاستراحات والمخيمات', kind: 'O' },
+  { id: 'camps', t: 'في الاستراحات والمخيمات', kind: 'O' },
   { id: 'ring2', t: 'على الدائري الثاني', kind: 'R' },
   { id: 'citytown', t: 'بين المدينة والقرية', kind: 'B' },
   { id: 'narrowfarm', t: 'في طرق المزارع الضيقة', kind: 'O', g: 'eco' },
@@ -336,7 +340,7 @@ export const ROUTES: Route[] = [
   { id: 'villa', t: 'بين الفلة والمكتب', kind: 'B', who: ['rich'] },
   { id: 'villafarm', t: 'بين الفلة والمزرعة', kind: 'B', who: ['rich', 'old'] },
   { id: 'airporthome', t: 'بين المطار والبيت', kind: 'B', who: ['rich', 'pro'], like: ['investor', 'captain', 'travel'] },
-  { id: 'evenings', t: 'في مشاوير السهرات', kind: 'I', who: ['young', 'rich'] },
+  { id: 'evenings', t: 'بين المقاهي والسهرات', kind: 'B', who: ['young', 'rich'] },
   { id: 'chalet', t: 'بين البيت والشاليه', kind: 'B', who: ['rich', 'fam', 'young'] },
   { id: 'latenight', t: 'في طلعات آخر الليل', kind: 'I', cls: ['sport', 'top', 'daily'], who: ['young', 'rich'] },
   { id: 'thumama', t: 'على طريق الثمامة', kind: 'R' },
@@ -351,7 +355,7 @@ export const FRAMES: Frame[] = [
   { id: 'mostly', t: 'أغلب ممشاها {w}', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'onoff', t: 'ممشاها {w}، يوم إيه ويوم لا', kinds: ['B', 'R', 'I'] },
   { id: 'weekend', t: 'تطلع {w} آخر الأسبوع بس', kinds: ['O', 'R'], q: 'R' },
-  { id: 'dawn', t: 'تمشي {w} من الفجر لين المغرب', kinds: ['B', 'R', 'I'], q: 'D', g: '!lo' },
+  { id: 'dawn', t: 'تمشي {w} من الفجر لين المغرب', kinds: ['B', 'R', 'I'], q: 'D', g: '!lo' , roles: ['trade', 'fleet', 'pro', 'young'] },
   { id: 'short', t: 'مشاويرها {w}، وأغلبها قصيرة', kinds: ['I', 'B'], g: '!hi' },
   { id: 'acfull', t: 'عاشت {w} والمكيف شغال على الآخر', kinds: ['B', 'R', 'I'] },
   { id: 'loading', t: 'شغلها {w}، تحميل وتنزيل', kinds: ['B', 'I'], g: 'work', k: 'boot' },
@@ -360,20 +364,20 @@ export const FRAMES: Frame[] = [
   { id: 'mostlife', t: 'قضت أغلب عمرها {w}', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'slowodo', t: 'ممشاها {w}، والعداد يمشي ببطء', kinds: ['I', 'B'], g: 'lo', q: 'R' },
   { id: 'allyear', t: 'كل يوم {w}، شتا وصيف', kinds: ['B', 'R', 'I'], q: 'D', g: '!lo' },
-  { id: 'shadenap', t: 'دوامها {w}، وتنام في مظلة', kinds: ['B', 'I'], k: 'sun' },
+  { id: 'shadenap', t: 'تمشي {w}، وتنام في مظلة', kinds: ['B', 'I'], k: 'sun' },
   { id: 'needonly', t: 'ما تتحرك إلا للحاجة، وأغلبها {w}', kinds: ['I', 'B'], q: 'R', g: '!hi' },
   { id: 'weekly', t: 'تقطع {w} أكثر من مرة في الأسبوع', kinds: ['R'], g: '!lo' },
   { id: 'calmkm', t: 'مشت {w} كثير بس بهدوء', kinds: ['R', 'B'], g: 'hi', k: 'speed' },
   { id: 'acon', t: 'تمشي {w} والمكيف ما يطفي', kinds: ['B', 'R', 'I'] },
   { id: 'allyearround', t: 'طول السنة {w}', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'kms', t: 'أغلب كيلواتها {w}', kinds: ['B', 'R', 'I', 'O'] },
-  { id: 'shifts', t: 'تشتغل {w} في كل ساعة من اليوم', kinds: ['B', 'I', 'R'], q: 'D', g: 'hi' },
-  { id: 'early', t: 'تطلع {w} الصبح بدري قبل الحر', kinds: ['O', 'R', 'B'] },
+  { id: 'shifts', t: 'تشتغل {w} في كل ساعة من اليوم', kinds: ['B', 'I', 'R'], q: 'D', g: 'hi' , roles: ['trade', 'fleet', 'pro', 'young'] },
+  { id: 'early', t: 'تطلع {w} الصبح بدري قبل الحر', kinds: ['O', 'R'] },
   { id: 'seasons', t: 'ممشاها {w} في المواسم، والباقي واقفة', kinds: ['O', 'R', 'B'], q: 'R' },
   { id: 'wholelife', t: 'عمرها كله {w}', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'nospeed', t: 'تمشي {w}، وصاحبها ما يحب السرعة', kinds: ['B', 'R', 'I'], person: true, k: 'speed' },
-  { id: 'norest', t: 'كانت تشتغل {w} بدون راحة', kinds: ['B', 'I', 'R'], q: 'D', g: '!lo' },
-  { id: 'weekafter', t: 'تتنقل {w} أسبوع ورا أسبوع', kinds: ['B', 'R'] },
+  { id: 'norest', t: 'كانت تشتغل {w} بدون راحة', kinds: ['B', 'I', 'R'], q: 'D', g: '!lo' , roles: ['trade', 'fleet', 'pro', 'young'] },
+  { id: 'weekafter', t: 'تتنقل {w} أسبوع ورا أسبوع', kinds: ['B'] },
   { id: 'turns', t: 'ساقوها {w} بالدور', kinds: ['B', 'I'], group: true, k: 'driver' },
   { id: 'friwash', t: 'تمشي {w}، وتنغسل كل جمعة', kinds: ['B', 'I'], k: 'wash' },
   { id: 'thursday', t: 'تطلع {w} ليلة الخميس والجمعة', kinds: ['O', 'R'], q: 'R' },
@@ -383,8 +387,8 @@ export const FRAMES: Frame[] = [
   { id: 'night', t: 'أغلب مشاويرها {w} بالليل', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'sameday', t: 'تروح {w} وترجع نفس اليوم', kinds: ['R'] },
   { id: 'mostplace', t: 'مشت {w} أكثر من أي مكان ثاني', kinds: ['B', 'R', 'I', 'O'] },
-  { id: 'wholeweek', t: 'الأسبوع كله {w}', kinds: ['B', 'I', 'R'], q: 'D' },
-  { id: 'shiftstart', t: 'تشتغل {w} أول الدوام وتطفي آخره', kinds: ['B', 'I'], q: 'D', g: 'eco' },
+  { id: 'wholeweek', t: 'الأسبوع كله {w}', kinds: ['B', 'I', 'R'], q: 'D' , roles: ['trade', 'fleet', 'pro', 'young'] },
+  { id: 'shiftstart', t: 'تشتغل {w} أول الدوام وتطفي آخره', kinds: ['B', 'I'], q: 'D', g: 'eco' , roles: ['trade', 'fleet', 'pro', 'young'] },
   { id: 'summertrip', t: 'ممشاها {w}، وفي الصيف تسافر', kinds: ['B', 'I'] },
   { id: 'overhalf', t: 'أكثر من نص ممشاها {w}', kinds: ['B', 'R', 'I', 'O'] },
   { id: 'sunpark', t: 'تمشي {w} وتوقف في الشمس', kinds: ['B', 'I'], g: 'eco', k: 'sun' },
@@ -439,7 +443,7 @@ export const CAUSES: Cause[] = [
   { id: 'abroad', t: 'جاه عرض شغل برا البلد', cat: 'move' },
   // the family grew
   { id: 'third', t: 'جاه الولد الثالث', cat: 'grow', g: 'small' },
-  { id: 'married', t: 'تزوج', cat: 'grow', g: 'small' },
+  { id: 'married', t: 'تزوج وجاه ولد', cat: 'grow', g: 'small' },
   { id: 'mumhome', t: 'الوالدة صارت ساكنة معهم', cat: 'grow', g: 'small' },
   { id: 'grown', t: 'العيال كبروا', cat: 'grow', g: 'small' },
   // needs the money
