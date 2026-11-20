@@ -127,19 +127,6 @@
   justify-self: center;
 }
 
-.create .input:focus,
-.create .input:focus-visible {
-  border-color: var(--ink-2);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, .08);
-}
-
-/* the chosen market or budget: a chalk rim, never red */
-.create .market[aria-checked='true'],
-.create .budget[aria-pressed='true'] {
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink), 0 2px 0 #000;
-}
-
 /* segmented keys: the chosen one is chalk white, no red strip */
 .seg > button[aria-pressed='true'] {
   background: var(--ink);

@@ -170,42 +170,18 @@
 
 /* ---------- entrances: lists arrive in order, never all at once ---------- */
 
-.markets > .market,
-.budgets > .budget,
-.strip > figure {
+.markets > .market {
   animation: fx-rise var(--fx-t3) var(--fx-out) backwards;
 }
 
-.markets > :nth-child(2), .budgets > :nth-child(2), .strip > :nth-child(2) { animation-delay: calc(var(--fx-stagger) * 1) }
-.markets > :nth-child(3), .budgets > :nth-child(3), .strip > :nth-child(3) { animation-delay: calc(var(--fx-stagger) * 2) }
-.markets > :nth-child(4), .budgets > :nth-child(4), .strip > :nth-child(4) { animation-delay: calc(var(--fx-stagger) * 3) }
-.markets > :nth-child(5), .budgets > :nth-child(5), .strip > :nth-child(5) { animation-delay: calc(var(--fx-stagger) * 4) }
-.markets > :nth-child(6), .budgets > :nth-child(6), .strip > :nth-child(6) { animation-delay: calc(var(--fx-stagger) * 5) }
-.markets > :nth-child(7), .strip > :nth-child(7) { animation-delay: calc(var(--fx-stagger) * 6) }
-.markets > :nth-child(8), .strip > :nth-child(8) { animation-delay: calc(var(--fx-stagger) * 7) }
-.markets > :nth-child(n + 9), .strip > :nth-child(n + 9) { animation-delay: calc(var(--fx-stagger) * 8) }
-
-/* photos still on their way: a slow sheen on the empty frame (stops once the photo covers it) */
-.strip > figure {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.strip > figure::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 70%);
-  transform: translateX(100%);
-  animation: fx-skel 1.5s var(--fx-in-out) 5;
-  pointer-events: none;
-}
-
-@keyframes fx-skel {
-  to { transform: translateX(-100%) }
-}
+.markets > :nth-child(2) { animation-delay: calc(var(--fx-stagger) * 1) }
+.markets > :nth-child(3) { animation-delay: calc(var(--fx-stagger) * 2) }
+.markets > :nth-child(4) { animation-delay: calc(var(--fx-stagger) * 3) }
+.markets > :nth-child(5) { animation-delay: calc(var(--fx-stagger) * 4) }
+.markets > :nth-child(6) { animation-delay: calc(var(--fx-stagger) * 5) }
+.markets > :nth-child(7) { animation-delay: calc(var(--fx-stagger) * 6) }
+.markets > :nth-child(8) { animation-delay: calc(var(--fx-stagger) * 7) }
+.markets > :nth-child(n + 9) { animation-delay: calc(var(--fx-stagger) * 8) }
 
 .home .intro {
   position: relative;
@@ -216,7 +192,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ring.hot::after,
-  .strip > figure::before,
   .btn-primary.bid-main::after,
   .btn-gold::after {
     display: none;
@@ -224,9 +199,7 @@
 
   .ring.hot,
   .reveal > *,
-  .markets > .market,
-  .budgets > .budget,
-  .strip > figure {
+  .markets > .market {
     animation: none;
   }
 

@@ -10,7 +10,6 @@ import './styles/reactions.css';
 import './styles/brand.css';
 import './styles/console.css';
 import './styles/lot.css';
-import './styles/identity.css';
 import './styles/controls.css';
 import './styles/qa.css';
 import './styles/theme.css';

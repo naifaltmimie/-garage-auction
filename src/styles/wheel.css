@@ -4,10 +4,6 @@
    .wheel-rim    the tyre and the rim, see-through between the spokes: turns
    .wheel-light  where the room's light falls: never turns, so no highlight travels with the rotation */
 
-:root {
-  --tex-tire: url('/brand/wheel/wheel-full-320.webp');
-}
-
 .wheel {
   position: relative;
   display: inline-block;
@@ -85,54 +81,5 @@
 @media (prefers-reduced-motion: reduce) {
   .wheel.is-spin .wheel-rim {
     animation-duration: 6s;
-  }
-}
-
-/* ---------------------------------------------------------------- the small spinner is the real wheel
-   theme.css turns .spinner itself and hides its pseudo-elements; here the element holds still,
-   ::before is the brake and ::after the turning tyre and rim. */
-
-.spinner.spinner {
-  position: relative;
-  background: none;
-  animation: none;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .6));
-}
-
-span.spinner::before,
-div.spinner::before,
-.spinner.spinner::before,
-span.spinner::after,
-div.spinner::after,
-.spinner.spinner::after {
-  content: '';
-  display: block;
-  position: absolute;
-  inset: 0;
-  border: 0;
-  border-radius: 0;
-  background: center / contain no-repeat;
-}
-
-span.spinner::before,
-div.spinner::before,
-.spinner.spinner::before {
-  background-image: url('/brand/wheel/brake-160.webp');
-  animation: none;
-}
-
-span.spinner::after,
-div.spinner::after,
-.spinner.spinner::after {
-  background-image: url('/brand/wheel/wheel-160.webp');
-  will-change: transform;
-  animation: wheel-spin .9s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  span.spinner::after,
-  div.spinner::after,
-  .spinner.spinner::after {
-    animation-duration: 3s;
   }
 }

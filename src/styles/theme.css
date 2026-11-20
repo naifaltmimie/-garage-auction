@@ -89,7 +89,6 @@
   /* the old gold names hold the alloy, so every screen follows */
   --gold: var(--alloy);
   --gold-hi: var(--alloy-hi);
-  --gold-50: var(--alloy-50);
 
   --red: #ff4a4f;
   --red-50: rgba(255, 74, 79, .13);
@@ -106,7 +105,6 @@
 
   /* textures */
   --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  --tex-tire: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='r' cx='.38' cy='.32' r='.75'%3E%3Cstop offset='0' stop-color='%23e9eaee'/%3E%3Cstop offset='.55' stop-color='%239a9da4'/%3E%3Cstop offset='1' stop-color='%2355585e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22.6' fill='%231a1b1e' stroke='%23050506' stroke-width='1.2'/%3E%3Cg fill='%232d2f35'%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(0 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(20 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(40 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(60 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(80 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(100 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(120 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(140 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(160 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(180 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(200 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(220 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(240 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(260 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(280 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(300 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(320 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(340 24 24)'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='15.4' fill='%230c0d0f'/%3E%3Ccircle cx='24' cy='24' r='12.6' fill='url(%23r)'/%3E%3Cg stroke='%232b2d33' stroke-width='3.4' stroke-linecap='round'%3E%3Cline x1='24.00' y1='20.40' x2='24.00' y2='13.40'/%3E%3Cline x1='27.42' y1='22.89' x2='34.08' y2='20.72'/%3E%3Cline x1='26.12' y1='26.91' x2='30.23' y2='32.58'/%3E%3Cline x1='21.88' y1='26.91' x2='17.77' y2='32.58'/%3E%3Cline x1='20.58' y1='22.89' x2='13.92' y2='20.72'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='12.6' fill='none' stroke='%230c0d0f' stroke-width='1'/%3E%3Ccircle cx='24' cy='24' r='3.4' fill='%23e5262d'/%3E%3C/svg%3E");
 
   --spring: cubic-bezier(.3, 1.6, .5, 1);
 }
@@ -167,15 +165,10 @@ body {
 
 /* ---------------------------------------------------------------- surfaces: flat rubber; only a sheet over content casts a shadow */
 
-.card,
-.notice {
+.card {
   background: var(--rubber-2);
   border-color: var(--line);
   box-shadow: none;
-}
-
-.notice {
-  border-top-color: var(--line-2);
 }
 
 /* wells: inputs and steppers sit sunk into the rubber */
@@ -413,35 +406,6 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 0 #000;
 }
 
-/* ---------------------------------------------------------------- the wait: a tyre that rolls */
-
-.spinner {
-  width: 46px;
-  height: 46px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--tex-tire) center / contain no-repeat;
-  animation: tire-roll .9s linear infinite;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .6));
-}
-
-.spinner::before,
-.spinner::after {
-  display: none;
-}
-
-@keyframes tire-roll {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation-duration: 3s;
-  }
-}
-
 /* ---------------------------------------------------------------- paper things stay paper, the rest goes rubber */
 
 .qr,
@@ -460,11 +424,6 @@ body {
 
 .g-slide {
   background: linear-gradient(100deg, #1a1b1e 30%, #24262b 50%, #1a1b1e 70%);
-}
-
-.result.first {
-  background: linear-gradient(180deg, rgba(214, 218, 226, .16), rgba(214, 218, 226, .04));
-  border-color: rgba(214, 218, 226, .4);
 }
 
 .records li.warn,
@@ -489,8 +448,7 @@ body {
   background: var(--brand-50);
 }
 
-.budget[aria-pressed='true'] .t-money,
-.tabs button[aria-selected='true'] {
+.budget[aria-pressed='true'] .t-money {
   color: #fff;
 }
 
@@ -500,11 +458,6 @@ body {
 }
 
 .rx-fab {
-  color: var(--ink);
-}
-
-.log li.me {
-  background: var(--alloy-50);
   color: var(--ink);
 }
 
@@ -545,12 +498,6 @@ body {
   background: var(--face);
 }
 
-.btn-primary.bid-main.sending:disabled {
-  --face: linear-gradient(180deg, #e02a30 0%, #c41f25 50%, #a3141a 100%);
-  background: var(--face);
-  color: #fff;
-}
-
 .btn-primary.bid-main:disabled:not(.sending) {
   --face: var(--rubber-3);
   background: var(--face);
@@ -564,9 +511,7 @@ body {
 
 /* ---------------------------------------------------------------- type that used to sit dark-green on paper */
 
-.code,
-.countdown,
-.result .score .t-money {
+.code {
   color: #fff;
 }
 

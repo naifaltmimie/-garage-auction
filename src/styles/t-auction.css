@@ -51,16 +51,6 @@
 
 /* ================================================================ the car sheet on dark */
 
-/* the report tabs: a rubber strip, never paper */
-.tabs {
-  background: rgba(23, 24, 27, .97);
-  border-bottom-color: var(--line);
-}
-
-.tabs button[aria-selected='true']::after {
-  background: var(--brand);
-}
-
 /* the inspector's notes: amber on rubber, readable */
 .notes li {
   background: rgba(242, 173, 50, .08);
@@ -74,15 +64,6 @@
 
 .legend i {
   border-color: rgba(255, 255, 255, .14);
-}
-
-/* the paint map sits on a sunk well so the panels read */
-.damage svg {
-  padding: 6px 4px;
-  border-radius: 14px;
-  background: var(--rubber-0);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6);
-  box-sizing: border-box;
 }
 
 /* ================================================================ reactions on rubber */
@@ -103,33 +84,6 @@
   color: var(--ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 2px 0 #000, 0 4px 10px -4px rgba(0, 0, 0, .7);
 }
-
-/* «كشف التسوية» is a receipt: label right, tabular amount left, a dashed rule only above the total */
-.reveal .slip dl { font-size: 14px; gap: 6px 12px; }
-.reveal .slip dt { color: var(--ink-2); font-weight: 500; }
-.reveal .slip dd { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.reveal .slip .total {
-  border-top: 1px dashed var(--line-2);
-  padding-top: 10px;
-  margin-top: 4px;
-  font-size: 17px;
-  font-weight: 800;
-}
-
-/* the true value: the number big in chalk, the gain or loss as small text beside it, the verdict under it */
-
-.reveal .verdict {
-  background: none;
-  padding: 0;
-  border-radius: 0;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-.reveal .verdict b { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
-.reveal .verdict.up b { color: var(--ok, #3ccf7a); }
-.reveal .roast { font-size: 17px; color: var(--ink-2); text-align: center; }
 
 /* ================================================================ the lot sticker on the windshield */
 

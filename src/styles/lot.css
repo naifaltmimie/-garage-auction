@@ -82,13 +82,6 @@
   display: inline-block;
 }
 
-@media (max-width: 370px) {
-  .tabs button {
-    padding: 0 8px;
-    font-size: 14px;
-  }
-}
-
 /* ---------------------------------------------------------------- inspection: one quiet ruled sheet, not a pile of cards
    verdicts, mechanics and panels read like the key facts above: hairline rules, the colour only on the value */
 .mech {
@@ -99,9 +92,8 @@
   background: var(--line);
 }
 
-/* the seller's own words read as a quote, the inspector's as a ruled list */
-.notes li,
-.quote p {
+/* the inspector's notes wrap inside themselves */
+.notes li {
   overflow-wrap: break-word;
 }
 

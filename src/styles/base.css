@@ -40,7 +40,6 @@
 
   --gold: #a37b25;
   --gold-hi: #d6ad52;
-  --gold-50: #faf3e1;
 
   --red: #d0312d;
   --red-50: #fcecea;
@@ -235,10 +234,6 @@ textarea {
 
 .row.wrap {
   flex-wrap: wrap;
-}
-
-.between {
-  justify-content: space-between;
 }
 
 .grow {
@@ -443,13 +438,6 @@ textarea {
   border: 1px solid var(--line-2);
 }
 
-.chip .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 99px;
-  background: currentColor;
-}
-
 /* ---------------------------------------------------------------- forms */
 
 .field {
@@ -566,15 +554,6 @@ textarea {
   z-index: 80;
   background: rgba(10, 10, 12, .45);
   animation: fade .2s both;
-}
-
-.spinner {
-  width: 34px;
-  height: 34px;
-  border-radius: 99px;
-  border: 3px solid var(--line);
-  border-top-color: var(--green);
-  animation: spin .8s linear infinite;
 }
 
 .toasts {

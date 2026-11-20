@@ -1,14 +1,8 @@
-/* QA sweep: the screens outside the live auction (home, join, create, how-to, showcase, voting,
-   results, awards, share, career, «الجديد»). Scoped to those screens so the auction is untouched. */
+/* QA sweep: the screens outside the live auction. Scoped to those screens so the auction is untouched. */
 
 /* ---------------------------------------------------------------- tap targets (44px) */
 
-.home .btn-quiet,
-.create .btn-quiet {
-  min-height: 44px;
-}
-
-.create .seg > button {
+.home .btn-quiet {
   min-height: 44px;
 }
 
@@ -16,29 +10,6 @@
 
 /* fields scroll clear of the sticky header and the keyboard */
 .home .input,
-.create .input,
 .center-screen .input {
   scroll-margin-block: 88px 24px;
-}
-
-/* ---------------------------------------------------------------- create */
-
-/* the custom budget is a field, not a greyed-out button: quieter placeholder, dashed edge */
-.create .budgets + .input {
-  border-style: dashed;
-}
-
-.create .budgets + .input::placeholder {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--mute);
-  opacity: 1;
-}
-
-.create .budgets + .input:focus {
-  border-style: solid;
-}
-
-.create .input[aria-invalid='true'] {
-  border-color: var(--red, #b3261e);
 }

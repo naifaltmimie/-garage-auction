@@ -38,18 +38,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* the sent bid settles in place: a short press-down, then it waits in colour for the host */
-.btn-primary.bid-main.sending:disabled {
-  animation: cn-sent .22s var(--ease) both;
-}
-@keyframes cn-sent {
-  0% { transform: scale(.97); }
-  100% { transform: scale(1); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bid-main,
-  .btn-primary.bid-main.sending:disabled {
+  .bid-main {
     transition: none;
     animation: none;
   }

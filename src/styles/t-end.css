@@ -7,28 +7,6 @@
   overflow: hidden;
 }
 
-.totals > div {
-  background: var(--rubber-1);
-  border-color: var(--line);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .45);
-}
-
-.totals small {
-  color: var(--mute);
-}
-
-.totals b {
-  color: var(--ink);
-}
-
-.totals b.gain {
-  color: var(--ok-700);
-}
-
-.totals b.loss {
-  color: var(--red);
-}
-
 .rate {
   gap: 6px 8px;
 }
