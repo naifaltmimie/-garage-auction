@@ -3,7 +3,7 @@
 import { Rng } from '../lib/rng';
 import { money } from '../lib/util';
 import { AUCTIONEER, ROASTS, fill } from './lines';
-import { buildDeck } from './lotgen';
+import { PLATE_LETTERS, buildDeck } from './lotgen';
 import { dutchDuration, dutchPriceAt, dutchProgress } from './dutch';
 import {
   CLOSE_GRACE_MS, DROP_FACTOR, MAX_DROPS, SPEEDS, dealScore, extensionFor, feesOf, increment, lotsFor,
@@ -75,10 +75,7 @@ export interface Changes {
   hist?: boolean;
 }
 
-const PLATE_LETTERS: [string, string][] = [
-  ['ا', 'A'], ['ب', 'B'], ['ح', 'J'], ['د', 'D'], ['ر', 'R'], ['س', 'S'], ['ص', 'X'], ['ط', 'T'], ['ع', 'E'],
-  ['ق', 'G'], ['ك', 'K'], ['ل', 'L'], ['م', 'Z'], ['ن', 'N'], ['هـ', 'H'], ['و', 'U'], ['ى', 'V'],
-];
+// the plate letters come from the deck's own table, so a player's plate and a car's plate use one alphabet
 const NAME_TO_PLATE: Record<string, number> = {
   'ا': 0, 'أ': 0, 'إ': 0, 'آ': 0, 'ب': 1, 'ح': 2, 'ج': 2, 'د': 3, 'ذ': 3, 'ر': 4, 'ز': 4, 'س': 5, 'ش': 5, 'ص': 6, 'ض': 6,
   'ط': 7, 'ظ': 7, 'ع': 8, 'غ': 8, 'ق': 9, 'ك': 10, 'ل': 11, 'م': 12, 'ن': 13, 'ه': 14, 'ة': 14, 'و': 15, 'ي': 16, 'ى': 16,
@@ -127,7 +124,7 @@ export class HostEngine {
     const seed = (Math.random() * 2 ** 32) >>> 0;
     const rng = new Rng(seed);
     const host: HostPlayer = {
-      id: opts.hostId, sec: opts.hostSec, name: opts.hostName.trim().slice(0, 18) || 'المضيف', paddle: 1,
+      id: opts.hostId, sec: opts.hostSec, name: opts.hostName.trim().slice(0, 18) || 'الدلال', paddle: 1,
       plate: plateFor(opts.hostName, rng), host: true, cash: opts.settings.budget, garage: [], online: true,
       spectator: false, bids: 0, lastSeen: opts.now,
     };

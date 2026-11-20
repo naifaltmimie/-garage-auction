@@ -2,7 +2,7 @@
 // Effects: "pct" is a fraction of the car's value, "sar" a fixed riyal amount (scaled by class).
 import type { Rng } from '../lib/rng';
 import { arDigits, money } from '../lib/util';
-import { PLATE_WORDS, gradePlate, wordLetters } from './lotgen';
+import { PLATE_LETTERS, PLATE_WORDS, gradePlate, wordLetters } from './lotgen';
 import type { CarModel, CarPub, PanelStatus, SaleMode, Seller, Surprise } from './types';
 
 export interface SurpriseCtx {
@@ -131,7 +131,7 @@ const DEFS: Def[] = [
   },
   {
     id: 'taxi', good: false, w: 3,
-    fits: (c) => taxiish.has(c.m.modelEn) && c.age >= 3,
+    fits: (c) => taxiish.has(c.m.modelEn) && c.age >= 3 && (c.car.plate.kind ?? 'private') === 'private',
     effect: neg(pct(0.2, 0.3)),
     text: () => 'كانت ليموزين، لوحتها كانت صفراء والممشى الحقيقي فلكي',
     tells: ['آثار لاصق على الأبواب', 'الفرش الخلفي مستهلك'],
@@ -304,7 +304,7 @@ const DEFS: Def[] = [
 
 function plateFor(rng: Rng, delta: number): string {
   // names a plate that really grades at the claimed worth (same grader as the deck's plates)
-  const L = ['ا', 'ب', 'ح', 'د', 'ر', 'س', 'ص', 'ط', 'ع', 'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ى'];
+  const L = PLATE_LETTERS.map((l) => l[0]);
   const want = delta >= 1_000_000 ? 'legend' : delta >= 250_000 ? 'rare' : delta >= 60_000 ? 'top' : 'special';
   const d = () => String(rng.pick([1, 5, 7, 9, rng.int(1, 9)]));
   for (let i = 0; i < 80; i++) {
