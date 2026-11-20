@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { REACTIONS, REACT_BY_KEY, REACT_COOLDOWN_MS, REACT_PHASES, reactBus, type ReactEvent } from '../../engine/reactions';
 import { HAPTIC, buzz, fxOn, onFx, setFx } from '../../lib/fx';
 import { randId } from '../../lib/util';
-import { timeLeft, useNow, type RoomView } from '../useRoom';
+import { timeLeft, useCut, useNow, type RoomView } from '../useRoom';
 
 const MAX_ON_SCREEN = 12;
 const IDLE_CLOSE_MS = 5000;
@@ -227,7 +227,7 @@ export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLEleme
     if (!live) setOpen(false);
   }, [live]);
   // with the line down a comment would go nowhere: the tray closes and its button waits, dimmed
-  const cut = !room.net.connected;
+  const cut = useCut(room);
   useEffect(() => {
     if (cut) setOpen(false);
   }, [cut]);

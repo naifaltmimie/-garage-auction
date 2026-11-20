@@ -130,9 +130,10 @@ function Verdict({ sale, stage, mine, buyerName }: { sale: Sale; stage: SaleStag
       {shown.settled && shown.value !== null && (sale.roast || plateVal > 0) && (
         <p className="srv-roast">
           {sale.roast}
+          {/* a special plate is part of the value: said as its own remark, not run into the roast */}
           {plateVal > 0 && (
             <span className="srv-plateval">
-              {' '}منها اللوحة <span className="ltr">{money(plateVal)}</span>
+              {sale.roast ? ' · ' : ''}اللوحة لحالها <span className="ltr">{money(plateVal)}</span>
             </span>
           )}
         </p>

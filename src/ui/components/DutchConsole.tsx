@@ -8,7 +8,7 @@ import { feesOf } from '../../engine/rules';
 import type { DutchPlan, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
 import { sound } from '../../audio/sound';
-import { timeLeft, type RoomView } from '../useRoom';
+import { timeLeft, useCut, type RoomView } from '../useRoom';
 import { countRender, FactLine, HostBar, lotFacts, maxBidFor, StatusRow } from './Console';
 
 /** One drum of the board: when its digit changes the old one drops out and the new one falls in (120ms). */
@@ -112,7 +112,7 @@ export function DutchConsole({
   const garageFull = !!me && me.garage.length >= core.settings.garage;
   const canPay = price <= maxBid;
   const total = feesOf(price, lot.fee).total;
-  const offline = (typeof navigator !== 'undefined' && navigator.onLine === false) || !room.net.connected || (room.role !== 'host' && room.net.hostGone);
+  const offline = useCut(room);
 
   // a soft mechanical click on every step down, sharper as the floor gets close
   const lastStep = useRef(step);

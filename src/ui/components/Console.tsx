@@ -7,7 +7,7 @@ import { sound } from '../../audio/sound';
 import { feesOf, increment, minNextBid } from '../../engine/rules';
 import type { Core, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
-import { timeLeft, useNow, type RoomView } from '../useRoom';
+import { timeLeft, useCut, useNow, type RoomView } from '../useRoom';
 import { Icon } from './Bits';
 import { Paddle } from './Plate';
 import { DutchConsole } from './DutchConsole';
@@ -87,21 +87,6 @@ function useShort() {
   return short;
 }
 
-/** The phone's own idea of the network, live. */
-function useOnline() {
-  const [on, setOn] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false);
-  useEffect(() => {
-    const up = () => setOn(true);
-    const down = () => setOn(false);
-    window.addEventListener('online', up);
-    window.addEventListener('offline', down);
-    return () => {
-      window.removeEventListener('online', up);
-      window.removeEventListener('offline', down);
-    };
-  }, []);
-  return on;
-}
 
 /**
  * The countdown ring: the only piece of the block that redraws on the clock. Print digits in chalk, red only in the
@@ -595,8 +580,7 @@ export function Console({
   const lot = snap.lot;
   countRender('console');
   const short = useShort();
-  const online = useOnline();
-  const offline = !online || !room.net.connected || (room.role !== 'host' && room.net.hostGone);
+  const offline = useCut(room);
 
   const bidding = core.phase === 'bidding' && !core.paused;
   const top = core.bid;

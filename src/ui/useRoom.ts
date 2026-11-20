@@ -335,6 +335,29 @@ export function useRoom(code: string, me: Me): RoomView {
   };
 }
 
+/** The phone's own idea of the network, live. */
+export function useOnline(): boolean {
+  const [on, setOn] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false);
+  useEffect(() => {
+    const up = () => setOn(true);
+    const down = () => setOn(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+  return on;
+}
+
+/** True while anything this phone sends would go nowhere: its own network is down, the line to the room is cut,
+ *  or (for a player) the host is gone. The bid panel and the comments both go quiet on it. */
+export function useCut(room: RoomView): boolean {
+  const online = useOnline();
+  return !online || !room.net.connected || (room.role !== 'host' && room.net.hostGone);
+}
+
 /** 10 Hz clock in host time. */
 export function useNow(offset: number, hz = 10) {
   const [now, setNow] = useState(() => Date.now() + offset);
