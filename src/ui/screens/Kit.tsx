@@ -5,6 +5,7 @@ import { ICON_NAMES, Icon } from '../components/Bits';
 import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
 import { KitObjects } from '../components/kit/KitObjects';
+import { KitPlates } from '../components/kit/KitPlates';
 import { Rows } from '../components/kit/Rows';
 import { ScreenTitle } from '../components/kit/ScreenTitle';
 
@@ -241,6 +242,7 @@ export default function Kit() {
       </Sec>
 
       <KitObjects />
+      <KitPlates />
     </main>
   );
 }
