@@ -71,6 +71,12 @@ html {
   caret-color: var(--ink);
 }
 
+/* a pull down at the top of a page must never reload it: a reload in the middle of a car costs the player his bid */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   min-height: 100dvh;
@@ -385,8 +391,11 @@ textarea {
   text-shadow: 0 1px 0 rgba(0, 0, 0, .18);
 }
 
-.btn-primary:hover:not(:disabled) {
-  filter: brightness(1.04);
+/* only where a pointer can really hover: on touch the browser leaves :hover stuck on the last button tapped */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
 }
 
 .btn-primary:active:not(:disabled) {
