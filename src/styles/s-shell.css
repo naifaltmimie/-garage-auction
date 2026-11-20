@@ -557,6 +557,9 @@
 .shl-p-facts {
   display: block;
   overflow: hidden;
+  /* room for the ink under the last line, given back */
+  padding-bottom: .3em;
+  margin-bottom: -.3em;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
