@@ -85,7 +85,13 @@
   --alloy-lo: #6f737c;
   --alloy-deck: #3b3e45;
   --alloy-ink: #0c0d0f;
-  --alloy-face: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 34%, #b4b8c1 68%, #8c909a 100%);
+  /* the face: brushed metal. One tileable grain of fine horizontal strokes (public/brand/kit/alloy-brush.webp,
+     drawn by scripts/brand/alloy/brush.py) over the metal's tone, which catches the light in a band near the top */
+  --alloy-brush: url('/brand/kit/alloy-brush.webp') 0 0 / 256px 48px repeat;
+  --alloy-tone: linear-gradient(180deg, #e8ebef 0%, #fafbfc 18%, #dde0e5 42%, #b7bbc3 72%, #9195a0 100%);
+  --alloy-face: var(--alloy-brush), var(--alloy-tone);
+  /* a machined edge for a large alloy surface: a bright chamfer on top, a dark one under, and its shadow */
+  --alloy-edge: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(0, 0, 0, .38), inset 0 -3px 0 rgba(255, 255, 255, .12), 0 10px 24px -14px rgba(0, 0, 0, .9);
   --alloy-50: rgba(214, 218, 226, .1);
   --alloy-100: rgba(214, 218, 226, .26);
   /* the old gold names hold the alloy, so every screen follows */
@@ -360,7 +366,7 @@ body {
 }
 
 .btn-gold {
-  --face: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 38%, #b4b8c1 72%, #8c909a 100%);
+  --face: var(--alloy-face);
   --deck: #3b3e45;
   --rim: rgba(255, 255, 255, .3);
   color: #0c0d0f;

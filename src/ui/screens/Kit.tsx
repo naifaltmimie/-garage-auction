@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { ICON_NAMES, Icon } from '../components/Bits';
 import { Delta } from '../components/Garage';
+import { Paddle } from '../components/Plate';
+import { Wheel } from '../components/Wheel';
 import { ActionBar } from '../components/kit/ActionBar';
 import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
@@ -269,6 +271,20 @@ function KitPage() {
 
       <Sec title="كيف نلعب بثلاثة أسطر" note="HowToLines: لشاشة الدخول والصالة. صفوف مسطّرة ورقم مطبوع صغير، بلا دوائر.">
         <HowToLines />
+      </Sec>
+
+      <Sec title="المعدن" note="الألمنيوم للهيبة بس: البطل، الكؤوس، اللوحات المميزة، وصف اللاعب نفسه. معدن مصقول بخطوط أفقية ناعمة، والسطح الكبير له حافة مشغولة: خط فاتح فوق وخط غامق تحت.">
+        <div className="e-kit-alloy" data-kit="alloy">
+          <div className="e-kit-alloy-band">
+            <Wheel size={84} className="e-kit-alloy-wheel" />
+            <span className="e-kit-alloy-name">سعود</span>
+            <span className="e-kit-alloy-score print ltr">88</span>
+          </div>
+          <div className="e-kit-alloy-small">
+            <Paddle n={2} me />
+            <span className="e-kit-alloy-chip" />
+          </div>
+        </div>
       </Sec>
 
       <Sec title="الشريط السفلي" note="زر الشاشة الواحد ثابت تحت الإبهام: 56 بكسل، وهوامش 16، وتحته المنطقة الآمنة. الصفحة تخلي له مكان فما يغطي شي.">

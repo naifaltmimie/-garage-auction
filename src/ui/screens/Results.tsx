@@ -10,6 +10,7 @@ import { ScreenTitle } from '../components/kit/ScreenTitle';
 import { Paddle } from '../components/Plate';
 import { useShareGarage } from '../components/ShareGarage';
 import { TireLoader } from '../components/TireLoader';
+import { Wheel } from '../components/Wheel';
 import type { RoomView } from '../useRoom';
 
 const still = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -131,17 +132,16 @@ export function Results({ room }: { room: RoomView }) {
         نتيجة المزاد
       </ScreenTitle>
 
-      <section ref={champRef} className={`e-champ${champIn ? ' is-in' : ''}`} aria-live="polite" aria-label="بطل الليلة">
+      <section ref={champRef} className={`e-champ${champIn ? ' is-in' : ''}${champ && champ.name.length > 12 ? ' is-long' : ''}`} aria-live="polite" aria-label="بطل الليلة">
         {champIn && champ ? (
           <>
-            <div className="e-champ-who">
-              <p className={`e-champ-name${champ.name.length > 16 ? ' is-long' : champ.name.length > 10 ? ' is-mid' : ''}`}>{champ.name}</p>
-              <p className="e-champ-k">
-                بطل الليلة
-                {champ.id === room.myId && <span className="e-you is-dark">أنت</span>}
-              </p>
-              {tie && <p className="e-champ-tie">تعادل مع {tie.name} بالنقاط، والربح حسمها</p>}
-            </div>
+            <Wheel size={64} className="e-champ-wheel" />
+            <p className="e-champ-name">{champ.name}</p>
+            <p className="e-champ-k">
+              بطل الليلة
+              {champ.id === room.myId && <span className="e-you is-dark">أنت</span>}
+            </p>
+            {tie && <p className="e-champ-tie">تعادل مع {tie.name} بالنقاط، والربح حسمها</p>}
             <p className="e-champ-score">
               <b className="print ltr">
                 <CountUp to={champRow.total} ms={1400} />
@@ -175,7 +175,7 @@ export function Results({ room }: { room: RoomView }) {
                   </span>
                   <span className="e-rank-total">
                     <b className="print ltr">
-                      <CountUp to={r.total} ms={800} />
+                      {r.rank === 1 ? r.total : <CountUp to={r.total} ms={800} />}
                     </b>
                     <small>نقطة</small>
                   </span>
@@ -198,7 +198,7 @@ export function Results({ room }: { room: RoomView }) {
       </ol>
 
       <AwardsList aw={aw} myId={room.myId} spectator={spectator} />
-      <AwardStage aw={aw} myId={room.myId} />
+      <AwardStage aw={aw} myId={room.myId} paddleOf={(id) => nameOf(id)?.paddle ?? 0} />
       {share.dialog}
 
       <ActionBar label="بعد النتيجة" className="e-res-bar">
