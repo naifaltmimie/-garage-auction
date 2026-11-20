@@ -255,7 +255,11 @@
   color: var(--ink-2);
 }
 .srv-paid .ltr { font-weight: 700; color: var(--ink); }
-/* the receipt waits for the count-up, then feeds out of its slit */
+/* what was paid and the listings wait for the count to land, like the word: nothing prints beside a rolling number */
+.srv-paid,
+.srv-comps { animation: srv-fade 240ms cubic-bezier(.16, 1, .3, 1) 1s both; }
+/* the receipt waits for the count-up, then feeds out of its slit; the slit shows up just before the paper */
+.srv-rcpt .rcpt-slit { animation: srv-fade 160ms ease-out 860ms both; }
 .srv-rcpt .rcpt-paper { animation-delay: 1s; }
 
 /* ---------------------------------------------------------------- envelopes, listings */
@@ -388,7 +392,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .srv, .srv-env-l > li, .srv-mute, .srv-word-row > *, .srv-roast { animation: none; }
+  .srv, .srv-env-l > li, .srv-mute, .srv-word-row > *, .srv-roast, .srv-paid, .srv-comps, .srv-rcpt .rcpt-slit { animation: none; }
   .srv-cover { display: none; }
 }
 .srv-wait .srv-tag { align-self: center; }

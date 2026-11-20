@@ -550,7 +550,8 @@ export function checksFor(rng: Rng, x: StoryCtx): NonNullable<CarPub['checks']> 
   const ac = c.mech.ac;
   if (ac !== 'unknown') {
     const temp = ac === 'cold' ? rng.int(4, 8) : ac === 'weak' ? rng.int(13, 19) : rng.int(26, 34);
-    out.push({ k: 'حرارة الفتحات', v: `${temp}°م`, tone: ac === 'cold' ? 'good' : ac === 'weak' ? 'mid' : 'bad' });
+    // said as it is read («6 درجات», «31 درجة»): a degree sign beside Arabic lands on the wrong side of the number
+    out.push({ k: 'حرارة الفتحات', v: `${temp} ${temp <= 10 ? 'درجات' : 'درجة'}`, tone: ac === 'cold' ? 'good' : ac === 'weak' ? 'mid' : 'bad' });
   }
   const s = c.mech.susp;
   out.push({ k: 'التعليق', v: s === 'ok' ? 'متماسك، بدون صوت' : s === 'minor' ? 'صوت خفيف من قدام' : 'المساعدات منتهية', tone: s === 'ok' ? 'good' : s === 'minor' ? 'mid' : 'bad' });

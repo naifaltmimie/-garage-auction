@@ -747,7 +747,9 @@ i.pr-mark.bad {
   .sh { --sh-g: 14px; }
   .sh-title { font-size: 28px; }
   .sh-map { grid-template-columns: 128px minmax(0, 1fr); gap: 14px; }
-  .sh-tabbar button { font-size: 13.5px; padding: 0 2px; }
+  /* the four tabs take the room their words need, so «كلام المعلن» and its dot never touch the next tab */
+  .sh-tabbar button { flex: 1 1 auto; font-size: 13.5px; padding: 0 2px; }
+  .sh-tabdot { margin-inline-start: 3px; }
   .pairs { column-gap: 14px; }
 }
 

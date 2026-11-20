@@ -226,8 +226,14 @@ export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLEleme
   useEffect(() => {
     if (!live) setOpen(false);
   }, [live]);
+  // with the line down a comment would go nowhere: the tray closes and its button waits, dimmed
+  const cut = !room.net.connected;
+  useEffect(() => {
+    if (cut) setOpen(false);
+  }, [cut]);
 
   const send = (k: string) => {
+    if (cut) return;
     const now = Date.now();
     setPoke((p) => p + 1);
     if (now - lastSent.current < REACT_COOLDOWN_MS) return;
@@ -290,7 +296,8 @@ export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLEleme
       type="button"
       className={`rx-fab${open ? ' open' : ''}${docked ? ' is-docked' : ' is-float'}`}
       aria-expanded={open}
-      aria-label={open ? 'سكّر التعليقات' : 'علّق على السيارة'}
+      aria-label={cut ? 'التعليقات واقفة لين يرجع الخط' : open ? 'سكّر التعليقات' : 'علّق على السيارة'}
+      disabled={cut}
       onClick={() => setOpen((o) => !o)}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">

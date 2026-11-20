@@ -138,7 +138,7 @@ export function DutchConsole({
     : garageFull
       ? 'كراجك فل'
       : offline
-        ? 'مقطوع، نرجّع الخط…'
+        ? 'مقطوع، نرجّع الخط'
         : core.paused
           ? 'المزاد واقف'
           : !canPay

@@ -3,10 +3,10 @@
 // moment (saleShown), and every older sale settled. Styles: src/styles/s-shell.css (prefix shl-).
 import { useState } from 'react';
 import type { Sale } from '../../engine/types';
-import { money, signed } from '../../lib/util';
+import { money } from '../../lib/util';
 import { useBack } from '../App';
 import { Icon } from '../components/Bits';
-import { GarageCard } from '../components/Garage';
+import { Delta, GarageCard } from '../components/Garage';
 import { Paddle } from '../components/Plate';
 import { ShellSheet } from '../components/RoomMenu';
 import { ScreenTitle } from '../components/kit/ScreenTitle';
@@ -156,8 +156,7 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
                   </span>
                 </span>
                 <span className={`shl-gain is-${tone}`} aria-hidden="true">
-                  {tone !== 'even' && <i className="shl-mark" />}
-                  <span className="ltr">{pending && !any ? '—' : any ? signed(profit) : '0'}</span>
+                  {any ? <Delta v={profit} /> : <span className="ltr">{pending ? '—' : '0'}</span>}
                 </span>
               </button>
             </li>

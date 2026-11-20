@@ -615,20 +615,9 @@
   color: var(--mute);
 }
 
-/* the small mark beside a gain or a loss: a green point up, a red point down */
-.shl-mark {
-  flex: none;
-  width: 0;
-  height: 0;
-  border-inline: 5px solid transparent;
-}
-
-.shl-gain.is-gain .shl-mark {
-  border-bottom: 7px solid var(--ok);
-}
-
-.shl-gain.is-loss .shl-mark {
-  border-top: 7px solid var(--brand-hi);
+/* a gain or a loss reads as it does in every garage: the kit's Delta, at the row's size */
+.shl-gain .e-delta {
+  font-weight: 800;
 }
 
 .shl-p.is-off .shl-p-name {

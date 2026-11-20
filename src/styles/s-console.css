@@ -831,6 +831,12 @@
   box-shadow: none;
 }
 .cs-rx .rx-fab.is-docked.open { background: var(--plate); border-color: var(--plate); color: var(--plate-ink); }
+/* the line is down: the comments button waits, dimmed, and takes no press */
+.rx-fab:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.rx-fab:disabled:active { transform: none; }
 /* over a sale sheet: the bottom corner; the sheet keeps 72px free at its end for it */
 .rx .rx-fab.is-float {
   bottom: calc(12px + var(--safe-b));

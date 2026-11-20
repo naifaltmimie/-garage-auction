@@ -744,8 +744,15 @@ export function Console({
     call = (
       <>
         زاودوا عليك
+        {/* a late bid that beat him also grew the clock: he hears that instead of the price the button already shows */}
         <span className="cs-call-x">
-          ، المطلوب <span className="print ltr">{money(min)}</span>
+          {ext && bidding ? (
+            '، وتمدد الوقت'
+          ) : (
+            <>
+              ، المطلوب <span className="print ltr">{money(min)}</span>
+            </>
+          )}
         </span>
       </>
     );
@@ -769,6 +776,8 @@ export function Console({
   const total = lot ? feesOf(min, lot.fee).total : min;
   let body: ReactNode = null;
   let kind = 'bid';
+  // «تقدر لين» stands in the foot only for a player who can still buy this car
+  let maxLine = true;
   if (after) {
     kind = 'after';
     body = (
@@ -794,13 +803,15 @@ export function Console({
     );
   } else if (spectator) {
     kind = 'calm';
+    maxLine = false;
     body = <Calm icon="eye" title="أنت متفرج بهالجولة" sub="تابع السوم وعلّق مع الشباب" />;
   } else if (garageFull) {
     kind = 'calm';
+    maxLine = false;
     body = <Calm icon="car" title="كراجك فل" sub="ما تقدر تشتري زيادة، تفرّج وعلّق مع الشباب" />;
   } else if (offline) {
     kind = 'calm';
-    body = <Calm icon="info" title="مقطوع، نرجّع الخط…" sub="السوم يرجع لك أول ما يرجع الخط، والساعة ماشية" tone="off" />;
+    body = <Calm icon="info" title="مقطوع، نرجّع الخط" sub="السوم يرجع لك أول ما يرجع الخط، والساعة ماشية" tone="off" />;
   } else if (core.paused) {
     kind = 'calm';
     body = (
@@ -812,6 +823,7 @@ export function Console({
     );
   } else if (core.phase === 'sealed' ? core.opening > maxBid && mine == null : min > maxBid && !iAmTop) {
     kind = 'calm';
+    maxLine = false;
     body = (
       <Calm
         icon="wallet"
@@ -953,9 +965,11 @@ export function Console({
                 مع السعي والضريبة <span className="ltr">{money(total)}</span>
               </span>
             )}
-            <span className="nb">
-              تقدر لين <span className="ltr">{money(maxBid)}</span>
-            </span>
+            {maxLine && (
+              <span className="nb">
+                تقدر لين <span className="ltr">{money(maxBid)}</span>
+              </span>
+            )}
           </p>
           <button type="button" className="cs-log" onClick={onLog}>
             سجل السوم (<span className="ltr">{core.log.length}</span>)

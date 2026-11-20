@@ -185,16 +185,21 @@ body:has(.actbar:not(.is-inline)) {
   list-style: none;
 }
 
+/* one car: the photo, then the name and its line with the gain beside them, then «دفع» and «قيمتها» on one
+   line that runs under the gain too, so seven-digit prices never break onto a second line */
 .e-car {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 2px;
   padding-block: 12px;
   border-bottom: 1px solid var(--line-2);
 }
 
 .e-car-ph {
+  grid-column: 1;
+  grid-row: 1 / span 4;
   position: relative;
   display: block;
   width: 72px;
@@ -220,13 +225,15 @@ body:has(.actbar:not(.is-inline)) {
   opacity: 1;
 }
 
+/* the body's lines are laid on the car's own grid */
 .e-car-body {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
+  display: contents;
 }
 
 .e-car-model {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
   overflow: hidden;
   /* room for the ink under the line, given back */
   padding-bottom: .3em;
@@ -245,6 +252,9 @@ body:has(.actbar:not(.is-inline)) {
 }
 
 .e-car-sub {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
   overflow: hidden;
   padding-bottom: .3em;
   margin-bottom: -.3em;
@@ -257,6 +267,8 @@ body:has(.actbar:not(.is-inline)) {
 }
 
 .e-car-nums {
+  grid-column: 2 / -1;
+  grid-row: 3;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -284,11 +296,15 @@ body:has(.actbar:not(.is-inline)) {
 }
 
 .e-car-delta {
+  grid-column: 3;
+  grid-row: 1 / span 2;
   font-size: 17px;
   line-height: 21px;
 }
 
 .e-car-plate {
+  grid-column: 2 / -1;
+  grid-row: 4;
   display: block;
   margin-top: 6px;
 }
@@ -343,7 +359,7 @@ body:has(.actbar:not(.is-inline)) {
 
 .e-garage.is-compact .e-car {
   grid-template-columns: 56px minmax(0, 1fr) auto;
-  gap: 10px;
+  column-gap: 10px;
   padding-block: 9px;
 }
 
