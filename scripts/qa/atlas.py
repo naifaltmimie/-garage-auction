@@ -82,7 +82,7 @@ async def new_page(browser, a, name, w, h, mobile=True, dsf=2):
 
     await ctx.route('**/*haraj*/**', fake)
     await ctx.route('**/api/img**', fake)
-    await ctx.add_init_script("try{localStorage.setItem('mzk:news',JSON.stringify('2026-11-19'))}catch(e){}")
+    await ctx.add_init_script("try{localStorage.setItem('mzk:news',JSON.stringify('2099-12-31'))}catch(e){}")
     pg = await ctx.new_page()
     pg.on('pageerror', lambda e: a.say(f'[{name}] PAGEERROR', e))
     return ctx, pg

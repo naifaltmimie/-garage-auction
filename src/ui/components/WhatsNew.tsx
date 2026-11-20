@@ -26,9 +26,9 @@ const RELEASES: { date: string; items: Item[] }[] = [
   },
 ];
 
-/** Whether this phone hasn't seen the current release notes yet. */
+/** Whether this phone hasn't seen the current release notes yet (dates are ISO, so they compare as text). */
 export function hasNews() {
-  return store.get<string>(SEEN_KEY, '') !== RELEASE;
+  return store.get<string>(SEEN_KEY, '') < RELEASE;
 }
 
 export function WhatsNew({ open, onClose }: { open: boolean; onClose: () => void }) {
