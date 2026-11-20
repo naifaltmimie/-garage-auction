@@ -11,9 +11,27 @@
 :root {
   color-scheme: dark;
 
-  /* three type roles: the voice (the logo's face), print (numbers on objects), text (--f-ui) */
+  /* three type roles: the voice (the logo's face), print (numbers on objects), text (--f-ui).
+     The older display and number names point at the roles, so every screen sheet follows. */
   --f-voice: 'Lalezar', 'IBM Plex Sans Arabic', system-ui, sans-serif;
   --f-print: 'Barlow Condensed', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-display: var(--f-voice);
+  --f-num: var(--f-print);
+
+  /* the role scale. Voice reads about 18% smaller than Plex at the same px, so it starts at 22px;
+     Print's condensed digits run a step larger than the Plex digits they replace. */
+  --t-voice-xl: 44px;
+  --t-voice-l: 34px;
+  --t-voice-m: 26px;
+  --t-voice-s: 22px;
+  --t-print-xxl: 68px;
+  --t-print-xl: 54px;
+  --t-print-l: 32px;
+  --t-print-m: 22px;
+  --t-print-s: 16px;
+  --t-body: 17px;
+  --t-sub: 15px;
+  --t-cap: 13px;
 
   /* rubber */
   --rubber-0: #0b0c0d;
@@ -105,16 +123,56 @@
 
 html {
   background: var(--rubber-1);
+  /* Lalezar has one weight and Barlow two: nothing may fake a bold or an italic */
+  font-synthesis: none;
 }
+
+/* ---------------------------------------------------------------- the three roles as utilities */
+
+.voice,
+.voice-xl,
+.voice-l,
+.voice-m,
+.voice-s {
+  font-family: var(--f-voice);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.voice-xl { font-size: var(--t-voice-xl); line-height: 1.15; }
+.voice-l { font-size: var(--t-voice-l); line-height: 1.2; }
+.voice-m { font-size: var(--t-voice-m); }
+.voice-s { font-size: var(--t-voice-s); }
+
+.print,
+.print-xxl,
+.print-xl,
+.print-l,
+.print-m,
+.print-s {
+  font-family: var(--f-print);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+  letter-spacing: .01em;
+}
+
+.print-xxl { font-size: var(--t-print-xxl); line-height: 1; }
+.print-xl { font-size: var(--t-print-xl); line-height: 1; }
+.print-l { font-size: var(--t-print-l); line-height: 1.05; }
+.print-m { font-size: var(--t-print-m); line-height: 1.1; }
+.print-s { font-size: var(--t-print-s); line-height: 1.2; }
+
+.text-body { font-size: var(--t-body); line-height: 1.6; }
+.text-sub { font-size: var(--t-sub); line-height: 1.5; }
+.text-cap { font-size: var(--t-cap); line-height: 1.4; }
 
 body {
   background: var(--rubber-1) var(--tex-grain);
   color: var(--ink);
-}
-
-::selection {
-  background: var(--brand-100);
-  color: #fff;
 }
 
 /* ---------------------------------------------------------------- the bars: matte rubber, one hairline */
@@ -162,9 +220,10 @@ body {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6);
 }
 
+/* a field in use is lit in chalk: red never marks focus */
 .input:focus {
-  border-color: var(--brand);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6), 0 0 0 4px var(--brand-50);
+  border-color: var(--ink-2);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6), 0 0 0 3px rgba(242, 242, 244, .1);
 }
 
 .seg {
@@ -306,6 +365,44 @@ body {
   --rim: rgba(255, 255, 255, .3);
   color: #0c0d0f;
   text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+/* a screen's one action speaks in the voice (the bid button keeps it when it turns alloy for the leader).
+   Lalezar's Arabic sits low in its line box, so the label is lifted 1px to the face's optical middle (measured).
+   Every other button stays Text 700. */
+.btn.btn-primary,
+.btn.btn-gold,
+.btn.bid-main {
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-size: var(--t-voice-s);
+  line-height: 1;
+  letter-spacing: 0;
+  padding-bottom: 2px;
+}
+
+.btn.btn-sm.btn-primary,
+.btn.btn-sm.btn-gold {
+  font-size: 20px;
+}
+
+/* a unit beside a number on a button (ريال) stays in the text face */
+.btn.btn-primary small,
+.btn.btn-gold small,
+.btn.bid-main small {
+  font-family: var(--f-ui);
+  font-weight: 600;
+}
+
+/* any number on a button is print */
+.btn .t-money,
+.btn .num,
+.btn output,
+.btn .print {
+  font-family: var(--f-print);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: .01em;
 }
 
 .btn-dark {
