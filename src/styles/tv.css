@@ -17,6 +17,9 @@ html.tv-mode body {
   --k: 1;
   --gut: calc(var(--u) * 4);
   --ease: cubic-bezier(.16, 1, .3, 1);
+  /* the alloy's grain at the screen's scale: a phone-sized tile would repeat seven times across a band here */
+  --alloy-brush: url('/brand/kit/alloy-brush.webp') 0 0 / calc(var(--u) * 56) calc(var(--u) * 56) repeat;
+  --alloy-face: var(--alloy-brush), var(--alloy-tone);
   position: fixed;
   inset: 0;
   display: grid;
@@ -70,7 +73,7 @@ html.tv-mode body {
 /* ---------------------------------------------------------------- the top band */
 .tv-band {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr) minmax(0, max-content);
   align-items: center;
   column-gap: calc(var(--u) * 3);
   height: calc(var(--u) * 7);
@@ -84,7 +87,7 @@ html.tv-mode body {
 }
 .tv-band-room {
   min-width: 0;
-  max-width: calc(var(--u) * 70);
+  max-width: calc(var(--u) * 50);
   overflow: hidden;
   font: 400 calc(var(--u) * 4.2)/1.2 var(--f-voice);
   font-synthesis: none;
@@ -102,6 +105,7 @@ html.tv-mode body {
   animation: tv-fade 600ms var(--ease) both;
 }
 .tv-band-join {
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: calc(var(--u) * 1.6);
@@ -110,6 +114,14 @@ html.tv-mode body {
 .tv-band-join-k {
   font: 500 calc(var(--u) * 2.6)/1.3 var(--f-ui);
   color: var(--mute);
+}
+.tv-band-host {
+  min-width: 0;
+  overflow: hidden;
+  font: 700 calc(var(--u) * 3.2)/1 var(--f-print);
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  color: var(--ink-2);
 }
 .tv-band-code {
   font: 800 calc(var(--u) * 4.4)/1 var(--f-print);
@@ -190,6 +202,12 @@ html.tv-mode body {
 .tv-slip-k {
   font: 600 calc(var(--u) * 2.6)/1.3 var(--f-ui);
   color: rgba(17, 17, 17, .66);
+}
+.tv-slip-host {
+  max-width: calc(var(--u) * 42);
+  font: 700 calc(var(--u) * 3.4)/1.15 var(--f-print);
+  overflow-wrap: anywhere;
+  color: var(--plate-ink);
 }
 .tv-slip-n {
   font: 800 calc(var(--u) * 12)/.9 var(--f-print);
@@ -343,6 +361,7 @@ html.tv-mode body {
 }
 @keyframes tv-count { from { opacity: .2; transform: scale(1.08); } }
 .tv-intro-facts {
+  margin-top: calc(var(--u) * 4);
   font: 500 calc(var(--u) * 3.2)/1.4 var(--f-ui);
   color: var(--ink-2);
 }
@@ -682,47 +701,18 @@ html.tv-mode body {
   color: var(--ink-2);
 }
 
-/* dutch: the falling price, and its rail from the start price down to the floor */
+/* dutch: the phone's split-flap board and rail (s-console.css), zoomed; only their size on this screen is set here */
 .tv-dutch {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--u) * 3);
+  gap: calc(var(--u) * 3.4);
   margin-block: auto;
 }
-.tv-rail-track {
-  position: relative;
-  display: block;
-  height: calc(var(--u) * 1.2);
-  border-radius: calc(var(--u) * .6);
-  background: var(--rubber-4);
-}
-.tv-rail-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--ink-2);
-  transform-origin: right center;
-  transition: transform 300ms var(--ease);
-}
-.tv-rail-pin {
-  position: absolute;
-  top: 50%;
-  width: calc(var(--u) * 3.2);
-  height: calc(var(--u) * 3.2);
-  margin: calc(var(--u) * -1.6) calc(var(--u) * -1.6) 0;
-  border-radius: 50%;
-  background: var(--plate);
-  box-shadow: 0 0 0 calc(var(--u) * .3) var(--rubber-1);
-  transition: inset-inline-start 300ms var(--ease);
-}
-.tv-rail-ends {
-  display: flex;
-  justify-content: space-between;
-  margin-top: calc(var(--u) * 1.2);
-  font: 500 calc(var(--u) * 2.8)/1.3 var(--f-ui);
-  color: var(--mute);
-}
-.tv-rail-ends .ltr { font: 700 calc(var(--u) * 3.2)/1 var(--f-print); color: var(--ink-2); }
+.tv-dboard { justify-items: start; }
+.tv-dboard-k { font: 600 12px/1.3 var(--f-ui); color: var(--mute); }
+.tv-dboard .cs-board-n { font-size: 54px; }
+.tv-dboard .cs-board-u { font-size: 13px; }
+.tv-drail .cs-ends { font-size: 12px; }
 
 /* every bidder as one cell of a ruled strip; the leader's cell in alloy, never red */
 .tv-pstrip {
@@ -764,10 +754,14 @@ html.tv-mode body {
 .tv-pcell-cars {
   grid-area: cars;
   justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * .6);
   margin-inline-start: calc(var(--u) * 1.4);
   font: 700 calc(var(--u) * 2.8)/1.1 var(--f-print);
   color: var(--mute);
 }
+.tv .tv-pcell-car { width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); }
 .tv-pcell.is-lead {
   background: var(--alloy-100);
 }
@@ -917,12 +911,7 @@ html.tv-mode body {
   font: 600 calc(var(--u) * 3)/1 var(--f-ui);
   color: var(--mute);
 }
-.tv-value-blank {
-  display: block;
-  width: calc(var(--u) * 34);
-  height: calc(var(--u) * 10);
-  border-bottom: calc(var(--u) * .3) dashed var(--line-2);
-}
+.tv-value-wait { align-self: center; }
 .tv-word-row {
   display: flex;
   flex-wrap: wrap;
@@ -1099,6 +1088,29 @@ html.tv-mode body {
 .tv-table.is-dense .tv-c-name { font-size: calc(var(--u) * 3.6); }
 .tv-table.is-dense .tv-tr > .tv-c-n.ltr { font-size: calc(var(--u) * 3.4); }
 .tv-table.is-dense .paddle { width: calc(var(--u) * 4.4); height: calc(var(--u) * 4.4); }
+
+/* two to four bidders: the rows grow so the table holds the screen */
+.tv-table.is-few { --u5: calc(var(--u) * 7); --u12: calc(var(--u) * 16); --u14: calc(var(--u) * 18); --u20: calc(var(--u) * 28); }
+.tv-table.is-few .tv-tr:not(.tv-th) { padding-block: calc(var(--u) * 3); }
+.tv-table.is-few .tv-th > span { font-size: calc(var(--u) * 3); }
+.tv-table.is-few .tv-c-rank { font-size: calc(var(--u) * 5); }
+.tv-table.is-few .tv-c-name { font-size: calc(var(--u) * 6.4); }
+.tv-table.is-few .paddle { width: calc(var(--u) * 7); height: calc(var(--u) * 7); font-size: calc(var(--u) * 3.6); }
+.tv-table.is-few .tv-tr > .tv-c-n.ltr { font-size: calc(var(--u) * 5.4); }
+.tv-table.is-few .tv-tr > .tv-c-total.ltr { font-size: calc(var(--u) * 6.4); }
+.tv-table.is-few .tv-tr > .tv-c-n .e-delta { font-size: calc(var(--u) * 5.4); }
+.tv-table.is-few .tv-tr:not(.tv-th) > .tv-c-state { font-size: calc(var(--u) * 4); }
+.tv .tv-table.is-few .tv-check { width: calc(var(--u) * 3.6); height: calc(var(--u) * 3.6); }
+
+/* the spec line may take two lines while the bidders' strip is one row; the two lines share the words, so the
+   last one is never a single word on its own */
+.tv-lot:has(.tv-pstrip:not(.is-two)) .tv-spec {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  text-wrap: balance;
+}
 
 /* the kit's gain and loss (Delta, from Garage.tsx) at the board's size */
 .tv .e-delta { gap: calc(var(--u) * .7); line-height: 1; }

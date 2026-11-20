@@ -188,7 +188,7 @@ export class HostEngine {
   // ------------------------------------------------------------------ joining
 
   join(pid: string, sec: string, name: string, now: number): { ok: boolean; reason?: Nack; spectator?: boolean; changes: Changes } {
-    const clean = name.trim().slice(0, NAME_MAX) || 'لاعب';
+    const clean = name.trim().slice(0, NAME_MAX) || 'مزايد';
     const ex = this.player(pid);
     if (ex) {
       if (ex.sec !== sec) return { ok: false, reason: 'auth', changes: {} };

@@ -585,13 +585,31 @@ body:has(.actbar:not(.is-inline)) {
   border: 1px dashed var(--line-2);
 }
 
-/* the screen's one alloy surface */
+/* the screen's one alloy surface: the wheel stands as the trophy at its start, the score at its end */
 .e-champ.is-in {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'wheel name score'
+    'wheel k score'
+    'tie tie tie';
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 2px;
   border: 0;
   background: var(--alloy-face);
   color: var(--alloy-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 0 rgba(0, 0, 0, .18), 0 10px 26px -14px rgba(0, 0, 0, .9);
+  box-shadow: var(--alloy-edge);
   animation: e-champ-in .3s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+/* a long name takes the band's whole width on top; the trophy, the title and the score sit under it */
+.e-champ.is-in.is-long {
+  grid-template-areas:
+    'name name name'
+    'wheel k score'
+    'tie tie tie';
+  row-gap: 8px;
 }
 
 @keyframes e-champ-in {
@@ -610,14 +628,17 @@ body:has(.actbar:not(.is-inline)) {
   text-align: center;
 }
 
-.e-champ-who {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-  gap: 2px;
+.e-champ .e-champ-wheel {
+  grid-area: wheel;
+  width: 64px;
+  height: 64px;
+  align-self: center;
 }
 
 .e-champ-name {
+  grid-area: name;
+  align-self: end;
+  min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
   font-family: var(--f-voice);
@@ -627,31 +648,43 @@ body:has(.actbar:not(.is-inline)) {
   text-wrap: balance;
 }
 
+.e-champ.is-long .e-champ-name {
+  font-size: var(--t-voice-l);
+}
+
 .e-champ-k {
+  grid-area: k;
+  align-self: start;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  column-gap: 8px;
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #2c2f35;
+  color: var(--alloy-deck);
+}
+
+.e-champ.is-long .e-champ-k {
+  align-self: center;
 }
 
 .e-champ-tie {
-  margin: 4px 0 0;
+  grid-area: tie;
+  margin: 6px 0 0;
   font-size: 12px;
   font-weight: 600;
-  color: #3b3e45;
+  color: var(--alloy-deck);
 }
 
 /* on the champion's light band the caption is dark */
 .e-you.is-dark {
-  color: #3b3e45;
+  color: var(--alloy-deck);
 }
 
 .e-champ-score {
+  grid-area: score;
   display: grid;
-  flex: none;
   justify-items: center;
   margin: 0;
 }
@@ -665,7 +698,31 @@ body:has(.actbar:not(.is-inline)) {
 .e-champ-score small {
   font-size: 13px;
   font-weight: 700;
-  color: #2c2f35;
+  color: var(--alloy-deck);
+}
+
+@media (max-width: 359px) {
+  .e-champ.is-in {
+    column-gap: 10px;
+    padding: 16px;
+  }
+
+  .e-champ .e-champ-wheel {
+    width: 52px;
+    height: 52px;
+  }
+
+  .e-champ-name {
+    font-size: var(--t-voice-l);
+  }
+
+  .e-champ.is-long .e-champ-name {
+    font-size: var(--t-voice-m);
+  }
+
+  .e-champ-score b {
+    font-size: var(--t-print-xl);
+  }
 }
 
 .e-ranks {
@@ -922,8 +979,8 @@ button.e-rank-row:active {
   bottom: var(--actbar-h, 96px);
   z-index: 39;
   display: grid;
-  place-items: center;
-  padding: 24px 20px;
+  padding: 72px 16px 20px;
+  overflow: hidden;
   background: var(--rubber-1);
 }
 
@@ -938,82 +995,19 @@ button.e-rank-row:active {
 
 .e-stage-aw {
   display: grid;
-  justify-items: center;
-  gap: 10px;
-  max-width: 420px;
-  text-align: center;
-  animation: e-aw-in .3s cubic-bezier(.16, 1, .3, 1) both;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 500px;
+  min-height: 0;
+  margin: auto;
+  height: 100%;
   pointer-events: none;
 }
 
-@keyframes e-aw-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-}
-
-.e-stage-title {
-  margin: 0;
-  font-family: var(--f-voice);
-  font-size: clamp(44px, 14vw, 64px);
-  font-weight: 400;
-  line-height: 1.1;
-  color: var(--ink);
-  text-wrap: balance;
-}
-
-.e-stage-aw.is-grand .e-stage-title {
-  color: var(--alloy);
-}
-
-.e-stage-name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.e-stage-fig {
-  display: grid;
-  justify-items: center;
-  margin: 8px 0 0;
-}
-
-.e-stage-fig b {
-  font-size: var(--t-print-xl);
-  line-height: 1;
-  color: var(--ink);
-}
-
-.e-stage-fig.is-up b {
-  color: var(--ok-700);
-}
-
-.e-stage-fig small {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mute);
-}
-
-.e-stage-line {
-  margin: 4px 0 0;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.6;
-  color: var(--ink-2);
-  text-wrap: pretty;
-}
-
 .e-stage-count {
-  margin: 18px 0 0;
+  margin: 0;
   font-size: 13px;
   font-weight: 500;
   color: var(--mute);
@@ -1022,6 +1016,127 @@ button.e-rank-row:active {
 .e-stage-count .print {
   font-size: 16px;
   color: var(--ink-2);
+}
+
+/* the award on brushed alloy: its name, then who won it, then the figure, each under an engraved rule (a dark cut, a lit lip) */
+.e-stage-band {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 14px;
+  background: var(--alloy-face);
+  box-shadow: var(--alloy-edge);
+  color: var(--alloy-ink);
+  animation: e-band-in .28s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes e-band-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.e-stage-band > * {
+  padding-inline: 20px;
+}
+
+.e-stage-title {
+  margin: 0;
+  padding-block: 18px 12px;
+  font-family: var(--f-voice);
+  font-size: clamp(48px, 16vw, 68px);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--alloy-ink);
+  text-wrap: balance;
+}
+
+.e-stage-who {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 16px;
+  padding-block: 16px;
+  border-top: 1px solid color-mix(in srgb, var(--alloy-ink) 34%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+.e-stage-who .paddle {
+  width: 84px;
+  height: 84px;
+  border: 3px solid var(--alloy-ink);
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-family: var(--f-print);
+  font-size: 38px;
+  font-weight: 800;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+}
+
+.e-stage-name {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-xl);
+  line-height: 1.2;
+  color: var(--alloy-ink);
+  overflow-wrap: anywhere;
+}
+
+.e-stage-who.is-long .e-stage-name {
+  font-size: var(--t-voice-l);
+}
+
+.e-stage-who.is-short .e-stage-name {
+  font-size: clamp(48px, 15vw, 60px);
+  line-height: 1.15;
+}
+
+.e-stage-you {
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--alloy-deck);
+}
+
+.e-stage-fig {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  margin: 0;
+  padding-block: 12px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--alloy-ink) 34%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+.e-stage-fig small {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--alloy-deck);
+}
+
+.e-stage-fig b {
+  font-size: clamp(48px, 17vw, 68px);
+  line-height: 1;
+  color: var(--alloy-ink);
+}
+
+/* two lines are always kept for the why, so the band is the same size from one award to the next; the box clips,
+   so it keeps room under the last line for the ink below Readex's descent, given back (as .facts does in kit.css) */
+.e-stage-line {
+  box-sizing: border-box;
+  min-height: 3.5em;
+  margin: 0 0 -.3em;
+  padding-bottom: .3em;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
 }
 
 /* ---------------------------------------------------------------- the share dialog */
@@ -1083,7 +1198,7 @@ button.e-rank-row:active {
 @media (prefers-reduced-motion: reduce) {
   .e-champ.is-in,
   .e-rank.is-in .e-rank-row,
-  .e-stage-aw {
+  .e-stage-band {
     animation: none;
   }
 }
@@ -1186,44 +1301,82 @@ button.e-rank-row:active {
   color: var(--mute);
 }
 
-.e-cr-badges,
+.e-cr-stickers,
+.e-cr-todo,
 .e-cr-nights {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.e-cr-badges li {
+/* an earned badge is a paper sticker, pressed on a little crooked; one not yet earned is the empty outline where it goes */
+.e-cr-stickers {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding-block: 11px;
-  border-bottom: 1px solid var(--line-2);
+  flex-wrap: wrap;
+  gap: 14px 12px;
+  padding-block: 16px 8px;
 }
 
-.e-cr-badges b {
-  flex: none;
+.e-sticker {
+  position: relative;
+  display: inline-grid;
+  justify-items: start;
+  gap: 1px;
+  max-width: 100%;
+  padding: 8px 14px 9px;
+  border-radius: 8px;
+  color: var(--plate-ink);
+  background:
+    url('/brand/kit/paper-grain.png') 0 0 / 128px 128px,
+    linear-gradient(160deg, var(--plate) 0%, color-mix(in srgb, var(--plate-ink) 4%, var(--plate)) 100%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .4), -2px 6px 10px -3px rgba(0, 0, 0, .5);
+  transform: rotate(-2deg);
+}
+
+.e-sticker.is-tilt {
+  transform: rotate(1.5deg);
+}
+
+.e-sticker b {
   font-size: 15px;
-  font-weight: 500;
-  color: var(--mute);
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-.e-cr-badges small {
-  font-size: 12px;
+.e-sticker small {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--plate-ink) 70%, transparent);
+}
+
+.e-sticker.is-empty {
+  flex: none;
+  min-width: 112px;
+  padding: 7px 12px;
+  border: 1.5px dashed var(--line-2);
+  background: none;
+  box-shadow: none;
+  color: var(--mute);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  transform: none;
+}
+
+.e-cr-todo li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 8px;
+}
+
+.e-cr-todo small {
+  min-width: 0;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
-  color: var(--mute);
-  text-align: end;
-}
-
-.e-cr-badges li.is-got b {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.e-cr-badges li.is-got small {
-  color: var(--ok-700);
+  color: var(--ink-2);
 }
 
 .e-cr-nights li {
@@ -1280,11 +1433,104 @@ button.e-rank-row:active {
   font-size: 22px;
 }
 
-/* a long champion's name steps down a size so it keeps to two lines */
-.e-champ-name.is-mid {
-  font-size: var(--t-voice-l);
+/* ---------------------------------------------------------------- the kit page: the alloy sample */
+
+.e-kit-alloy {
+  display: grid;
+  gap: 16px;
 }
 
-.e-champ-name.is-long {
-  font-size: var(--t-voice-m);
+.e-kit-alloy-band {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 120px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--alloy-face);
+  box-shadow: var(--alloy-edge);
+  color: var(--alloy-ink);
+}
+
+.e-kit-alloy-name {
+  flex: 1;
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-xl);
+  line-height: 1.15;
+}
+
+.e-kit-alloy-score {
+  font-size: var(--t-print-xxl);
+  line-height: 1;
+}
+
+.e-kit-alloy-small {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.e-kit-alloy-small .paddle {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--alloy-mid);
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  font-family: var(--f-print);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.e-kit-alloy-chip {
+  width: 160px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--alloy-face);
+}
+
+/* a short phone: the stage's objects step down so the band keeps its three parts in view */
+@media (max-height: 700px) {
+  .e-stage {
+    padding-top: 68px;
+  }
+
+  .e-stage-title {
+    padding-block: 12px 8px;
+    font-size: 44px;
+  }
+
+  .e-stage-who {
+    padding-block: 10px;
+  }
+
+  .e-stage-who .paddle {
+    width: 64px;
+    height: 64px;
+    font-size: 28px;
+  }
+
+  .e-stage-name,
+  .e-stage-who.is-long .e-stage-name {
+    font-size: var(--t-voice-l);
+  }
+
+  .e-stage-who.is-long .e-stage-name {
+    font-size: var(--t-voice-m);
+  }
+
+  .e-stage-who.is-short .e-stage-name {
+    font-size: 44px;
+  }
+
+  .e-stage-fig {
+    padding-block: 8px 12px;
+  }
+
+  .e-stage-fig b {
+    font-size: 48px;
+  }
+
+  .e-stage-line {
+    font-size: 15px;
+  }
 }

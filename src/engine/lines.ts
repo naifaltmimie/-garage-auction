@@ -65,9 +65,29 @@ export const ROASTS: Record<Verdict, string[]> = {
   steal: ['الدلال نفسه ندمان إنه ما سامها', 'يعرف من وين تنوكل الكتف', 'صفقة تنحكى بالمجالس', 'الشاري كسبان وصاحبها زعلان'],
   good: ['شروة حلوة ومكسبها مضمون', 'ما خسر، ربحه في جيبه', 'شاطر وعارف السوق'],
   fair: ['بالضبط، لا ربح ولا خسارة', 'دفع حقها بالريال', 'ما ينلام، هذا سعرها'],
-  over: ['الحماس غلّب عليه', 'دفع زيادة، بس قلبه مرتاح', 'السوم سحبه وراه'],
+  over: ['غلبه الحماس', 'دفع زيادة، بس قلبه مرتاح', 'السوم سحبه وراه'],
   robbed: ['الله يعوضه، راحت عليه', 'دفعها دم قلبه وراح الربح', 'الدلال يضحك والشاري يبكي', 'شرى الهوا بفلوسه'],
 };
+
+// The room hears a roast about the buyer; his own phone says the same remark to his face. A roast that never
+// mentions the buyer has no entry here and reads the same for everyone.
+const ROASTS_TO_BUYER: Record<string, string> = {
+  'يعرف من وين تنوكل الكتف': 'تعرف من وين تنوكل الكتف',
+  'الشاري كسبان وصاحبها زعلان': 'أنت كسبان وصاحبها زعلان',
+  'ما خسر، ربحه في جيبه': 'ما خسرت، ربحك في جيبك',
+  'دفع حقها بالريال': 'دفعت حقها بالريال',
+  'ما ينلام، هذا سعرها': 'ما تنلام، هذا سعرها',
+  'غلبه الحماس': 'غلبك الحماس',
+  'دفع زيادة، بس قلبه مرتاح': 'دفعت زيادة، بس قلبك مرتاح',
+  'السوم سحبه وراه': 'السوم سحبك وراه',
+  'الله يعوضه، راحت عليه': 'الله يعوضك، راحت عليك',
+  'دفعها دم قلبه وراح الربح': 'دفعتها دم قلبك وراح الربح',
+  'الدلال يضحك والشاري يبكي': 'الدلال يضحك وأنت تبكي',
+  'شرى الهوا بفلوسه': 'شريت الهوا بفلوسك',
+};
+
+/** The roast as this phone reads it: said to the buyer on his own phone, about him everywhere else. */
+export const roastSaid = (roast: string, mine: boolean): string => (mine ? ROASTS_TO_BUYER[roast] ?? roast : roast);
 
 /** Seller ad lines grouped by tag. Picked to match the car's actual state (or the seller's spin on it). */
 export const SELLER: Record<string, string[]> = {

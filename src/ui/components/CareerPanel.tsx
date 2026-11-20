@@ -7,6 +7,16 @@ import { Portal, useSheet } from './Bits';
 
 /** «سجلي»: this phone's record across nights as ruled rows, then the badges (earned in chalk, the rest with how to
  *  earn them), then the last nights. */
+/** The day a badge was first earned, as «20 نوفمبر»; nothing when the record has no real date. */
+function earnedOn(at: number | undefined): string {
+  if (!at || at < 1e11) return '';
+  try {
+    return new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { day: 'numeric', month: 'long' }).format(new Date(at));
+  } catch {
+    return '';
+  }
+}
+
 export function CareerPanel({ onClose }: { onClose: () => void }) {
   const [c] = useState(loadCareer);
   const t = totals(c);
@@ -57,17 +67,26 @@ export function CareerPanel({ onClose }: { onClose: () => void }) {
           <h3 className="e-cr-sub">
             الشارات <span className="print ltr">{got.length}/{BADGES.length}</span>
           </h3>
-          <ul className="e-cr-badges">
-            {[...got, ...todo].map((b) => {
-              const has = !!c.badges[b.key];
-              return (
-                <li key={b.key} className={has ? 'is-got' : ''}>
+          {got.length > 0 && (
+            <ul className="e-cr-stickers" aria-label="شاراتك">
+              {got.map((b, i) => (
+                <li key={b.key} className={`e-sticker${i % 2 ? ' is-tilt' : ''}`}>
                   <b>{b.title}</b>
-                  <small>{has ? 'حصّلتها' : b.how}</small>
+                  {earnedOn(c.badges[b.key]) && <small>{earnedOn(c.badges[b.key])}</small>}
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
+          {todo.length > 0 && (
+            <ul className="e-cr-todo" aria-label="باقي الشارات">
+              {todo.map((b) => (
+                <li key={b.key}>
+                  <span className="e-sticker is-empty">{b.title}</span>
+                  <small>{b.how}</small>
+                </li>
+              ))}
+            </ul>
+          )}
           {last.length > 0 && (
             <>
               <h3 className="e-cr-sub">آخر لياليك</h3>

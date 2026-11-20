@@ -3,6 +3,7 @@
 // difference, the verdict word), and, for the buyer only, what he paid (the receipt). The real listings the value
 // came from close it. The stage clock lives in ../saleStage; nothing prints a number before its stage.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { roastSaid } from '../../engine/lines';
 import type { Comp, Core, PlayerPub, Sale } from '../../engine/types';
 import { bidsN, km, money, signed } from '../../lib/util';
 import { saleShown, useSaleStage, verdictSaid, type SaleStage } from '../saleStage';
@@ -129,7 +130,7 @@ function Verdict({ sale, stage, mine, buyerName }: { sale: Sale; stage: SaleStag
       </div>
       {shown.settled && shown.value !== null && (sale.roast || plateVal > 0) && (
         <p className="srv-roast">
-          {sale.roast}
+          {roastSaid(sale.roast, mine)}
           {/* a special plate is part of the value: said as its own remark, not run into the roast */}
           {plateVal > 0 && (
             <span className="srv-plateval">
