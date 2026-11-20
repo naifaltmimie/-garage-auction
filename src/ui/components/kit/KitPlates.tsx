@@ -3,8 +3,8 @@
 import type { PlatePub } from '../../../engine/types';
 import { CarPlate, MiniPlate, type PlateLook } from '../Plate';
 
-type P = PlatePub & PlateLook;
-const p = (ar: string, en: string, num: string, look: PlateLook = {}, special?: PlatePub['special']): P => ({ ar, en, num, special, ...look });
+type P = PlatePub;
+const p = (ar: string, en: string, num: string, look: PlateLook = {}, special?: PlatePub['special']): P => ({ ar, en, num, special, ...look }) as unknown as P;
 
 const base = p('ح ط ب', 'J T B', '4821');
 
