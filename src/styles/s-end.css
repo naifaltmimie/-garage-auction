@@ -15,6 +15,13 @@
   box-shadow: 0 -14px 28px -18px rgba(0, 0, 0, .9);
 }
 
+.actbar.is-inline {
+  position: relative;
+  z-index: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
 .actbar-in {
   display: grid;
   gap: 8px;
@@ -41,7 +48,7 @@
 }
 
 /* the page keeps room under its last line for the bar (the TV link sits after the screen) */
-body:has(.actbar) {
+body:has(.actbar:not(.is-inline)) {
   padding-bottom: calc(var(--actbar-h, 96px) + 8px);
 }
 
@@ -83,7 +90,8 @@ body:has(.actbar) {
   color: var(--ok-700);
 }
 
-.e-delta.is-down {
+.e-delta.is-down,
+.e-delta.is-even {
   color: var(--ink);
 }
 
@@ -1237,4 +1245,18 @@ button.e-rank-row:active {
 .e-cr[tabindex='-1']:focus-visible,
 .e-share[tabindex='-1']:focus-visible {
   outline: none;
+}
+
+.e-rank-ic {
+  flex: none;
+  color: var(--mute);
+}
+
+/* the kit page: the three marks side by side */
+.e-kit-deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 0;
+  font-size: 22px;
 }

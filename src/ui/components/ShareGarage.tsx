@@ -213,9 +213,9 @@ export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasE
   if (!n) {
     draw(ctx, 'طلع من الليلة بلا سيارة، وفلوسه بجيبه', W / 2, (top + bottom) / 2 + 14, { face: 'text', size: 36, weight: 500, color: C.mute, align: 'center' });
   }
-  const rowH = n ? Math.min(168, (bottom - top) / n) : 0;
+  const rowH = n ? Math.min(n <= 2 ? 196 : 168, (bottom - top) / n) : 0;
   const y0 = top + (n ? Math.max(0, (bottom - top - rowH * n) / 2) : 0);
-  const big = rowH >= 150 ? 1 : rowH >= 120 ? 0.86 : 0.72;
+  const big = rowH >= 180 ? 1.12 : rowH >= 150 ? 1 : rowH >= 120 ? 0.86 : 0.72;
   d.cars.forEach((c, i) => {
     const y = y0 + i * rowH;
     const ph = rowH - 32;

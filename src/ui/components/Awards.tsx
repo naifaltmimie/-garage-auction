@@ -181,39 +181,32 @@ export function useNightAwards(room: RoomView, ready: boolean): NightAwardsState
   };
 }
 
-/** One award filling the screen: its name in the voice, who won it, the figure in print, one line of why.
+/** One award filling the screen (from the first envelope on; the champion keeps the screen until then): its name in the voice, who won it, the figure in print, one line of why.
  *  A tap anywhere opens the next envelope. */
 export function AwardStage({ aw, myId }: { aw: NightAwardsState; myId: string }) {
   const cur = aw.step >= 1 && aw.step <= aw.total ? aw.stage[aw.step - 1] : null;
-  if (!aw.running) return null;
+  if (!aw.running || !cur) return null;
   return (
     <Portal>
       <div className="e-stage" aria-live="polite">
         <button type="button" className="e-stage-tap" onClick={aw.next} aria-label={aw.step >= aw.total ? 'خلّصنا' : 'الجائزة الجاية'} />
-        {cur ? (
-          <div className={`e-stage-aw${cur.grand ? ' is-grand' : ''}`} key={cur.key}>
-            <h2 className="e-stage-title">{cur.title}</h2>
-            <p className="e-stage-name">
-              {cur.name}
-              {cur.who === myId && <span className="e-you">أنت</span>}
+        <div className={`e-stage-aw${cur.grand ? ' is-grand' : ''}`} key={cur.key}>
+          <h2 className="e-stage-title">{cur.title}</h2>
+          <p className="e-stage-name">
+            {cur.name}
+            {cur.who === myId && <span className="e-you">أنت</span>}
+          </p>
+          {cur.figure && (
+            <p className={`e-stage-fig${cur.tone === 'gain' ? ' is-up' : ''}`}>
+              <b className="print ltr">{cur.figure}</b>
+              <small>{cur.figureLabel}</small>
             </p>
-            {cur.figure && (
-              <p className={`e-stage-fig${cur.tone === 'gain' ? ' is-up' : ''}`}>
-                <b className="print ltr">{cur.figure}</b>
-                <small>{cur.figureLabel}</small>
-              </p>
-            )}
-            <p className="e-stage-line">{cur.line}</p>
-            <p className="e-stage-count">
-              الجائزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
-            </p>
-          </div>
-        ) : (
-          <div className="e-stage-aw is-wait" key="wait">
-            <h2 className="e-stage-title">جوايز الليلة</h2>
-            <p className="e-stage-line">نفتح الظرف الأول</p>
-          </div>
-        )}
+          )}
+          <p className="e-stage-line">{cur.line}</p>
+          <p className="e-stage-count">
+            الجائزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
+          </p>
+        </div>
       </div>
     </Portal>
   );

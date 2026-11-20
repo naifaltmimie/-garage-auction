@@ -3,11 +3,12 @@
 // root, and the page keeps that much room under its last line, so nothing stays hidden under it.
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
-export function ActionBar({ children, line, label = 'الإجراء', className }: { children: ReactNode; line?: ReactNode; label?: string; className?: string }) {
+/** `inline` draws it in the flow (the kit page) instead of fixed to the bottom. */
+export function ActionBar({ children, line, label = 'الإجراء', className, inline }: { children: ReactNode; line?: ReactNode; label?: string; className?: string; inline?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || inline) return;
     const root = document.documentElement;
     const put = () => root.style.setProperty('--actbar-h', `${Math.ceil(el.getBoundingClientRect().height)}px`);
     put();
@@ -17,9 +18,9 @@ export function ActionBar({ children, line, label = 'الإجراء', className 
       ro?.disconnect();
       root.style.removeProperty('--actbar-h');
     };
-  }, []);
+  }, [inline]);
   return (
-    <div ref={ref} className={className ? `actbar ${className}` : 'actbar'} role="region" aria-label={label}>
+    <div ref={ref} className={['actbar', inline ? 'is-inline' : '', className].filter(Boolean).join(' ')} role="region" aria-label={label}>
       <div className="actbar-in">
         {line != null && (
           <p className="actbar-line" role="status">

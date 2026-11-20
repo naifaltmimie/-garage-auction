@@ -3,6 +3,7 @@ import { sound } from '../../audio/sound';
 import type { ResultRow } from '../../engine/types';
 import { go } from '../App';
 import { AwardStage, AwardsList, useNightAwards } from '../components/Awards';
+import { Icon } from '../components/Bits';
 import { GarageCard } from '../components/Garage';
 import { ActionBar } from '../components/kit/ActionBar';
 import { ScreenTitle } from '../components/kit/ScreenTitle';
@@ -155,7 +156,7 @@ export function Results({ room }: { room: RoomView }) {
           return (
             <li key={r.id} data-rank={r.rank} className={`e-rank${inn ? ' is-in' : ''}${r.id === room.myId ? ' is-mine' : ''}`}>
               {inn ? (
-                <button type="button" className="e-rank-row" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : r.id)}>
+                <button type="button" className="e-rank-row" aria-expanded={isOpen} aria-label={`${p.name}، ${r.total} نقطة، ${isOpen ? 'سكّر كراجه' : 'افتح كراجه'}`} onClick={() => setOpen(isOpen ? null : r.id)}>
                   <span className="e-rank-n print ltr">{r.rank}</span>
                   <Paddle n={p.paddle} me={p.id === room.myId} />
                   <span className="e-rank-t">
@@ -171,6 +172,7 @@ export function Results({ room }: { room: RoomView }) {
                     </b>
                     <small>نقطة</small>
                   </span>
+                  <Icon name={isOpen ? 'minus' : 'plus'} size={16} className="e-rank-ic" />
                 </button>
               ) : (
                 <div className="e-rank-row is-hidden" aria-hidden="true">

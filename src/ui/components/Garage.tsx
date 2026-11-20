@@ -7,12 +7,12 @@ import { Silhouette } from './Silhouette';
 
 /** A gain or a loss in Print: a gain is a small green figure, a loss stays chalk with a small red mark before it. */
 export function Delta({ v, className }: { v: number; className?: string }) {
-  const up = v >= 0;
+  const tone = v > 0 ? 'is-up' : v < 0 ? 'is-down' : 'is-even';
   return (
-    <span className={`e-delta ${up ? 'is-up' : 'is-down'}${className ? ` ${className}` : ''}`}>
-      {!up && <i className="e-delta-mark" aria-hidden="true" />}
-      <span className="ltr" aria-label={up ? `ربح ${money(v)}` : `خسارة ${money(-v)}`}>
-        {up ? `+${money(v)}` : `−${money(-v)}`}
+    <span className={`e-delta ${tone}${className ? ` ${className}` : ''}`}>
+      {v < 0 && <i className="e-delta-mark" aria-hidden="true" />}
+      <span className="ltr" aria-label={v > 0 ? `ربح ${money(v)}` : v < 0 ? `خسارة ${money(-v)}` : 'لا ربح ولا خسارة'}>
+        {v > 0 ? `+${money(v)}` : v < 0 ? `−${money(-v)}` : '0'}
       </span>
     </span>
   );

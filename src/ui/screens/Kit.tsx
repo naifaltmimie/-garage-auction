@@ -2,6 +2,8 @@
 // own background. It is the reference the screens are built from and reviewed against.
 import { useState } from 'react';
 import { ICON_NAMES, Icon } from '../components/Bits';
+import { Delta } from '../components/Garage';
+import { ActionBar } from '../components/kit/ActionBar';
 import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
 import { KitObjects } from '../components/kit/KitObjects';
@@ -239,6 +241,20 @@ export default function Kit() {
         <Field label="سيارات تحت الغطا" hint="تسوم وأنت ما تدري وش تحت الغطا">
           <Switch on={covered} onChange={setCovered} label="سيارات تحت الغطا" />
         </Field>
+      </Sec>
+
+      <Sec title="الشريط السفلي" note="زر الشاشة الواحد ثابت تحت الإبهام: 56 بكسل، وهوامش 16، وتحته المنطقة الآمنة. الصفحة تخلي له مكان فما يغطي شي.">
+        <ActionBar inline line="باقي فهد وسعود">
+          <button type="button" className="btn btn-primary btn-block e-go">
+            ابدأ التقييم السري
+          </button>
+        </ActionBar>
+      </Sec>
+
+      <Sec title="الربح والخسارة" note="الربح رقم أخضر صغير، والخسارة بالطباشير وقبلها علامة حمرا صغيرة.">
+        <p className="e-kit-deltas">
+          <Delta v={411625} /> <Delta v={-1365200} /> <Delta v={0} />
+        </p>
       </Sec>
 
       <KitObjects />
