@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, FinalResults, Sale } from '../../engine/types';
 import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
 import { money, signed } from '../../lib/util';
+import { Portal } from './Bits';
+import { Facts } from './kit/Facts';
 import type { RoomView } from '../useRoom';
-import { ShareGarage } from './ShareGarage';
 
 /** One award as the ceremony shows it. Derived on this phone from what the host published. */
 export interface AwardItem {
@@ -71,15 +72,36 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
   return out.map(({ ord: _o, ...a }) => a);
 }
 
-/** Awards ceremony + this night saved to «سجلي» + «شارك كراجك». */
-export function NightAwards({ room, ready }: { room: RoomView; ready: boolean }) {
+/** The first award waits this long after the champion lands, so his moment is his own. */
+const FIRST_MS = 2600;
+
+export interface NightAwardsState {
+  items: AwardItem[];
+  /** the awards the ceremony opens one by one (five at most, the champion last) */
+  stage: AwardItem[];
+  /** the awards that only go to the list */
+  rest: AwardItem[];
+  /** 0 before the first envelope, 1..total during it, total + 1 after */
+  step: number;
+  total: number;
+  running: boolean;
+  over: boolean;
+  skip: () => void;
+  next: () => void;
+  /** this player's titles and badges tonight */
+  badges: string[];
+  fresh: string[];
+  saved: boolean;
+}
+
+/** The night's awards, the ceremony's clock, and tonight saved to «سجلي» on this phone (once per room and night). */
+export function useNightAwards(room: RoomView, ready: boolean): NightAwardsState {
   const core = room.snap.core!;
   const res = room.snap.hist?.results ?? null;
   const sales = room.snap.hist?.sales ?? [];
   // keyed on the results and sales only, so the core's frequent snapshots never restart the show
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const items = useMemo(() => (res ? computeAwards(core, sales, res) : []), [res?.at, res?.awards.length, sales.length, core.players.length]);
-  // the ceremony opens five envelopes at most: the most important ones, the champion last; the rest go to a plain list
   const stage = useMemo(() => {
     if (items.length <= 5) return items;
     const top = new Set([...items].sort((a, b) => (a.pri ?? 0) - (b.pri ?? 0)).slice(0, 5).map((a) => a.key));
@@ -90,7 +112,6 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
   const meRow = res?.rows.find((r) => r.id === room.myId) ?? null;
   const nightKey = `${room.code}:${core.startedAt || res?.at || 0}`;
 
-  // save tonight to this phone's career, once per room + night
   const [night, setNight] = useState<{ badges: string[]; fresh: string[]; saved: boolean } | null>(null);
   useEffect(() => {
     if (!res || !meRow || room.spectator) return;
@@ -121,14 +142,12 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nightKey, !!res, !!meRow]);
 
-  // the ceremony: one envelope at a time, then the full list stays
   const [step, setStep] = useState(0);
   const [skipped, setSkipped] = useState(false);
-  const over = skipped || step > total;
+  const over = skipped || step > total || (ready && total === 0);
   useEffect(() => {
     if (!ready || over || total === 0) return;
-    // the first envelope waits a beat, so the champion's row on the podium gets its moment first
-    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 700 : stage[step - 1]?.grand ? 2400 : 1600);
+    const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? FIRST_MS : stage[step - 1]?.grand ? 2400 : 1600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, over, step, total]);
@@ -143,150 +162,100 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, ready, skipped, total]);
 
-  // the show follows itself down the page: the stage when the envelopes start, then the share card
-  const secRef = useRef<HTMLElement>(null);
-  const mineRef = useRef<HTMLDivElement>(null);
-  const glide = (el: HTMLElement | null, block: ScrollLogicalPosition) => {
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-    if (r.top >= 64 && r.bottom <= vh - 8) return;
-    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el.scrollIntoView({ block, behavior: still ? 'auto' : 'smooth' });
-  };
-  const started = ready && total > 0;
-  useEffect(() => {
-    if (!started || skipped) return;
-    const t = window.setTimeout(() => glide(secRef.current, 'start'), 1100);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started]);
-  useEffect(() => {
-    if (!over || !ready) return;
-    const t = window.setTimeout(() => glide(mineRef.current, 'nearest'), skipped ? 120 : 600);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [over, ready]);
-
-  if (!ready || !res) return null;
-  const cur = !over && step >= 1 && step <= total ? stage[step - 1] : null;
-  const listed = over ? stage : stage.slice(0, Math.max(0, step - 1));
   const myTitles = items.filter((a) => a.who === room.myId).map((a) => a.title);
-  const nightBadges = [...new Set([...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)])];
+  const freshTitles = (night?.fresh ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x);
+  const badges = [...new Set([...myTitles, ...(night?.badges ?? []).map((k) => badgeOf(k)?.title).filter((x): x is string => !!x)])];
+  return {
+    items,
+    stage,
+    rest,
+    step,
+    total,
+    running: ready && !over && total > 0,
+    over: ready && over,
+    skip: () => setSkipped(true),
+    next: () => setStep((s) => Math.min(total + 1, s + 1)),
+    badges,
+    fresh: freshTitles,
+    saved: !!night?.saved,
+  };
+}
 
+/** One award filling the screen: its name in the voice, who won it, the figure in print, one line of why.
+ *  A tap anywhere opens the next envelope. */
+export function AwardStage({ aw, myId }: { aw: NightAwardsState; myId: string }) {
+  const cur = aw.step >= 1 && aw.step <= aw.total ? aw.stage[aw.step - 1] : null;
+  if (!aw.running) return null;
   return (
-    <section className="aw" ref={secRef} aria-label="جوائز الليلة">
-      <header className="aw-head">
-        <h2>جوائز الليلة</h2>
-        {!over && total > 0 && (
-          <button className="btn btn-quiet aw-skip" onClick={() => setSkipped(true)}>
-            تخطَّ الحفل
-          </button>
-        )}
-      </header>
-
-      {total === 0 && <p className="aw-empty">ما انباعت سيارات تكفي لجوائز هالليلة.</p>}
-
-      {!over && total > 0 && (
-        <div className="aw-stage">
-          <div className="aw-frame" aria-live="polite">
-            {cur ? (
-              <div className={`aw-card ${cur.grand ? 'grand' : ''}`} key={cur.key}>
-                <span className="aw-env" aria-hidden>
-                  <i className="aw-env-flap" />
-                  <i className="aw-seal" />
-                </span>
-                <span className="aw-count">
-                  الجائزة <span className="ltr">{step}</span> من <span className="ltr">{total}</span>
-                </span>
-                <h3 className="aw-title">{cur.title}</h3>
-                <i className="aw-rule" aria-hidden />
-                <span className="aw-goes">من نصيب</span>
-                <b className="aw-name">
-                  {cur.name}
-                  {cur.who === room.myId && <em>أنت</em>}
-                </b>
-                {cur.figure && (
-                  <span className={`aw-fig ${cur.tone ?? ''}`}>
-                    <small>{cur.figureLabel}</small>
-                    <span className="t-money">{cur.figure}</span>
-                  </span>
-                )}
-                <p className="aw-line">{cur.line}</p>
-              </div>
-            ) : (
-              <div className="aw-card aw-wait" key="wait">
-                <span className="aw-count">نفتح الظرف الأول…</span>
-              </div>
+    <Portal>
+      <div className="e-stage" aria-live="polite">
+        <button type="button" className="e-stage-tap" onClick={aw.next} aria-label={aw.step >= aw.total ? 'خلّصنا' : 'الجائزة الجاية'} />
+        {cur ? (
+          <div className={`e-stage-aw${cur.grand ? ' is-grand' : ''}`} key={cur.key}>
+            <h2 className="e-stage-title">{cur.title}</h2>
+            <p className="e-stage-name">
+              {cur.name}
+              {cur.who === myId && <span className="e-you">أنت</span>}
+            </p>
+            {cur.figure && (
+              <p className={`e-stage-fig${cur.tone === 'gain' ? ' is-up' : ''}`}>
+                <b className="print ltr">{cur.figure}</b>
+                <small>{cur.figureLabel}</small>
+              </p>
             )}
+            <p className="e-stage-line">{cur.line}</p>
+            <p className="e-stage-count">
+              الجائزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
+            </p>
           </div>
-          <div className="aw-ctrl">
-            <button className="btn btn-ghost" onClick={() => setStep((s) => Math.min(total + 1, s + 1))}>
-              {step >= total ? 'خلّصنا' : 'الجائزة الجاية'}
-            </button>
+        ) : (
+          <div className="e-stage-aw is-wait" key="wait">
+            <h2 className="e-stage-title">جوايز الليلة</h2>
+            <p className="e-stage-line">نفتح الظرف الأول</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    </Portal>
+  );
+}
 
-      {listed.length > 0 && (
-        <ol className="aw-list">
-          {listed.map((a, i) => (
-            <li key={a.key} className={`aw-row ${a.grand ? 'grand' : ''} ${a.who === room.myId ? 'mine' : ''}`} style={{ animationDelay: over && skipped ? `${i * 0.05}s` : '0s' }}>
-              <span className="aw-n ltr">{String(i + 1).padStart(2, '0')}</span>
-              <div className="aw-row-body">
-                <span className="aw-row-title">{a.title}</span>
-                <b className="aw-row-name">
+/** The night's awards as one ruled list, then this player's badges and the «سجلي» note. */
+export function AwardsList({ aw, myId, spectator }: { aw: NightAwardsState; myId: string; spectator: boolean }) {
+  if (!aw.over) return null;
+  const all = [...aw.stage, ...aw.rest];
+  return (
+    <section className="e-awards" aria-label="جوايز الليلة">
+      <h2 className="e-sec-h">جوايز الليلة</h2>
+      {all.length === 0 ? (
+        <p className="e-awards-empty">ما انباعت سيارات تكفي لجوايز هالليلة.</p>
+      ) : (
+        <ul className="e-aw-list">
+          {all.map((a) => (
+            <li key={a.key} className={`e-aw${a.who === myId ? ' is-mine' : ''}`}>
+              <div className="e-aw-t">
+                <b className="e-aw-title">{a.title}</b>
+                <span className="e-aw-name">
                   {a.name}
-                  {a.who === room.myId && <em>أنت</em>}
-                </b>
-                <small>{a.line}</small>
+                  {a.who === myId && <span className="e-you">أنت</span>}
+                </span>
               </div>
               {a.figure && (
-                <span className={`aw-row-fig ${a.tone ?? ''}`}>
+                <span className="e-aw-fig">
+                  <b className={`print ltr${a.tone === 'gain' ? ' is-up' : ''}`}>{a.figure}</b>
                   <small>{a.figureLabel}</small>
-                  <span className="t-money">{a.figure}</span>
                 </span>
               )}
             </li>
           ))}
-        </ol>
+        </ul>
       )}
-
-      {over && rest.length > 0 && (
-        <div className="aw-rest">
-          <h3>وباقي الجوائز</h3>
-          <ul>
-            {rest.map((a) => (
-              <li key={a.key}>
-                <span>{a.title}</span>
-                <b>
-                  {a.name}
-                  {a.who === room.myId && <em>أنت</em>}
-                </b>
-              </li>
-            ))}
-          </ul>
+      {!spectator && aw.badges.length > 0 && (
+        <div className="e-badges">
+          <h3 className="e-badges-h">شاراتك الليلة</h3>
+          <Facts items={aw.badges.map((b) => (aw.fresh.includes(b) ? { t: `${b} (جديدة)`, tone: 'good' as const } : b))} />
         </div>
       )}
-
-      {over && meRow && !room.spectator && (
-        <div className="aw-mine" ref={mineRef}>
-          {nightBadges.length > 0 && (
-            <div className="aw-badges">
-              <span className="aw-badges-label">شاراتك الليلة</span>
-              <div className="aw-badges-row">
-                {nightBadges.map((b) => (
-                  <span key={b} className={`aw-badge ${night?.fresh.some((k) => badgeOf(k)?.title === b) ? 'new' : ''}`}>
-                    {b}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          <ShareGarage room={room} badges={nightBadges} />
-          {night?.saved && <p className="aw-saved">انحفظت الليلة في «سجلي» على هالجوال</p>}
-        </div>
-      )}
+      {!spectator && aw.saved && <p className="e-saved">انحفظت الليلة في «سجلي» على هالجوال</p>}
     </section>
   );
 }

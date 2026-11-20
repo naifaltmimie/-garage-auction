@@ -1,75 +1,83 @@
-import { useEffect, useState } from 'react';
-import { money, signed } from '../../lib/util';
+import { useEffect, useState, type ReactNode } from 'react';
+import { money } from '../../lib/util';
 import type { RoomView } from '../useRoom';
 import { Portal, useSheet } from './Bits';
 import { LOGO } from './Logo';
 
-// «شارك كراجك»: the night's garage drawn as a 1080×1350 poster on a canvas, dressed like the game:
-// rubber black, chalk text, caliper red for the rule lines, alloy only for the night's champion, and the rendered wheel still.
-// Text only (Haraj photos would taint the canvas), Arabic drawn right-to-left with the page font.
-// The logo and the wheel still are same-origin; if a browser still refuses them, it's drawn again without.
+// «شارك كراجك»: the night's garage drawn as a 1080×1350 poster on a canvas, in the game's three type roles on rubber:
+// Voice (Lalezar) for the player's name, Print (Barlow Condensed) for every figure, Text (Readex Pro) for the words.
+// The logo is drawn as it is; red and paper appear only where the brand puts them (the logo's tag, the paddle).
+// Car photos come through the same-origin image proxy so the canvas stays exportable; a photo that will not load
+// leaves a plain rubber frame, and if the browser still refuses the export the poster is drawn again without art.
 
 const W = 1080;
 const H = 1350;
-const PAD = 80;
-const FONT = "'Readex Pro Variable', system-ui, sans-serif";
+const PAD = 72;
+const VOICE = "'Lalezar', 'Readex Pro Variable', sans-serif";
+const PRINT = "'Barlow Condensed', 'Readex Pro Variable', sans-serif";
+const TEXT = "'Readex Pro Variable', system-ui, sans-serif";
 const C = {
   bg0: '#0b0c0d',
-  bg1: '#1a1b1e',
-  card: '#1d1e22',
-  card2: '#141518',
-  line: '#2b2d32',
+  bg1: '#17181b',
+  frame: '#1d1e22',
+  line: '#34363d',
+  hair: '#26282d',
   ink: '#f2f2f4',
   ink2: '#c6c8ce',
   mute: '#8d9098',
-  dim: '#5d6068',
-  red: '#e5262d',
-  redHi: '#ff4a4f',
-  alloy: '#d5d8de',
-  alloyHi: '#eef0f3',
-  alloyLine: 'rgba(214, 218, 226, .55)',
-  alloyHair: 'rgba(214, 218, 226, .22)',
+  red: '#ff4a4f',
   gain: '#55d892',
-  loss: '#ff6b6f',
+  alloy: '#d5d8de',
+  alloyHi: '#f6f7f9',
+  paper: '#fbfbf8',
+  paperInk: '#111111',
 };
-
 
 export interface PosterData {
   room: string;
   date: string;
   player: string;
+  paddle: number;
   rank: number;
   players: number;
-  cars: { name: string; trim: string; year: number; paid: number; value: number }[];
+  cars: { name: string; trim: string; year: number; paid: number; value: number; photo?: string }[];
   paid: number;
   value: number;
   profit: number;
   badges: string[];
 }
 
-function fit(ctx: CanvasRenderingContext2D, text: string, weight: number, size: number, max: number, min = 24): number {
-  let s = size;
-  for (; s > min; s -= 2) {
-    ctx.font = `${weight} ${s}px ${FONT}`;
-    if (ctx.measureText(text).width <= max) break;
-  }
-  ctx.font = `${weight} ${s}px ${FONT}`;
-  return s;
-}
+type Face = 'voice' | 'print' | 'text';
+const FAMILY: Record<Face, string> = { voice: VOICE, print: PRINT, text: TEXT };
+const font = (face: Face, size: number, weight = 400) => `${face === 'voice' ? 400 : weight} ${size}px ${FAMILY[face]}`;
 
-function clip(ctx: CanvasRenderingContext2D, text: string, max: number): string {
-  if (ctx.measureText(text).width <= max) return text;
-  let t = text;
-  while (t.length > 1 && ctx.measureText(`${t}…`).width > max) t = t.slice(0, -1);
-  return `${t.trim()}…`;
-}
-
-function txt(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, o: { size: number; weight?: number; color: string; align?: CanvasTextAlign; dir?: CanvasDirection }) {
-  ctx.font = `${o.weight ?? 500} ${o.size}px ${FONT}`;
+function draw(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, o: { face: Face; size: number; weight?: number; color: string; align?: CanvasTextAlign }) {
+  ctx.font = font(o.face, o.size, o.weight);
   ctx.fillStyle = o.color;
-  ctx.direction = o.dir ?? 'rtl';
+  // Arabic shapes and runs right to left; figures run left to right
+  ctx.direction = o.face === 'print' ? 'ltr' : 'rtl';
   ctx.textAlign = o.align ?? 'right';
   ctx.fillText(s, x, y);
+}
+
+function width(ctx: CanvasRenderingContext2D, s: string, face: Face, size: number, weight = 400) {
+  ctx.font = font(face, size, weight);
+  ctx.direction = face === 'print' ? 'ltr' : 'rtl';
+  return ctx.measureText(s).width;
+}
+
+/** The largest size from `size` down to `min` at which the line fits `max`. */
+function fit(ctx: CanvasRenderingContext2D, s: string, face: Face, size: number, max: number, min: number, weight = 400) {
+  let z = size;
+  while (z > min && width(ctx, s, face, z, weight) > max) z -= 2;
+  return z;
+}
+
+function clip(ctx: CanvasRenderingContext2D, s: string, face: Face, size: number, max: number, weight = 400) {
+  if (width(ctx, s, face, size, weight) <= max) return s;
+  let t = s;
+  while (t.length > 1 && width(ctx, `${t}…`, face, size, weight) > max) t = t.slice(0, -1);
+  return `${t.trim()}…`;
 }
 
 function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -78,12 +86,11 @@ function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   else ctx.rect(x, y, w, h);
 }
 
-const svgData = (s: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(s)}`;
-
 function img(src: string): Promise<HTMLImageElement | null> {
   return new Promise((ok) => {
     const im = new Image();
-    im.onload = () => ok(im);
+    im.decoding = 'async';
+    im.onload = () => ok(im.naturalWidth > 40 ? im : null);
     im.onerror = () => ok(null);
     im.src = src;
   });
@@ -93,209 +100,196 @@ function img(src: string): Promise<HTMLImageElement | null> {
 async function sized(url: string, w: number, h: number): Promise<HTMLImageElement | null> {
   try {
     const s = await (await fetch(url)).text();
-    return await img(svgData(s.replace('<svg ', `<svg width="${w}" height="${h}" `)));
+    return await img(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(s.replace('<svg ', `<svg width="${w}" height="${h}" `))}`);
   } catch {
     return null;
   }
 }
 
-/** The rendered wheel still; null when it does not load, and then the poster goes without it. */
-const WHEEL_STILL = '/brand/wheel/wheel-full-320.webp';
-/** A plain bar of matte rubber. */
-function treadBar(ctx: CanvasRenderingContext2D, y: number, h: number) {
-  const g = ctx.createLinearGradient(0, y, 0, y + h);
-  g.addColorStop(0, '#26272c');
-  g.addColorStop(0.55, '#191a1d');
-  g.addColorStop(1, '#121315');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, y, W, h);
+/** A car's cover photo through the same-origin proxy (a direct Haraj image would taint the canvas). */
+function photoUrl(u: string): string {
+  if (u.startsWith('h:')) return `/api/img?u=${encodeURIComponent(`https://mimg6cdn.haraj.com.sa/${u.slice(2)}`)}`;
+  return u;
+}
+
+function cover(ctx: CanvasRenderingContext2D, im: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  const k = Math.max(w / im.naturalWidth, h / im.naturalHeight);
+  const sw = w / k;
+  const sh = h / k;
+  ctx.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
+}
+
+/** Waits for each of the three faces, with Arabic and Latin samples so every subset the poster uses is in. */
+async function fontsReady() {
+  const ar = 'مزاد الكراج كراج نايف';
+  try {
+    await Promise.all([
+      document.fonts.load(font('voice', 80), ar),
+      document.fonts.load(font('print', 60, 800), '0123456789,+−/'),
+      document.fonts.load(font('print', 60, 700), '0123456789,+−/'),
+      document.fonts.load(font('text', 40, 700), ar),
+      document.fonts.load(font('text', 40, 500), ar),
+    ]);
+  } catch {
+    /* falls back to the next family in the stack */
+  }
+}
+
+/** A gain in green Print; a loss in chalk Print with a small red mark before it. Drawn from its left edge. */
+function delta(ctx: CanvasRenderingContext2D, v: number, x: number, y: number, size: number) {
+  const s = v > 0 ? `+${money(v)}` : v === 0 ? '0' : `−${money(-v)}`;
+  if (v >= 0) {
+    if (v === 0) {
+      draw(ctx, s, x, y, { face: 'print', size, weight: 700, color: C.ink, align: 'left' });
+      return width(ctx, s, 'print', size, 700);
+    }
+    draw(ctx, s, x, y, { face: 'print', size, weight: 700, color: C.gain, align: 'left' });
+    return width(ctx, s, 'print', size, 700);
+  }
+  const r = Math.max(5, size * 0.14);
+  ctx.fillStyle = C.red;
+  ctx.beginPath();
+  ctx.arc(x + r, y - size * 0.34, r, 0, Math.PI * 2);
+  ctx.fill();
+  draw(ctx, s, x + r * 2 + 10, y, { face: 'print', size, weight: 700, color: C.ink, align: 'left' });
+  return r * 2 + 10 + width(ctx, s, 'print', size, 700);
 }
 
 export async function drawPoster(d: PosterData, art = true): Promise<HTMLCanvasElement> {
-  try {
-    await Promise.all([document.fonts.load(`700 40px ${FONT}`), document.fonts.load(`500 40px ${FONT}`), document.fonts.load(`600 40px ${FONT}`)]);
-  } catch {
-    /* falls back to the system font */
-  }
+  await fontsReady();
   const champ = d.rank === 1 && d.players > 1;
-  const LOGO_H = 168;
+  const LOGO_H = 150;
   const LOGO_W = Math.round((LOGO_H * 224) / 196.2);
-  const [logo, wheel] = art ? await Promise.all([sized(LOGO.stack, LOGO_W * 2, LOGO_H * 2), img(WHEEL_STILL)]) : [null, null];
+  const [logo, ...photos] = art
+    ? await Promise.all([sized(LOGO.stack, LOGO_W * 2, LOGO_H * 2), ...d.cars.map((c) => (c.photo ? img(photoUrl(c.photo)) : Promise.resolve(null)))])
+    : [null, ...d.cars.map(() => null)];
 
   const cv = document.createElement('canvas');
   cv.width = W;
   cv.height = H;
   const ctx = cv.getContext('2d')!;
   ctx.textBaseline = 'alphabetic';
+  const R = W - PAD;
+  const L = PAD;
 
-  // ground: matte rubber, lit a touch from the top; a big tyre rolls in behind, barely there
+  // rubber, a touch lighter where the light falls on the top
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, C.bg1);
+  g.addColorStop(0.55, '#111214');
   g.addColorStop(1, C.bg0);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  const lit = ctx.createRadialGradient(W / 2, 140, 20, W / 2, 140, 760);
-  lit.addColorStop(0, champ ? 'rgba(214, 218, 226, .12)' : 'rgba(255, 255, 255, .05)');
-  lit.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = lit;
-  ctx.fillRect(0, 0, W, H);
-  if (wheel && wheel.naturalWidth > 0) {
-    ctx.save();
-    ctx.globalAlpha = 0.16;
-    ctx.drawImage(wheel, -150, 380, 520, 520);
-    ctx.restore();
-  }
 
-  // a rubber bar across the top, with the caliper-red line under it (alloy for the champion)
-  treadBar(ctx, 0, 64);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 64, W, 2);
-  ctx.fillStyle = champ ? C.alloy : C.red;
-  ctx.fillRect(0, 66, W, 5);
+  // the logo as it is, then the night
+  if (logo) ctx.drawImage(logo, (W - LOGO_W) / 2, 56, LOGO_W, LOGO_H);
+  else draw(ctx, 'مزاد الكراج', W / 2, 170, { face: 'voice', size: 84, color: C.ink, align: 'center' });
+  const night = clip(ctx, [d.room, d.date].filter(Boolean).join('  ·  '), 'text', 26, W - PAD * 2, 500);
+  draw(ctx, night, W / 2, 262, { face: 'text', size: 26, weight: 500, color: C.mute, align: 'center' });
 
-  // the price-tag logo, then the date
-  const R = W - PAD;
-  if (logo) {
-    ctx.drawImage(logo, (W - LOGO_W) / 2, 98, LOGO_W, LOGO_H);
-  } else {
-    txt(ctx, 'مزاد الكراج', W / 2, 200, { size: 64, weight: 700, color: C.ink, align: 'center' });
-  }
-  txt(ctx, d.date, W / 2, 318, { size: 26, weight: 500, color: C.mute, align: 'center' });
-
-  // who, and where they finished
-  txt(ctx, champ ? 'بطل الليلة' : 'كراج الليلة', W / 2, 392, { size: 30, weight: 700, color: champ ? C.alloy : C.redHi, align: 'center' });
-  const ns = fit(ctx, d.player, 700, 104, W - PAD * 2, 56);
-  txt(ctx, d.player, W / 2, 392 + ns + 2, { size: ns, weight: 700, color: champ ? C.alloyHi : C.ink, align: 'center' });
-  let y = 392 + ns + 34;
-  {
-    const where = d.players > 1 ? `المركز ${d.rank} من ${d.players}  ·  ${d.room}` : d.room;
-    ctx.font = `600 28px ${FONT}`;
-    const label = clip(ctx, where, W - PAD * 2 - 60);
-    const w = ctx.measureText(label).width + 56;
-    const x = (W - w) / 2;
-    rr(ctx, x, y, w, 58, 29);
-    if (champ) {
-      const gg = ctx.createLinearGradient(0, y, 0, y + 58);
-      gg.addColorStop(0, '#fafbfc');
-      gg.addColorStop(0.45, '#dfe2e7');
-      gg.addColorStop(1, '#8c909a');
-      ctx.fillStyle = gg;
-      ctx.fill();
-    } else {
-      ctx.fillStyle = C.card;
-      ctx.fill();
-      ctx.strokeStyle = C.line;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    txt(ctx, label, W / 2, y + 39, { size: 28, weight: 600, color: champ ? '#0c0d0f' : C.ink2, align: 'center' });
-    y += 58;
-  }
-
-  // the cars: a card each, the block centred in its space
-  const top = y + 30;
-  const bottom = 968;
-  const n = Math.max(1, d.cars.length);
-  const gap = n > 4 ? 10 : 16;
-  const rowH = Math.min(150, (bottom - top - gap * (n - 1)) / n);
-  const big = rowH >= 120 ? 42 : rowH >= 96 ? 36 : rowH >= 76 ? 30 : 24;
-  const small = rowH >= 120 ? 26 : rowH >= 96 ? 24 : rowH >= 76 ? 21 : 18;
-  const y00 = top + Math.max(0, (bottom - top - (rowH * n + gap * (n - 1))) / 2);
-  if (!d.cars.length) {
-    txt(ctx, 'طلع من الليلة بلا سيارة، وفلوسه بجيبه', W / 2, top + (bottom - top) / 2, { size: 36, weight: 600, color: C.mute, align: 'center' });
-  }
-  d.cars.forEach((c, i) => {
-    const y0 = y00 + i * (rowH + gap);
-    const cg = ctx.createLinearGradient(0, y0, 0, y0 + rowH);
-    cg.addColorStop(0, '#202126');
-    cg.addColorStop(1, '#17181b');
-    rr(ctx, PAD, y0, W - PAD * 2, rowH, 18);
-    ctx.fillStyle = cg;
-    ctx.fill();
-    ctx.strokeStyle = C.line;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255, 255, 255, .05)';
-    ctx.fillRect(PAD + 18, y0 + 1, W - PAD * 2 - 36, 2);
-    const mid = y0 + rowH / 2 + (rowH >= 76 ? -4 : 6);
-    const l2 = mid + small + 10;
-    const profit = c.value - c.paid;
-    // its number in the garage
-    txt(ctx, String(i + 1).padStart(2, '0'), R - 26, mid, { size: 22, weight: 700, color: C.mute, dir: 'ltr' });
-    // left: what he paid, then the gain or loss and the value
-    txt(ctx, money(c.paid), PAD + 28, mid, { size: big, weight: 700, color: C.ink, align: 'left', dir: 'ltr' });
-    if (rowH >= 76) {
-      const lineB = signed(profit);
-      txt(ctx, lineB, PAD + 28, l2, { size: small, weight: 600, color: profit >= 0 ? C.gain : C.loss, align: 'left', dir: 'ltr' });
-      ctx.font = `600 ${small}px ${FONT}`;
-      const wB = ctx.measureText(lineB).width;
-      txt(ctx, `القيمة ${money(c.value)}`, PAD + 28 + wB + 16, l2, { size: small, weight: 500, color: C.mute, align: 'left', dir: 'rtl' });
-    }
-    // right: the car
-    ctx.font = `700 ${big}px ${FONT}`;
-    txt(ctx, clip(ctx, c.name, 470), R - 76, mid, { size: big, weight: 700, color: C.ink });
-    if (rowH >= 76) {
-      ctx.font = `500 ${small}px ${FONT}`;
-      txt(ctx, clip(ctx, `${c.trim ? `${c.trim}  ·  ` : ''}${c.year}`, 430), R - 76, l2, { size: small, weight: 500, color: C.mute });
-    }
-  });
-
-  // the totals, sunk into the rubber
-  const ty = 994;
-  rr(ctx, PAD, ty, W - PAD * 2, 132, 20);
-  ctx.fillStyle = C.card2;
+  // the paddle (paper) and the name in the voice
+  const nameMax = W - PAD * 2 - 120;
+  const ns = fit(ctx, d.player, 'voice', 118, nameMax, 60);
+  const nw = width(ctx, d.player, 'voice', ns);
+  const PW = 84;
+  const rowW = nw + 24 + PW;
+  const nx = W / 2 + rowW / 2;
+  const ny = 392;
+  draw(ctx, d.player, nx, ny, { face: 'voice', size: ns, color: champ ? C.alloyHi : C.ink });
+  const px = nx - nw - 24 - PW;
+  const py = ny - ns * 0.5 - PW / 2 + 4;
+  rr(ctx, px, py, PW, PW, PW / 2);
+  ctx.fillStyle = champ ? C.alloy : C.paper;
   ctx.fill();
-  ctx.strokeStyle = champ ? C.alloyLine : C.line;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  const cols = [
-    { label: 'دفع', v: money(d.paid), color: C.ink },
-    { label: 'قيمة الكراج', v: money(d.value), color: C.ink },
-    { label: d.profit >= 0 ? 'الربح' : 'الخسارة', v: signed(d.profit), color: d.profit >= 0 ? C.gain : C.loss },
-  ];
-  const cw = (W - PAD * 2) / 3;
-  cols.forEach((c, i) => {
-    const cx = R - cw * i - cw / 2;
-    txt(ctx, c.label, cx, ty + 48, { size: 24, weight: 600, color: C.mute, align: 'center' });
-    const s = fit(ctx, c.v, 700, 44, cw - 28, 26);
-    txt(ctx, c.v, cx, ty + 104, { size: s, weight: 700, color: c.color, align: 'center', dir: 'ltr' });
-    if (i > 0) {
-      ctx.fillStyle = C.line;
-      ctx.fillRect(R - cw * i, ty + 22, 2, 88);
-    }
+  draw(ctx, String(d.paddle).padStart(2, '0'), px + PW / 2, py + PW / 2 + 15, { face: 'print', size: 42, weight: 800, color: C.paperInk, align: 'center' });
+  const where = d.players > 1 ? (champ ? `بطل الليلة، الأول من ${d.players}` : `المركز ${d.rank} من ${d.players}`) : 'مزاد لحاله';
+  draw(ctx, where, W / 2, ny + 74, { face: 'text', size: 32, weight: 700, color: champ ? C.alloy : C.ink2, align: 'center' });
+
+  // the cars as ruled rows: photo, model, what he paid, what it is worth
+  const top = 500;
+  const bottom = 1004;
+  ctx.fillStyle = C.line;
+  ctx.fillRect(L, top, W - PAD * 2, 3);
+  const n = d.cars.length;
+  if (!n) {
+    draw(ctx, 'طلع من الليلة بلا سيارة، وفلوسه بجيبه', W / 2, (top + bottom) / 2 + 14, { face: 'text', size: 36, weight: 500, color: C.mute, align: 'center' });
+  }
+  const rowH = n ? Math.min(168, (bottom - top) / n) : 0;
+  const y0 = top + (n ? Math.max(0, (bottom - top - rowH * n) / 2) : 0);
+  const big = rowH >= 150 ? 1 : rowH >= 120 ? 0.86 : 0.72;
+  d.cars.forEach((c, i) => {
+    const y = y0 + i * rowH;
+    const ph = rowH - 32;
+    const pw = Math.round(ph * 1.42);
+    const pyy = y + 16;
+    // photo at the row's start
+    ctx.save();
+    rr(ctx, R - pw, pyy, pw, ph, 12);
+    ctx.fillStyle = C.frame;
+    ctx.fill();
+    ctx.clip();
+    const im = photos[i];
+    if (im) cover(ctx, im, R - pw, pyy, pw, ph);
+    ctx.restore();
+    // model and its line
+    const tx = R - pw - 28;
+    const leftCol = 300;
+    const tmax = tx - (L + leftCol) - 16;
+    const ms = Math.round(40 * big);
+    draw(ctx, clip(ctx, c.name, 'text', ms, tmax, 700), tx, pyy + ph * 0.42, { face: 'text', size: ms, weight: 700, color: C.ink });
+    const sub = [c.trim, String(c.year)].filter(Boolean).join('  ·  ');
+    draw(ctx, clip(ctx, sub, 'text', Math.round(26 * big), tmax, 500), tx, pyy + ph * 0.42 + Math.round(44 * big), { face: 'text', size: Math.round(26 * big), weight: 500, color: C.mute });
+    // figures at the row's end: what he paid, then the value and the gain
+    const ps = Math.round(52 * big);
+    const paidY = pyy + ph * 0.46;
+    draw(ctx, money(c.paid), L, paidY, { face: 'print', size: ps, weight: 800, color: C.ink, align: 'left' });
+    const pwid = width(ctx, money(c.paid), 'print', ps, 800);
+    draw(ctx, 'دفع', L + pwid + 14, paidY, { face: 'text', size: Math.round(24 * big), weight: 500, color: C.mute, align: 'left' });
+    const vy = paidY + Math.round(44 * big);
+    const vs = Math.round(32 * big);
+    const dw = delta(ctx, c.value - c.paid, L, vy, vs);
+    draw(ctx, money(c.value), L + dw + 18, vy, { face: 'print', size: vs, weight: 700, color: C.ink2, align: 'left' });
+    const vw = width(ctx, money(c.value), 'print', vs, 700);
+    draw(ctx, 'قيمتها', L + dw + 18 + vw + 12, vy, { face: 'text', size: Math.round(22 * big), weight: 500, color: C.mute, align: 'left' });
+    // the hairline under the row
+    ctx.fillStyle = C.hair;
+    ctx.fillRect(L, y + rowH - 1, W - PAD * 2, 2);
   });
 
-  // the night's badges: one centred row of alloy-lined pills in chalk
-  ctx.font = `600 26px ${FONT}`;
-  const pills: { b: string; w: number }[] = [];
-  let tw = 0;
-  for (const b of [...new Set(d.badges)]) {
-    const w = ctx.measureText(b).width + 44;
-    if (tw + w + (pills.length ? 14 : 0) > W - PAD * 2) break;
-    tw += w + (pills.length ? 14 : 0);
-    pills.push({ b, w });
-  }
-  let bx = W / 2 + tw / 2;
-  const by = 1150;
-  for (const { b, w } of pills) {
-    rr(ctx, bx - w, by, w, 54, 27);
-    ctx.fillStyle = 'rgba(214, 218, 226, .1)';
-    ctx.fill();
-    ctx.strokeStyle = C.alloyLine;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    txt(ctx, b, bx - w / 2, by + 36, { size: 26, weight: 600, color: C.ink, align: 'center' });
-    bx -= w + 14;
+  // the three totals on one ruled band
+  const ty = 1022;
+  ctx.fillStyle = C.line;
+  ctx.fillRect(L, ty, W - PAD * 2, 3);
+  const cw = (W - PAD * 2) / 3;
+  const cols: [string, number, 'plain' | 'delta'][] = [
+    ['دفع', d.paid, 'plain'],
+    ['قيمة الكراج', d.value, 'plain'],
+    [d.profit >= 0 ? 'الربح' : 'الخسارة', d.profit, 'delta'],
+  ];
+  cols.forEach(([label, v, kind], i) => {
+    const cx = R - cw * i - cw / 2;
+    draw(ctx, label, cx, ty + 54, { face: 'text', size: 26, weight: 500, color: C.mute, align: 'center' });
+    const s = kind === 'delta' ? (v > 0 ? `+${money(v)}` : v === 0 ? '0' : `−${money(-v)}`) : money(v);
+    const z = fit(ctx, s, 'print', 64, cw - 40, 36, 800);
+    if (kind === 'delta') {
+      const w = width(ctx, s, 'print', z, 700) + (v < 0 ? z * 0.28 + 10 : 0);
+      delta(ctx, v, cx - w / 2, ty + 124, z);
+    } else {
+      draw(ctx, s, cx, ty + 124, { face: 'print', size: z, weight: 800, color: C.ink, align: 'center' });
+    }
+  });
+  ctx.fillStyle = C.hair;
+  ctx.fillRect(L, ty + 160, W - PAD * 2, 2);
+
+  // the awards he won, as words
+  const aw = [...new Set(d.badges)];
+  if (aw.length) {
+    const s = clip(ctx, aw.join('  ·  '), 'text', 32, W - PAD * 2, 700);
+    draw(ctx, s, W / 2, ty + 218, { face: 'text', size: 32, weight: 700, color: champ ? C.alloy : C.ink, align: 'center' });
   }
 
-  // foot: the address over a last bar of rubber
-  txt(ctx, 'garage-auction.vercel.app', PAD, H - 92, { size: 22, weight: 600, color: C.mute, align: 'left', dir: 'ltr' });
-  txt(ctx, 'سيارات حقيقية من السوق السعودي', R, H - 92, { size: 22, weight: 500, color: C.mute });
-  ctx.fillStyle = champ ? C.alloy : C.red;
-  ctx.fillRect(0, H - 54, W, 4);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, H - 50, W, 2);
-  treadBar(ctx, H - 48, 48);
+  // the address
+  draw(ctx, 'garage-auction.vercel.app', L, H - 44, { face: 'print', size: 30, weight: 700, color: C.mute, align: 'left' });
+  draw(ctx, 'سيارات حقيقية من السوق السعودي', R, H - 44, { face: 'text', size: 24, weight: 500, color: C.mute });
   return cv;
 }
 
@@ -319,9 +313,10 @@ export function posterFor(room: RoomView, badges: string[]): PosterData | null {
     room: core.settings.roomName,
     date: dateAr(),
     player: me.name,
+    paddle: me.paddle,
     rank: row.rank,
     players: res.rows.length,
-    cars: mine.map((s) => ({ name: `${s.car.makeAr} ${s.car.modelAr}`, trim: s.car.trimAr || s.car.trim, year: s.car.year, paid: s.paid, value: s.value })),
+    cars: mine.map((s) => ({ name: `${s.car.makeAr} ${s.car.modelAr}`, trim: s.car.trimAr || s.car.trim, year: s.car.year, paid: s.paid, value: s.value, photo: s.car.photos?.[0] })),
     paid: row.paid,
     value: row.value,
     profit: row.profit,
@@ -329,13 +324,17 @@ export function posterFor(room: RoomView, badges: string[]): PosterData | null {
   };
 }
 
-/** The button, and a preview sheet with share / download. */
-export function ShareGarage({ room, badges }: { room: RoomView; badges: string[] }) {
+/** «شارك كراجك»: makes the poster on demand and holds its preview dialog («شارك الصورة», «حمّلها»). */
+export function useShareGarage(room: RoomView, badges: string[]): { make: () => void; busy: boolean; can: boolean; dialog: ReactNode } {
   const [busy, setBusy] = useState(false);
-  const [img, setImg] = useState<{ url: string; blob: Blob } | null>(null);
-  useEffect(() => () => {
-    if (img) URL.revokeObjectURL(img.url);
-  }, [img]);
+  const [im, setIm] = useState<{ url: string; blob: Blob } | null>(null);
+  useEffect(
+    () => () => {
+      if (im) URL.revokeObjectURL(im.url);
+    },
+    [im],
+  );
+  const can = !!posterFor(room, badges);
 
   const make = async () => {
     const d = posterFor(room, badges);
@@ -347,10 +346,9 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
       try {
         blob = await toBlob(await drawPoster(d));
       } catch {
-        // a browser that won't export a canvas with SVG on it: the same poster without the logo and the tyre
         blob = await toBlob(await drawPoster(d, false));
       }
-      if (blob) setImg({ url: URL.createObjectURL(blob), blob });
+      if (blob) setIm({ url: URL.createObjectURL(blob), blob });
       else room.toast('ما قدرنا نجهز الصورة، جرّب مرة ثانية', 'bad');
     } catch {
       room.toast('ما قدرنا نجهز الصورة، جرّب مرة ثانية', 'bad');
@@ -360,9 +358,9 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
   };
 
   const download = () => {
-    if (!img) return;
+    if (!im) return;
     const a = document.createElement('a');
-    a.href = img.url;
+    a.href = im.url;
     a.download = 'kraji-mazad.png';
     document.body.appendChild(a);
     a.click();
@@ -370,9 +368,9 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
   };
 
   const share = async () => {
-    if (!img) return;
+    if (!im) return;
     try {
-      const file = new File([img.blob], 'kraji-mazad.png', { type: 'image/png' });
+      const file = new File([im.blob], 'kraji-mazad.png', { type: 'image/png' });
       const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
       if (nav.share && nav.canShare?.({ files: [file] })) {
         await nav.share({ files: [file], title: 'كراجي في مزاد الكراج' });
@@ -384,13 +382,18 @@ export function ShareGarage({ room, badges }: { room: RoomView; badges: string[]
     download();
   };
 
+  return { make, busy, can, dialog: im ? <SharePreview url={im.url} onShare={share} onSave={download} onClose={() => setIm(null)} /> : null };
+}
+
+/** The share button on its own, with its dialog. */
+export function ShareGarage({ room, badges, className = 'btn btn-ghost btn-block' }: { room: RoomView; badges: string[]; className?: string }) {
+  const s = useShareGarage(room, badges);
   return (
     <>
-      <button className="btn btn-ghost btn-block aw-share" onClick={make} disabled={busy}>
-        {busy && <i className="spinner sg-spin" aria-hidden />}
-        {busy ? 'نجهز الصورة…' : 'شارك كراجك'}
+      <button className={className} onClick={s.make} disabled={s.busy || !s.can}>
+        {s.busy ? 'نجهز الصورة…' : 'شارك كراجك'}
       </button>
-      {img && <SharePreview url={img.url} onShare={share} onSave={download} onClose={() => setImg(null)} />}
+      {s.dialog}
     </>
   );
 }
@@ -399,19 +402,21 @@ function SharePreview({ url, onShare, onSave, onClose }: { url: string; onShare:
   const ref = useSheet<HTMLDivElement>(onClose);
   return (
     <Portal>
-      <div className="sg-back" role="dialog" aria-modal="true" aria-label="صورة كراجك" onClick={onClose}>
-        <div className="sg-sheet" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
-          <img className="sg-img" src={url} alt="صورة كراجك الليلة" width={1080} height={1350} />
-          <div className="sg-btns">
-            <button className="btn btn-primary" onClick={onShare}>
+      <div className="e-share-back" role="dialog" aria-modal="true" aria-label="صورة كراجك" onClick={onClose}>
+        <div className="e-share" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+          <img className="e-share-img" src={url} alt="صورة كراجك الليلة" width={1080} height={1350} />
+          <div className="e-share-btns">
+            <button className="btn btn-primary e-go" onClick={onShare}>
               شارك الصورة
             </button>
-            <button className="btn btn-ghost" onClick={onSave}>
-              حمّلها
-            </button>
-            <button className="btn btn-quiet" onClick={onClose}>
-              سكّر
-            </button>
+            <div className="e-share-row">
+              <button className="btn btn-ghost" onClick={onSave}>
+                حمّلها
+              </button>
+              <button className="btn btn-quiet" onClick={onClose}>
+                سكّر
+              </button>
+            </div>
           </div>
         </div>
       </div>
