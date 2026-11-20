@@ -41,22 +41,31 @@
 
 /* ---------------------------------------------------------------- price tag
    Geometry (physical, the nose is on the left in either direction): --nose is the chamfer's depth,
-   the hole sits at --hx on the centre line. The strings rise about 26px above the tag's box. */
+   the hole sits at --hx on the centre line, the blunt tip is 2 x --tip tall. The component's box reserves
+   the room the string rises into (--top), so it takes normal spacing; the tilt and the shadow stay inside
+   the reserved room or within 14px below. */
 .ptag {
   --h: 84px;
   --nose: 34px;
+  --tip: 6px;
   --hx: 30px;
   --hr: 6px;
   --num: 50px;
+  /* the knot's ends reach about 73px above the hole (the hole is on the centre line) */
+  --top: calc(75px - var(--h) / 2);
   --ink-60: rgba(17, 17, 17, .6);
   position: relative;
   width: 100%;
+  padding-top: var(--top);
+}
+.ptag-body {
+  position: relative;
   height: var(--h);
   transform: rotate(-1.2deg);
   transform-origin: var(--hx) 50%;
 }
-.ptag[data-tick='a'] { animation: ptag-tick-a 260ms both; }
-.ptag[data-tick='b'] { animation: ptag-tick-b 260ms both; }
+.ptag-body[data-tick='a'] { animation: ptag-tick-a 260ms both; }
+.ptag-body[data-tick='b'] { animation: ptag-tick-b 260ms both; }
 @keyframes ptag-tick-a {
   0% { transform: rotate(-1.2deg); animation-timing-function: cubic-bezier(.3, .7, .4, 1); }
   32% { transform: rotate(-2.8deg); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
@@ -83,11 +92,11 @@
   direction: rtl;
   color: var(--plate-ink);
   background:
-    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
-    linear-gradient(172deg, rgba(255, 255, 255, .7) 0%, rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, .045) 100%),
+    url('/brand/kit/paper-grain.png') 0 0 / 128px 128px,
+    linear-gradient(176deg, rgba(255, 255, 255, .5) 0%, rgba(255, 255, 255, 0) 40%, rgba(0, 0, 0, .03) 100%),
     var(--plate);
   border-radius: 0 7px 7px 0;
-  clip-path: polygon(var(--nose) 0, 100% 0, 100% 100%, var(--nose) 100%, 0 calc(50% + 6px), 0 calc(50% - 6px));
+  clip-path: polygon(var(--nose) 0, 100% 0, 100% 100%, var(--nose) 100%, 0 calc(50% + var(--tip)), 0 calc(50% - var(--tip)));
   -webkit-mask: radial-gradient(circle at var(--hx) 50%, #0000 var(--hr), #000 calc(var(--hr) + .6px));
   mask: radial-gradient(circle at var(--hx) 50%, #0000 var(--hr), #000 calc(var(--hr) + .6px));
 }
@@ -96,7 +105,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 41px;
+  width: 40.8px;
   height: 100%;
   fill: none;
   stroke: rgba(17, 17, 17, .24);
@@ -106,7 +115,7 @@
 .ptag-nose polyline { vector-effect: non-scaling-stroke; }
 .ptag-rule {
   position: absolute;
-  left: 40.5px;
+  left: 40.8px;
   right: 5px;
   top: 5px;
   bottom: 5px;
@@ -222,10 +231,19 @@
 
 .ptag-l { --num: 46px; }
 .ptag-xl { --num: 40px; }
+/* compact: the same tag at 60px, label and amount only; no string, so it reserves only the tilt (7px) */
+.ptag.ptag-compact { --h: 60px; --nose: 24px; --tip: 4px; --hx: 21px; --hr: 4.5px; --num: 34px; --top: 7px; }
+.ptag-compact .ptag-nose { width: 29.8px; }
+.ptag-compact .ptag-rule { left: 29.8px; top: 4px; right: 4px; bottom: 4px; }
+.ptag-compact .ptag-price { padding: 0 14px 0 12px; gap: 0; }
+.ptag-compact .ptag-label { font-size: 11px; }
+.ptag-compact .ptag-unit { font-size: 13px; }
+
 @media (max-width: 379px) {
   .ptag { --h: 78px; --num: 46px; }
   .ptag-l { --num: 42px; }
   .ptag-xl { --num: 34px; }
+  .ptag.ptag-compact { --h: 60px; --num: 34px; }
   .ptag-price { padding: 0 14px 0 12px; }
   .ptag-who { gap: 2px; }
   .ptag-name { font-size: 13px; }
@@ -285,7 +303,24 @@
 .stamp2-mine .stamp2-sub {
   color: #fff;
 }
-.stamp2-unsold { color: var(--ink-2); }
+/* the darker ink edge: a 1px rim of the same shape just outside every stroke, so the stamp reads on a bright
+   photo as on a dark one. Text gets it from a stroke painted under the fill; borders from 1px rings. All of it
+   sits inside the worn mask, so the wear goes through the edge too. */
+.stamp2 { --edge: rgba(72, 0, 6, .55); }
+.stamp2-word,
+.stamp2-sub,
+.stamp2-yours {
+  -webkit-text-stroke: 2px var(--edge);
+  paint-order: stroke fill;
+}
+.stamp2-ink { box-shadow: 0 0 0 1px var(--edge), inset 0 0 0 1px var(--edge); }
+.stamp2-face { box-shadow: 0 0 0 1px var(--edge), inset 0 0 0 1px var(--edge); }
+.stamp2-mine .stamp2-face { box-shadow: 0 0 0 1px var(--edge); }
+.stamp2-mine .stamp2-word,
+.stamp2-mine .stamp2-sub,
+.stamp2-mine .stamp2-yours { -webkit-text-stroke: 0; }
+.stamp2-unsold { --edge: rgba(0, 0, 0, .5); color: var(--ink-2); }
+.stamp2-unsold .stamp2-face { box-shadow: none; }
 .stamp2-unsold .stamp2-ink { padding: 0; border-width: 2.5px; }
 .stamp2-unsold .stamp2-face { border: 0; padding: 2px 16px 6px; }
 .stamp2-unsold .stamp2-word { font-size: 40px; }
@@ -301,7 +336,7 @@
   border-radius: 8px;
   color: var(--plate-ink);
   background:
-    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
+    url('/brand/kit/paper-grain.png') 0 0 / 128px 128px,
     linear-gradient(160deg, #fff 0%, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .04) 100%),
     var(--plate);
   box-shadow: 0 1px 1px rgba(0, 0, 0, .4), -2px 6px 10px -3px rgba(0, 0, 0, .5);
@@ -355,7 +390,7 @@
   padding: 20px 18px calc(22px + var(--tooth) / 2);
   color: #161616;
   background:
-    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
+    url('/brand/kit/paper-grain.png') 0 0 / 128px 128px,
     linear-gradient(180deg, rgba(0, 0, 0, .07) 0, rgba(0, 0, 0, 0) 14px),
     var(--plate);
   -webkit-mask:
@@ -438,22 +473,38 @@
 .kobj-stack {
   display: flex;
   flex-direction: column;
-  gap: 48px;
-  padding-top: 36px;
+  gap: 20px;
+  padding-top: 12px;
 }
+.kobj-compact { display: flex; flex-direction: column; gap: 14px; margin-top: 40px; max-width: 300px; }
 .kobj-ctl { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .kobj-photos { display: grid; gap: 12px; margin-top: 16px; }
-/* a stand-in for a car photo: a dim yard, a horizon, asphalt */
+/* stand-ins for car photos, from bright to night: each holds the three stamps */
 .kobj-photo {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 26px 12px;
   border-radius: 14px;
   overflow: hidden;
+}
+.kobj-photo-day {
+  background:
+    radial-gradient(70% 22% at 50% 62%, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #b9cfe0 0%, #dce8f1 30%, #f4f6f7 46%, #ffffff 58%, #e6e7e8 72%, #c9cacc 100%);
+}
+.kobj-photo-mid {
   background:
     var(--tex-grain),
     radial-gradient(60% 34% at 50% 64%, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%),
     linear-gradient(180deg, #4b4f56 0%, #737880 50%, #5c6067 51%, #34363b 100%);
+}
+.kobj-photo-night {
+  background:
+    var(--tex-grain),
+    radial-gradient(50% 18% at 30% 58%, rgba(255, 236, 214, .12), rgba(0, 0, 0, 0) 70%),
+    linear-gradient(180deg, #050607 0%, #0d0f12 55%, #17191c 62%, #08090a 100%);
 }
 .kobj-row { display: flex; align-items: flex-start; gap: 28px; padding: 18px 4px 4px; }
 .kobj-roll {
@@ -464,6 +515,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rn-in, .rn-out, .ptag[data-tick], .stamp2, .rcpt-paper { animation: none !important; }
+  .rn-in, .rn-out, .ptag-body[data-tick], .stamp2, .rcpt-paper { animation: none !important; }
   .rn-out { display: none; }
 }
