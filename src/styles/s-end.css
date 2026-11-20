@@ -999,7 +999,7 @@ button.e-rank-row:active {
   gap: 12px;
   width: 100%;
   max-width: 520px;
-  max-height: 540px;
+  max-height: 500px;
   min-height: 0;
   margin: auto;
   height: 100%;
@@ -1089,6 +1089,11 @@ button.e-rank-row:active {
   font-size: var(--t-voice-l);
 }
 
+.e-stage-who.is-short .e-stage-name {
+  font-size: clamp(48px, 15vw, 60px);
+  line-height: 1.15;
+}
+
 .e-stage-you {
   font-family: var(--f-ui);
   font-size: 13px;
@@ -1119,8 +1124,13 @@ button.e-rank-row:active {
   color: var(--alloy-ink);
 }
 
+/* two lines are always kept for the why, so the band is the same size from one award to the next; the box clips,
+   so it keeps room under the last line for the ink below Readex's descent, given back (as .facts does in kit.css) */
 .e-stage-line {
-  margin: 0;
+  box-sizing: border-box;
+  min-height: 3.5em;
+  margin: 0 0 -.3em;
+  padding-bottom: .3em;
   overflow: hidden;
   font-size: 16px;
   font-weight: 500;
@@ -1506,6 +1516,10 @@ button.e-rank-row:active {
 
   .e-stage-who.is-long .e-stage-name {
     font-size: var(--t-voice-m);
+  }
+
+  .e-stage-who.is-short .e-stage-name {
+    font-size: 44px;
   }
 
   .e-stage-fig {

@@ -188,7 +188,8 @@ export function useNightAwards(room: RoomView, ready: boolean): NightAwardsState
 export function AwardStage({ aw, myId, paddleOf }: { aw: NightAwardsState; myId: string; paddleOf: (id: string) => number }) {
   const cur = aw.step >= 1 && aw.step <= aw.total ? aw.stage[aw.step - 1] : null;
   if (!aw.running || !cur) return null;
-  const long = cur.name.length > 14;
+  // the winner is the moment: a short name is set as large as the award's own, a long one steps down to fit
+  const size = cur.name.length > 14 ? ' is-long' : cur.name.length <= 6 ? ' is-short' : '';
   return (
     <Portal>
       <div className="e-stage" aria-live="polite">
@@ -199,7 +200,7 @@ export function AwardStage({ aw, myId, paddleOf }: { aw: NightAwardsState; myId:
           </p>
           <div className="e-stage-band">
             <h2 className="e-stage-title">{cur.title}</h2>
-            <div className={`e-stage-who${long ? ' is-long' : ''}`}>
+            <div className={`e-stage-who${size}`}>
               <Paddle n={paddleOf(cur.who)} me={cur.who === myId} />
               <p className="e-stage-name">
                 <bdi>{cur.name}</bdi>

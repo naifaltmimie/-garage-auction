@@ -264,7 +264,7 @@ function Waiting({ status }: { status: ViewerStatus }) {
     <div className="tv-wait">
       <Wheel size={Math.round(260 * k)} spin="slow" />
       <p className="tv-wait-t">{status.connected ? 'ننتظر الدلال يفتح الصالة' : 'نتصل بالصالة'}</p>
-      <p className="tv-wait-sub">شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</p>
+      <p className="tv-wait-sub">شاشة العرض تتابع المزاد بس، ما تسوم منها</p>
     </div>
   );
 }
@@ -277,7 +277,7 @@ function terms(core: Core, bidders: number): { k: string; v: ReactNode; print?: 
   const speed = s.speed === 'fast' ? 'سريع' : s.speed === 'calm' ? 'هادي' : 'عادي';
   return [
     { k: 'السوق', v: marketOf(s.mix).label },
-    { k: 'ميزانية كل لاعب', v: money(s.budget), print: true },
+    { k: 'ميزانية كل واحد', v: money(s.budget), print: true },
     { k: 'السيارات', v: String(core.lotsTotal || lotsFor(s, Math.max(2, bidders))), print: true },
     { k: 'الكراج يشيل', v: carsN(s.garage) },
     { k: 'السرعة', v: speed },
@@ -913,9 +913,10 @@ function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number
   const said = verdictSaid(sale.verdict, shown, false, name);
   const surprise = stage >= 3 ? sale.surprise : null;
   const sealed = !!sale.sealedBids?.length;
+  // the year stands apart from the name: «فيراري 812 2020» read as two numbers run together
   const carName = (
     <>
-      <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> <span className="ltr">{sale.car.year}</span>
+      <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> · <span className="ltr">{sale.car.year}</span>
     </>
   );
   return (
@@ -1026,7 +1027,7 @@ function Unsold({ core, sale }: { core: Core; sale: Sale }) {
       <section className="tv-car">
         <HammerPhoto sale={sale} stamp="unsold" uncover={false} />
         <p className="tv-hammer-car">
-          <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> <span className="ltr">{sale.car.year}</span>
+          <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> · <span className="ltr">{sale.car.year}</span>
         </p>
       </section>
       <section className="tv-hammer-side">

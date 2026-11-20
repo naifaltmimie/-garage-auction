@@ -633,7 +633,8 @@ i.pr-mark.bad {
 
 .sh-map {
   display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
+  /* the map takes what the legend does not need: at 184px its side panels are a thumb wide */
+  grid-template-columns: clamp(160px, 47vw, 184px) minmax(0, 1fr);
   align-items: start;
   gap: 18px;
   margin-bottom: 6px;
@@ -646,7 +647,7 @@ i.pr-mark.bad {
 }
 .dm-wheel { fill: var(--rubber-0); stroke: var(--mute); stroke-width: .8; }
 .dm-glass { fill: var(--rubber-0); }
-.dm-front { font-family: var(--f-ui); font-size: 7px; font-weight: 600; fill: var(--mute); }
+.dm-front { font-family: var(--f-ui); font-size: 9.5px; font-weight: 600; fill: var(--mute); pointer-events: none; }
 
 /* original: just the car's shape, a chalk outline that holds 3:1 on the rubber */
 .dm-p { stroke-linejoin: round; }
@@ -743,7 +744,7 @@ i.pr-mark.bad {
 @media (max-width: 359px) {
   .sh { --sh-g: 14px; }
   .sh-title { font-size: 28px; }
-  .sh-map { grid-template-columns: 138px minmax(0, 1fr); gap: 12px; }
+  .sh-map { grid-template-columns: 146px minmax(0, 1fr); gap: 12px; }
   /* the four tabs take the room their words need, so «كلام المعلن» and its dot never touch the next tab */
   .sh-tabbar button { flex: 1 1 auto; font-size: 13.5px; padding: 0 2px; }
   .sh-tabdot { margin-inline-start: 3px; }

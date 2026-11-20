@@ -180,7 +180,7 @@ export function SettingsFields({ s, set, players }: { s: Settings; set: SetSetti
     <div className="sf">
       <BudgetField budget={s.budget} set={set} />
 
-      <Field label="الكراج يشيل" hint="كم سيارة يقدر يشتري كل لاعب">
+      <Field label="الكراج يشيل" hint="كم سيارة يقدر يشتري كل واحد">
         <div className="sf-tight">
           <Seg
             print
@@ -192,7 +192,7 @@ export function SettingsFields({ s, set, players }: { s: Settings; set: SetSetti
       </Field>
 
       <div className="sf-pair">
-        <Field label="عدد السيارات" hint={s.lots ? 'بالمزاد كله' : players ? `تلقائي الحين: ${autoN}` : 'تلقائي على قد اللاعبين'}>
+        <Field label="عدد السيارات" hint={s.lots ? 'بالمزاد كله' : players ? `تلقائي الحين: ${autoN}` : 'تلقائي على قد المزايدين'}>
           <Stepper
             value={s.lots ? <span className="ltr">{s.lots}</span> : <span className="sf-auto">تلقائي</span>}
             canInc={s.lots < 40}

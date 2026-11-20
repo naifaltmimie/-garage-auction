@@ -86,8 +86,9 @@
   --alloy-deck: #3b3e45;
   --alloy-ink: #0c0d0f;
   /* the face: brushed metal. One tileable grain of fine horizontal strokes (public/brand/kit/alloy-brush.webp,
-     drawn by scripts/brand/alloy/brush.py) over the metal's tone, which catches the light in a band near the top */
-  --alloy-brush: url('/brand/kit/alloy-brush.webp') 0 0 / 256px 48px repeat;
+     drawn by scripts/brand/alloy/brush.py) over the metal's tone, which catches the light in a band near the top.
+     The tile is as tall as it is wide, so a tall plate never shows the same scratches as a ladder down its face */
+  --alloy-brush: url('/brand/kit/alloy-brush.webp') 0 0 / 256px 256px repeat;
   --alloy-tone: linear-gradient(180deg, #e8ebef 0%, #fafbfc 18%, #dde0e5 42%, #b7bbc3 72%, #9195a0 100%);
   --alloy-face: var(--alloy-brush), var(--alloy-tone);
   /* a machined edge for a large alloy surface: a bright chamfer on top, a dark one under, and its shadow */

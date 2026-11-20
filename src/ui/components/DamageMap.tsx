@@ -64,7 +64,7 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
   const list = panelsFor(car.doors);
   const geom = (p: PanelId) => (car.doors === 2 && GEOM2[p]) || GEOM[p];
   return (
-    <svg className="dm" viewBox="-10 -12 140 264" role="img" aria-label="خريطة البودي، القطع اللي مو أصلية عليها حرف حالتها">
+    <svg className="dm" viewBox="-10 -12 140 274" role="img" aria-label="خريطة البودي، القطع اللي مو أصلية عليها حرف حالتها">
       {/* wheels and glass, for orientation only */}
       <rect className="dm-wheel" x="1" y="40" width="6" height="30" rx="2" />
       <rect className="dm-wheel" x="113" y="40" width="6" height="30" rx="2" />
@@ -90,13 +90,16 @@ export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: P
           </text>
         );
       })}
-      {/* invisible tap areas: the thin side panels reach out to the edge so a thumb finds them */}
+      {/* invisible tap areas: the thin side panels, the two bumpers and the boot reach past their drawing (out to
+          the map's margins, up over the rear glass), so a thumb finds them: 44px and up from a 360px phone */}
       {onPick &&
         list.map((p) => {
           const [x0, y0, x1, y1] = box(geom(p));
-          const l = SIDE_L.includes(p) ? -10 : x0;
-          const r = SIDE_R.includes(p) ? 130 : x1;
-          return <rect key={`h${p}`} className="dm-hit" x={l} y={y0} width={r - l} height={y1 - y0} onClick={() => onPick(p)} />;
+          const l = SIDE_L.includes(p) ? -15 : x0;
+          const r = SIDE_R.includes(p) ? 135 : x1;
+          const t = p === 'fb' ? -12 : p === 'trunk' ? 185 : y0;
+          const b = p === 'rb' ? 262 : y1;
+          return <rect key={`h${p}`} className="dm-hit" x={l} y={t} width={r - l} height={b - t} onClick={() => onPick(p)} />;
         })}
       <text className="dm-front" x="60" y="-5" textAnchor="middle" dominantBaseline="central">
         قدام
