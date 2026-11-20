@@ -32,13 +32,14 @@ function CarThumb({ s }: { s: Sale }) {
 const emptyLine = (n: number) => (n === 1 ? 'موقف فاضي' : n === 2 ? 'موقفين فاضية' : `${n} مواقف فاضية`);
 
 /** One player's garage as a group: his paddle and name as the heading, his cars as ruled rows, then the totals.
- *  `compact` drops the km and the special plate (the voting screen). `hideValues` keeps the true values covered. */
+ *  `compact` drops the km and the special plate (the voting screen). `secretLot` is the car whose value the
+ *  reveal has not announced yet: its value stays covered, and the garage's totals with it. */
 export function GarageCard({
   p,
   sales,
   slots,
   me,
-  hideValues,
+  secretLot,
   compact,
   heading = true,
 }: {
@@ -46,7 +47,7 @@ export function GarageCard({
   sales: Sale[];
   slots: number;
   me?: boolean;
-  hideValues?: boolean;
+  secretLot?: string | null;
   compact?: boolean;
   heading?: boolean;
 }) {
@@ -55,6 +56,8 @@ export function GarageCard({
   const value = mine.reduce((a, s) => a + s.value, 0);
   const profit = value - paid;
   const free = Math.max(0, slots - mine.length);
+  const covered = (s: Sale) => !!secretLot && s.lotId === secretLot;
+  const totalsCovered = mine.some(covered);
   return (
     <section className={`e-garage${compact ? ' is-compact' : ''}${me ? ' is-mine' : ''}`} aria-label={`كراج ${p.name}`}>
       {heading && (
@@ -90,7 +93,7 @@ export function GarageCard({
                     <small>دفع</small>
                     <b className="print ltr">{money(s.paid)}</b>
                   </span>
-                  {!hideValues && (
+                  {!covered(s) && (
                     <span className="e-num">
                       <small>قيمتها</small>
                       <b className="print ltr">{money(s.value)}</b>
@@ -103,7 +106,7 @@ export function GarageCard({
                   </span>
                 )}
               </div>
-              {!hideValues && <Delta v={s.profit} className="e-car-delta" />}
+              {!covered(s) && <Delta v={s.profit} className="e-car-delta" />}
             </li>
           ))}
         </ul>
@@ -117,7 +120,7 @@ export function GarageCard({
               <span className="print ltr">{money(paid)}</span>
             </dd>
           </div>
-          {!hideValues && (
+          {!totalsCovered && (
             <>
               <div>
                 <dt>قيمتها</dt>

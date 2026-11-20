@@ -82,7 +82,7 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
           <Icon name="back" size={18} />
           رجوع للترتيب
         </button>
-        <GarageCard p={sel.p} sales={sales} slots={slots} me={sel.p.id === room.myId} hideValues={!!secret && secret.buyer === sel.p.id} />
+        <GarageCard p={sel.p} sales={sales} slots={slots} me={sel.p.id === room.myId} secretLot={secret?.lotId} />
         {canKick &&
           (ask ? (
             <div className="shl-ask" role="group" aria-label={`تطلّع ${sel.p.name}؟`} ref={(el) => el?.scrollIntoView({ block: 'nearest' })}>
