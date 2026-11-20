@@ -4,6 +4,7 @@ import type { Core, FinalResults, Sale } from '../../engine/types';
 import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
 import { iso, money, signed } from '../../lib/util';
 import { Portal } from './Bits';
+import { Paddle } from './Plate';
 import { Facts } from './kit/Facts';
 import type { RoomView } from '../useRoom';
 
@@ -181,31 +182,38 @@ export function useNightAwards(room: RoomView, ready: boolean): NightAwardsState
   };
 }
 
-/** One award filling the screen (from the first envelope on; the champion keeps the screen until then): its name in the voice, who won it, the figure in print, one line of why.
- *  A tap anywhere opens the next envelope. */
-export function AwardStage({ aw, myId }: { aw: NightAwardsState; myId: string }) {
+/** One award to the screen (from the first envelope on; the champion keeps the screen until then), built like the
+ *  big screen's band: the award's name in the voice on brushed alloy, the winner's paddle beside his name, the figure
+ *  in print with its label; the line of why under the band and «الجايزة 1 من 5» over it. A tap anywhere opens the next. */
+export function AwardStage({ aw, myId, paddleOf }: { aw: NightAwardsState; myId: string; paddleOf: (id: string) => number }) {
   const cur = aw.step >= 1 && aw.step <= aw.total ? aw.stage[aw.step - 1] : null;
   if (!aw.running || !cur) return null;
+  const long = cur.name.length > 14;
   return (
     <Portal>
       <div className="e-stage" aria-live="polite">
         <button type="button" className="e-stage-tap" onClick={aw.next} aria-label={aw.step >= aw.total ? 'خلّصنا' : 'الجايزة الجاية'} />
         <div className={`e-stage-aw${cur.grand ? ' is-grand' : ''}`} key={cur.key}>
-          <h2 className="e-stage-title">{cur.title}</h2>
-          <p className="e-stage-name">
-            {cur.name}
-            {cur.who === myId && <span className="e-you">أنت</span>}
-          </p>
-          {cur.figure && (
-            <p className={`e-stage-fig${cur.tone === 'gain' ? ' is-up' : ''}`}>
-              <b className="print ltr">{cur.figure}</b>
-              <small>{cur.figureLabel}</small>
-            </p>
-          )}
-          <p className="e-stage-line">{cur.line}</p>
           <p className="e-stage-count">
             الجايزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
           </p>
+          <div className="e-stage-band">
+            <h2 className="e-stage-title">{cur.title}</h2>
+            <div className={`e-stage-who${long ? ' is-long' : ''}`}>
+              <Paddle n={paddleOf(cur.who)} me={cur.who === myId} />
+              <p className="e-stage-name">
+                <bdi>{cur.name}</bdi>
+                {cur.who === myId && <span className="e-stage-you">أنت</span>}
+              </p>
+            </div>
+            {cur.figure && (
+              <p className="e-stage-fig">
+                <small>{cur.figureLabel}</small>
+                <b className="print ltr">{cur.figure}</b>
+              </p>
+            )}
+          </div>
+          <p className="e-stage-line">{cur.line}</p>
         </div>
       </div>
     </Portal>
