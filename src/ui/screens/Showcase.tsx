@@ -1,39 +1,45 @@
 import { carsN } from '../../lib/util';
 import { GarageCard } from '../components/Garage';
+import { ActionBar } from '../components/kit/ActionBar';
+import { ScreenTitle } from '../components/kit/ScreenTitle';
+import { TireLoader } from '../components/TireLoader';
 import type { RoomView } from '../useRoom';
 
+/** عرض الكراجات: every garage as a ruled group, then the host opens the secret rating. */
 export function Showcase({ room }: { room: RoomView }) {
   const core = room.snap.core!;
   const sales = room.snap.hist?.sales ?? [];
   const active = core.players.filter((p) => !p.spectator);
   const sold = sales.filter((s) => s.buyer).length;
+  const host = core.players.find((p) => p.host);
+  // my garage first, then the rest in paddle order
+  const order = [...active].sort((a, b) => Number(b.id === room.myId) - Number(a.id === room.myId) || a.paddle - b.paddle);
   return (
-    <main className="shell showcase-page" style={{ maxWidth: 1180 }}>
-      <div className="stack" style={{ gap: 16 }}>
-        <div style={{ textAlign: 'center' }} className="rise">
-          <h1 className="t-display" style={{ fontSize: 'clamp(36px, 10vw, 56px)', margin: '4px 0' }}>عرض الكراجات</h1>
-          <p className="mute" style={{ margin: 0 }}>
-            {sold ? `انباعت ${carsN(sold)}.` : 'ما انباعت ولا سيارة.'} شوفوا كل كراج زين، بعدها التقييم السري.
-          </p>
-        </div>
-        <div className="garages">
-          {active.map((p, i) => (
-            <div key={p.id} style={{ animationDelay: `${i * 0.12}s` }}>
-              <GarageCard p={p} sales={sales} slots={core.settings.garage} me={p.id === room.myId} />
-            </div>
-          ))}
-        </div>
-        {room.host ? (
-          <button className="btn btn-primary btn-block showcase-go" style={{ minHeight: 62, fontSize: 20 }} onClick={active.length > 1 ? room.host.openVoting : room.host.finish}>
+    <main className="shell e-page e-showcase">
+      <ScreenTitle caption={`${sold ? `انباعت ${carsN(sold)}.` : 'ما انباعت ولا سيارة.'} الربح هنا من القيم اللي انكشفت بعد كل بيعة. التقييم السري يجي بالأخير.`}>
+        عرض الكراجات
+      </ScreenTitle>
+      <div className="e-groups">
+        {order.map((p) => (
+          <GarageCard key={p.id} p={p} sales={sales} slots={core.settings.garage} me={p.id === room.myId} />
+        ))}
+      </div>
+      {room.host ? (
+        <ActionBar label="التقييم السري">
+          <button className="btn btn-primary btn-block e-go" onClick={active.length > 1 ? room.host.openVoting : room.host.finish}>
             {active.length > 1 ? 'ابدأ التقييم السري' : 'اعرض النتيجة'}
           </button>
-        ) : (
-          <div className="card showcase-wait" role="status">
-            <i className="spinner sw-tire" aria-hidden />
-            <span>الدلال بيفتح التقييم السري بعد شوي</span>
+        </ActionBar>
+      ) : (
+        <ActionBar label="الحالة">
+          <div className="e-wait">
+            <TireLoader size={36} />
+            <span>
+              ننتظر <b>{host?.name ?? 'الدلال'}</b> يفتح التقييم السري
+            </span>
           </div>
-        )}
-      </div>
+        </ActionBar>
+      )}
     </main>
   );
 }

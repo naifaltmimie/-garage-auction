@@ -1,79 +1,140 @@
+import { useState } from 'react';
 import type { PlayerPub, Sale } from '../../engine/types';
-import { km, money, signed } from '../../lib/util';
-import { photoSrc } from './Gallery';
-import { CarPlate, MiniPlate, Paddle } from './Plate';
+import { money } from '../../lib/util';
+import { Photo } from './Gallery';
+import { CarPlate, Paddle } from './Plate';
 import { Silhouette } from './Silhouette';
 
-/** One player's garage: the cars with their ad photo, what they paid, what they're worth. */
-export function GarageCard({ p, sales, slots, me, hideValues }: { p: PlayerPub; sales: Sale[]; slots: number; me?: boolean; hideValues?: boolean }) {
+/** A gain or a loss in Print: a gain is a small green figure, a loss stays chalk with a small red mark before it. */
+export function Delta({ v, className }: { v: number; className?: string }) {
+  const tone = v > 0 ? 'is-up' : v < 0 ? 'is-down' : 'is-even';
+  return (
+    <span className={`e-delta ${tone}${className ? ` ${className}` : ''}`}>
+      {v < 0 && <i className="e-delta-mark" aria-hidden="true" />}
+      <span className="ltr" aria-label={v > 0 ? `ربح ${money(v)}` : v < 0 ? `خسارة ${money(-v)}` : 'لا ربح ولا خسارة'}>
+        {v > 0 ? `+${money(v)}` : v < 0 ? `−${money(-v)}` : '0'}
+      </span>
+    </span>
+  );
+}
+
+/** The car's ad photo, or its drawn shape when the photo will not load. */
+function CarThumb({ s }: { s: Sale }) {
+  const ph = s.car.photos?.[0];
+  const [dead, setDead] = useState(!ph);
+  return (
+    <span className="e-car-ph" aria-hidden="true">
+      {dead || !ph ? <Silhouette body={s.car.body} color={s.car.colorHex} /> : <Photo u={ph} className="e-car-img" onDead={() => setDead(true)} />}
+    </span>
+  );
+}
+
+const emptyLine = (n: number) => (n === 1 ? 'موقف فاضي' : n === 2 ? 'موقفين فاضية' : `${n} مواقف فاضية`);
+
+/** One player's garage as a group: his paddle and name as the heading, his cars as ruled rows, then the totals.
+ *  `compact` drops the km and the special plate (the voting screen). `hideValues` keeps the true values covered. */
+export function GarageCard({
+  p,
+  sales,
+  slots,
+  me,
+  hideValues,
+  compact,
+  heading = true,
+}: {
+  p: PlayerPub;
+  sales: Sale[];
+  slots: number;
+  me?: boolean;
+  hideValues?: boolean;
+  compact?: boolean;
+  heading?: boolean;
+}) {
   const mine = sales.filter((s) => s.buyer === p.id);
   const paid = mine.reduce((a, s) => a + s.paid, 0);
   const value = mine.reduce((a, s) => a + s.value, 0);
   const profit = value - paid;
+  const free = Math.max(0, slots - mine.length);
   return (
-    <article className="card garage">
-      <header className="garage-head">
-        <Paddle n={p.paddle} me={me} />
-        <div className="grow">
-          <h3>كراج {p.name}</h3>
-          <div className="row" style={{ gap: 8 }}>
-            <MiniPlate letters={p.plate} />
-            <span className="mute small">
-              {mine.length} من {slots} سيارات
-            </span>
-          </div>
-        </div>
-      </header>
-      <div className="garage-cars">
-        {mine.map((s) => {
-          const ph = s.car.photos?.[0];
-          return (
-            <div className="gcar" key={s.lotId}>
-              <div className="gcar-ph">
-                {ph ? <img src={photoSrc(ph)} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Silhouette body={s.car.body} color={s.car.colorHex} />}
-              </div>
-              <div className="gcar-body">
-                <b>
-                  {s.car.modelAr} <span className="trim">{s.car.trim}</span>
+    <section className={`e-garage${compact ? ' is-compact' : ''}${me ? ' is-mine' : ''}`} aria-label={`كراج ${p.name}`}>
+      {heading && (
+        <header className="e-garage-head">
+          <Paddle n={p.paddle} me={me} />
+          <h3 className="e-garage-name">{p.name}</h3>
+          {me && <span className="e-you">أنت</span>}
+          <span className="e-garage-count print ltr" aria-label={`${mine.length} من ${slots} سيارات`}>
+            {mine.length}/{slots}
+          </span>
+        </header>
+      )}
+      {mine.length > 0 && (
+        <ul className="e-cars">
+          {mine.map((s) => (
+            <li className="e-car" key={s.lotId}>
+              <CarThumb s={s} />
+              <div className="e-car-body">
+                <b className="e-car-model">
+                  {s.car.modelAr} <span className="e-car-trim">{s.car.trim}</span>
                 </b>
-                <small>
-                  <bdi>{s.car.makeAr}</bdi>، <span className="ltr">{s.car.year}</span>، <bdi>{km(s.car.km)}</bdi>
-                </small>
-                <div className="gcar-nums">
-                  <span>
-                    دفع <b className="ltr">{money(s.paid)}</b>
+                <span className="e-car-sub">
+                  <bdi>{s.car.makeAr}</bdi> · <span className="ltr">{s.car.year}</span>
+                  {!compact && (
+                    <>
+                      {' '}
+                      · <span className="ltr">{money(Math.round(s.car.km / 100) * 100)}</span> كم
+                    </>
+                  )}
+                </span>
+                <span className="e-car-nums">
+                  <span className="e-num">
+                    <small>دفع</small>
+                    <b className="print ltr">{money(s.paid)}</b>
                   </span>
-                  {!hideValues && <b className={`ltr ${s.profit >= 0 ? 'gain' : 'loss'}`}>{signed(s.profit)}</b>}
-                </div>
+                  {!hideValues && (
+                    <span className="e-num">
+                      <small>قيمتها</small>
+                      <b className="print ltr">{money(s.value)}</b>
+                    </span>
+                  )}
+                </span>
+                {!compact && s.car.plate.special && (
+                  <span className="e-car-plate">
+                    <CarPlate plate={s.car.plate} size="sm" />
+                  </span>
+                )}
               </div>
-              {s.car.plate.special && (
-                <div className="gcar-plate">
-                  <CarPlate plate={s.car.plate} size="sm" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {Array.from({ length: Math.max(0, slots - mine.length) }).map((_, i) => (
-          <div className="gslot" key={`e${i}`}>
-            موقف فاضي
+              {!hideValues && <Delta v={s.profit} className="e-car-delta" />}
+            </li>
+          ))}
+        </ul>
+      )}
+      {free > 0 && <p className="e-garage-free">{mine.length === 0 ? 'ما شرى ولا سيارة' : emptyLine(free)}</p>}
+      {mine.length > 0 && (
+        <dl className="e-totals">
+          <div>
+            <dt>دفع</dt>
+            <dd>
+              <span className="print ltr">{money(paid)}</span>
+            </dd>
           </div>
-        ))}
-      </div>
-      <div className="totals">
-        <div>
-          <small>دفع</small>
-          <b className="ltr">{money(paid)}</b>
-        </div>
-        <div>
-          <small>قيمتها</small>
-          <b className="ltr">{hideValues ? '—' : money(value)}</b>
-        </div>
-        <div>
-          <small>الربح</small>
-          <b className={`ltr ${hideValues ? '' : profit >= 0 ? 'gain' : 'loss'}`}>{hideValues ? '—' : signed(profit)}</b>
-        </div>
-      </div>
-    </article>
+          {!hideValues && (
+            <>
+              <div>
+                <dt>قيمتها</dt>
+                <dd>
+                  <span className="print ltr">{money(value)}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>{profit >= 0 ? 'الربح' : 'الخسارة'}</dt>
+                <dd>
+                  <Delta v={profit} />
+                </dd>
+              </div>
+            </>
+          )}
+        </dl>
+      )}
+    </section>
   );
 }

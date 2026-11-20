@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { BADGES, loadCareer, totals } from '../../lib/career';
-import { carsN, money, signed } from '../../lib/util';
+import { money } from '../../lib/util';
+import { Delta } from './Garage';
+import { Rows } from './kit/Rows';
 import { Portal, useSheet } from './Bits';
 
 export function CareerChip() {
@@ -28,97 +30,94 @@ export function CareerChip() {
   );
 }
 
+/** «سجلي»: this phone's record across nights as ruled rows, then the badges (earned in chalk, the rest with how to
+ *  earn them), then the last nights. */
 export function CareerPanel({ onClose }: { onClose: () => void }) {
   const [c] = useState(loadCareer);
   const t = totals(c);
   const ref = useSheet<HTMLDivElement>(onClose);
   const last = [...c.nights].reverse().slice(0, 5);
+  const got = BADGES.filter((b) => !!c.badges[b.key]);
+  const todo = BADGES.filter((b) => !c.badges[b.key]);
+  const nf = (n: number) => <span className="ltr">{money(n)}</span>;
   return (
     <Portal>
-    <div className="sg-back" role="dialog" aria-modal="true" aria-label="سجلي" onClick={onClose}>
-      <div className="cr-sheet" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
-        <header className="cr-head">
-          <div>
-            
-            <h2>سجلي</h2>
-          </div>
-          <button className="btn btn-quiet" onClick={onClose} aria-label="سكّر">
-            سكّر
-          </button>
-        </header>
-        {t.nights === 0 ? (
-          <p className="cr-empty">ما خلّصت مزاد للحين. أول ليلة تكمّلها للنتيجة تنحسب لك هنا.</p>
-        ) : (
-          <>
-            <dl className="cr-grid">
-              <div>
-                <dt>ليالي</dt>
-                <dd className="t-money">{t.nights}</dd>
-              </div>
-              <div>
-                <dt>المركز الأول</dt>
-                <dd className="t-money">{t.wins}</dd>
-              </div>
-              <div>
-                <dt>سيارات</dt>
-                <dd className="t-money">{t.cars}</dd>
-              </div>
-              <div>
-                <dt>صرفت</dt>
-                <dd className="t-money">{money(t.paid)}</dd>
-              </div>
-              <div className="wide">
-                <dt>{t.profit >= 0 ? 'صافي ربحك' : 'صافي خسارتك'}</dt>
-                <dd className={`t-money ${t.profit >= 0 ? 'gain' : 'loss'}`}>{signed(t.profit)}</dd>
-              </div>
-            </dl>
-            {t.best && (
-              <div className="cr-best">
-                <span className="aw-kicker">أحسن صفقة لك</span>
-                <b>
-                  {t.best.name} <span className="ltr">{t.best.year}</span>
-                </b>
-                <small>
-                  دفعت <span className="ltr">{money(t.best.paid)}</span> وقيمتها <span className="ltr">{money(t.best.value)}</span>،
-                  ربحت <span className="ltr gain">{signed(t.best.profit)}</span>
-                </small>
-              </div>
-            )}
-          </>
-        )}
-        <h3 className="cr-sub">الشارات</h3>
-        <ul className="cr-badges">
-          {BADGES.map((b) => {
-            const got = !!c.badges[b.key];
-            return (
-              <li key={b.key} className={got ? 'got' : ''}>
-                <b>{b.title}</b>
-                <small>{got ? 'حصّلتها' : b.how}</small>
-              </li>
-            );
-          })}
-        </ul>
-        {last.length > 0 && (
-          <>
-            <h3 className="cr-sub">آخر لياليك</h3>
-            <ul className="cr-nights">
-              {last.map((n) => (
-                <li key={n.key}>
-                  <span className="grow">
-                    <b>{n.room}</b>
-                    <small>
-                      {n.players > 1 ? <>المركز <span className="ltr">{n.rank}</span> من <span className="ltr">{n.players}</span>، </> : null}
-                      {carsN(n.cars)}
-                    </small>
-                  </span>
-                  <span className={`t-money ${n.profit >= 0 ? 'gain' : 'loss'}`}>{signed(n.profit)}</span>
+      <div className="e-cr-back" role="dialog" aria-modal="true" aria-label="سجلي" onClick={onClose}>
+        <div className="e-cr" ref={ref} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+          <header className="e-cr-head">
+            <h2 className="e-cr-title">سجلي</h2>
+            <button className="btn btn-quiet e-cr-close" onClick={onClose}>
+              سكّر
+            </button>
+          </header>
+          {t.nights === 0 ? (
+            <p className="e-cr-empty">ما خلّصت مزاد للحين. أول ليلة تكمّلها للنتيجة تنحسب لك هنا.</p>
+          ) : (
+            <Rows
+              className="e-cr-rows"
+              items={[
+                { k: 'ليالي', v: nf(t.nights), print: true },
+                { k: 'طلعت الأول', v: nf(t.wins), print: true },
+                { k: 'سيارات شريتها', v: nf(t.cars), print: true },
+                { k: 'صرفت', v: nf(t.paid), print: true },
+                { k: t.profit >= 0 ? 'صافي ربحك' : 'صافي خسارتك', v: <Delta v={t.profit} />, print: true },
+                ...(t.best
+                  ? [
+                      {
+                        k: 'أحسن شروة',
+                        v: (
+                          <span className="e-cr-best">
+                            <span className="e-cr-best-car">
+                              {t.best.name} <span className="ltr">{t.best.year}</span>
+                            </span>
+                            <Delta v={t.best.profit} />
+                          </span>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          )}
+          <h3 className="e-cr-sub">
+            الشارات <span className="print ltr">{got.length}/{BADGES.length}</span>
+          </h3>
+          <ul className="e-cr-badges">
+            {[...got, ...todo].map((b) => {
+              const has = !!c.badges[b.key];
+              return (
+                <li key={b.key} className={has ? 'is-got' : ''}>
+                  <b>{b.title}</b>
+                  <small>{has ? 'حصّلتها' : b.how}</small>
                 </li>
-              ))}
-            </ul>
-          </>
-        )}
+              );
+            })}
+          </ul>
+          {last.length > 0 && (
+            <>
+              <h3 className="e-cr-sub">آخر لياليك</h3>
+              <ul className="e-cr-nights">
+                {last.map((n) => (
+                  <li key={n.key}>
+                    <span className="e-cr-night">
+                      <b>{n.room || 'مزاد'}</b>
+                      <small>
+                        {n.players > 1 ? (
+                          <>
+                            المركز <span className="ltr">{n.rank}</span> من <span className="ltr">{n.players}</span> ·{' '}
+                          </>
+                        ) : null}
+                        {n.cars === 0 ? 'ولا سيارة' : n.cars === 1 ? 'سيارة وحدة' : n.cars === 2 ? 'سيارتين' : <><span className="ltr">{n.cars}</span> سيارات</>}
+                      </small>
+                    </span>
+                    <Delta v={n.profit} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
-    </div>
     </Portal>
   );
 }

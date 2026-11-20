@@ -32,6 +32,7 @@ import './styles/s-sheet.css';
 import './styles/s-home.css';
 import './styles/s-reveal.css';
 import './styles/s-console.css';
+import './styles/s-end.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';
