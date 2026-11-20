@@ -711,35 +711,90 @@ function PlayerStrip({ core }: { core: Core }) {
 
 // ============================================================================ reactions
 
+/** How many glyphs a reaction shows (a pair, like the heart with its arrow, is drawn smaller to fit its slot). */
+function graphemes(t: string): number {
+  try {
+    return [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(t)].length;
+  } catch {
+    return 1;
+  }
+}
+
 interface Floater {
   id: string;
   label: string;
   name: string;
-  x: number;
+  /** the slot's inline-start offset and width in the lane (px) */
+  at: number;
+  w: number;
   dur: number;
+  /** how far it rises (px) and how long it waits before rising (ms) */
   rise: number;
+  wait: number;
 }
 
-/** The six reactions floating up over the car (never over the price), large, with who sent them. */
+/** The six reactions floating up over the car (never over the price), large, with who sent them.
+ *  Positions are dealt, never drawn at random: the photo is cut into slots wide enough for an emoji and a name, the
+ *  far slots from the lot sticker come first, and each new reaction takes the next free slot in turn (with a small
+ *  jitter inside it). A slot under the sticker rises only to just below it. When every slot is in flight, the slot
+ *  that took off first is reused, and the new one waits until the old one has climbed clear of it. */
 function Reactions() {
   const [items, setItems] = useState<Floater[]>([]);
   const timers = useRef(new Set<number>());
   const lane = useRef<HTMLDivElement>(null);
+  // per slot: when its last reaction took off (ms, wall clock) and how long that one flies
+  const slots = useRef<{ start: number; dur: number; wait: number; rise: number }[]>([]);
+  const turn = useRef(0);
   useEffect(() => {
     const off = reactBus.on((ev) => {
       const r = REACT_BY_KEY.get(ev.k);
-      if (!r) return;
-      // the lot sticker holds the photo's top inline-start corner: reactions rise on the other two thirds, and only
-      // as high as the photo allows (an emoji with its name is about 15u tall), so neither cuts one
-      const h = lane.current?.clientHeight ?? 0;
+      const el = lane.current;
+      if (!r || !el) return;
+      const W = el.clientWidth;
+      const H = el.clientHeight;
       const u = Math.min(innerHeight / 100, innerWidth / 177.78);
-      const rise = Math.max(0, h - u * 19);
-      const f: Floater = { id: ev.i, label: r.label, name: ev.n, x: 34 + Math.random() * 54, dur: 3400 + Math.random() * 600, rise };
-      setItems((l) => [...l.slice(-9), f]);
+      const n = Math.max(2, Math.min(6, Math.floor(W / (u * 16))));
+      const sw = W / n;
+      if (slots.current.length !== n) slots.current = Array.from({ length: n }, () => ({ start: 0, dur: 0, wait: 0, rise: 0 }));
+      // the sticker's reach from the lane's inline-start edge, and its bottom
+      const lr = el.getBoundingClientRect();
+      const st = el.parentElement?.querySelector('.tv-sticker')?.getBoundingClientRect();
+      const stReach = st ? lr.right - st.left + u : 0;
+      const stBottom = st ? st.bottom - lr.top + u : 0;
+      // dealing order: from the far end (away from the sticker) back toward it
+      const order = Array.from({ length: n }, (_, i) => n - 1 - i);
+      const now = Date.now();
+      let pick = -1;
+      for (let k = 0; k < n; k++) {
+        const i = order[(turn.current + k) % n];
+        const sl = slots.current[i];
+        if (now > sl.start + sl.wait + sl.dur) {
+          pick = i;
+          turn.current = (turn.current + k + 1) % n;
+          break;
+        }
+      }
+      let wait = 0;
+      if (pick < 0) {
+        // all in flight: reuse the one that took off first, once it has climbed a whole emoji and name (16u) above
+        // where the new one starts; on a short photo that is when the old one has gone
+        pick = slots.current.reduce((m, sl, i, a) => (sl.start + sl.wait < a[m].start + a[m].wait ? i : m), 0);
+        const sl = slots.current[pick];
+        const p = Math.min(1, 0.12 + (0.88 * u * 16) / Math.max(1, sl.rise));
+        wait = Math.max(0, sl.start + sl.wait + sl.dur * p - now);
+      }
+      const dur = 3400 + Math.random() * 500;
+      const at = pick * sw;
+      const under = at < stReach;
+      const top = under ? stBottom : u * 2;
+      const rise = Math.max(0, H - u * 3 - u * 15 - top);
+      slots.current[pick] = { start: now, dur, wait, rise };
+      const f: Floater = { id: ev.i, label: r.label, name: ev.n, at: at + (Math.random() - 0.5) * u * 1.6, w: sw, dur, rise, wait };
+      setItems((l) => [...l.slice(-11), f]);
       const t = window.setTimeout(() => {
         timers.current.delete(t);
         setItems((l) => l.filter((x) => x.id !== f.id));
-      }, f.dur + 80);
+      }, wait + dur + 80);
       timers.current.add(t);
     });
     const ts = timers.current;
@@ -751,8 +806,20 @@ function Reactions() {
   return (
     <div className="tv-rx" aria-hidden="true" ref={lane}>
       {items.map((f) => (
-        <span key={f.id} className="tv-rx-f" style={{ insetInlineStart: `min(${f.x}%, calc(100% - var(--u) * 30))`, animationDuration: `${f.dur}ms`, ['--rise' as string]: `${f.rise}px` } as CSSProperties}>
-          <span className="tv-rx-e">{f.label}</span>
+        <span
+          key={f.id}
+          className="tv-rx-f"
+          style={
+            {
+              insetInlineStart: `${Math.max(0, f.at)}px`,
+              width: `${f.w}px`,
+              animationDuration: `${f.dur}ms`,
+              animationDelay: `${f.wait}ms`,
+              ['--rise' as string]: `${f.rise}px`,
+            } as CSSProperties
+          }
+        >
+          <span className={`tv-rx-e${graphemes(f.label) > 1 ? ' is-pair' : ''}`}>{f.label}</span>
           <span className="tv-rx-n">{f.name}</span>
         </span>
       ))}

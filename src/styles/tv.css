@@ -801,9 +801,11 @@ html.tv-mode body {
 .tv-rx-e {
   font-size: calc(var(--u) * 9);
   line-height: 1;
+  white-space: nowrap;
 }
+.tv-rx-e.is-pair { font-size: calc(var(--u) * 6.4); padding-top: calc(var(--u) * 2.6); }
 .tv-rx-n {
-  max-width: calc(var(--u) * 28);
+  max-width: calc(100% - var(--u) * 1.6);
   overflow: hidden;
   font: 700 calc(var(--u) * 2.6)/1.3 var(--f-ui);
   white-space: nowrap;
