@@ -83,6 +83,9 @@
 }
 .rx-f.emo .rx-t {
   font-size: 34px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  letter-spacing: -2px;
+  white-space: nowrap;
   line-height: 1.05;
   filter: drop-shadow(0 4px 6px rgba(18, 18, 20, .22));
 }
@@ -175,9 +178,9 @@
   z-index: 63;
   inset-inline-end: var(--rx-side);
   bottom: calc(var(--rx-b) + 66px);
-  width: min(320px, calc(100vw - 20px));
+  width: min(252px, calc(100vw - 20px));
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   padding: 10px;
   border-radius: var(--r);
@@ -213,7 +216,13 @@
 .rx-chip.t-good { color: var(--green-700); }
 .rx-chip.t-bad { color: var(--red); }
 .rx-chip.t-gold { color: var(--ink); }
-.rx-chip.emo { font-size: 23px; }
+/* the six emoji: big enough to hit and to read, drawn by the phone's own emoji font */
+.rx-chip.emo {
+  min-height: 56px;
+  font-size: 28px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  letter-spacing: -2px;
+}
 @media (hover: hover) {
   .rx-chip:hover { background: var(--bg); border-color: var(--line-2); }
 }

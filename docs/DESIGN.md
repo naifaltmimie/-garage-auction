@@ -55,3 +55,4 @@ The logo (`public/brand/*.svg`) is never recoloured, stretched, cropped or boxed
 - Motion: one authored moment per screen; transform and opacity; `cubic-bezier(.16,1,.3,1)`; 300ms or less; a spring only on the
   stamp and the tag; honour `prefers-reduced-motion`.
 - Copy: Saudi spoken dialect, short, no exclamation marks, no emoji, no English words in Arabic letters. Buttons name the action.
+- The one place emoji live is the reactions: the owner's own six, in his order (`src/engine/reactions.ts`). Never swap, add or reorder them.

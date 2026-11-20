@@ -1,4 +1,4 @@
-// Live reactions: short Saudi auction banter anyone in the hall can throw at the lot.
+// Live reactions: the six the owner chose, thrown at the lot by anyone in the hall.
 // They are ephemeral. The host checks and rate-limits each one, then sends it once to every
 // phone on its own non-retained topic, so they never ride inside (or bloat) the snapshots,
 // and a phone that joins late or misses one simply never sees it.
@@ -6,22 +6,26 @@ import type { Phase } from './types';
 
 export interface Reaction {
   k: string;
+  /** what floats over the lot: the emoji itself */
   label: string;
   emoji?: boolean;
-  /** colour of the floating chip: a steal, too pricey, or plain hall banter */
+  /** how a screen reader says it */
+  say: string;
+  /** colour of a floating word chip (none of the current six is a word) */
   tone?: 'good' | 'bad' | 'gold';
 }
 
-/** Order = order in the tray (RTL: first item sits on the right). */
+/**
+ * The owner's own set, in his order, exactly as he sent them (skin tones included). Do not swap, add or reorder
+ * without him. Order = order in the tray (RTL: the first sits on the right).
+ */
 export const REACTIONS: Reaction[] = [
-  { k: 'laqta', label: 'لقطة', tone: 'good' },
-  { k: 'ghalya', label: 'غالية', tone: 'bad' },
-  { k: 'yasalam', label: 'يا سلام', tone: 'good' },
-  { k: 'shareeti', label: 'شريطي', tone: 'gold' },
-  { k: 'khudha', label: 'خذها', tone: 'gold' },
-  { k: 'latfoot', label: 'لا تفوتك', tone: 'gold' },
-  { k: 'fire', label: '🔥', emoji: true },
-  { k: 'lol', label: '😂', emoji: true },
+  { k: 'cupid', label: '💗🏹', emoji: true, say: 'قلب وسهم' },
+  { k: 'catlove', label: '😻', emoji: true, say: 'عيون قلوب' },
+  { k: 'run', label: '🏃🏻', emoji: true, say: 'يركض' },
+  { k: 'eagle', label: '🦅', emoji: true, say: 'صقر' },
+  { k: 'pray', label: '🙏', emoji: true, say: 'تكفى' },
+  { k: 'call', label: '🤙🏻', emoji: true, say: 'كلمني' },
 ];
 
 export const REACT_BY_KEY = new Map(REACTIONS.map((r) => [r.k, r]));

@@ -278,7 +278,7 @@ export function ReactionLayer({ room }: { room: RoomView }) {
                   key={r.k}
                   type="button"
                   className={`rx-chip t-${r.tone ?? 'plain'} ${r.emoji ? 'emo' : ''}`}
-                  aria-label={r.emoji ? (r.k === 'fire' ? 'نار' : 'ضحك') : r.label}
+                  aria-label={r.say}
                   onClick={() => send(r.k)}
                 >
                   {r.label}
