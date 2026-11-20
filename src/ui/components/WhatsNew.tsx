@@ -26,6 +26,18 @@ const RELEASES: { date: string; items: Item[] }[] = [
   },
 ];
 
+const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+/** An ISO date as the player says it: «20 نوفمبر». */
+function dayMonth(iso: string) {
+  const [, m, d] = iso.split('-').map(Number);
+  return (
+    <>
+      <span className="ltr">{d}</span> {MONTHS[(m || 1) - 1]}
+    </>
+  );
+}
+
 /** Whether this phone hasn't seen the current release notes yet (dates are ISO, so they compare as text). */
 export function hasNews() {
   return store.get<string>(SEEN_KEY, '') < RELEASE;
@@ -62,8 +74,8 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
               <ScreenTitle as="h2">وش الجديد</ScreenTitle>
             </div>
             {RELEASES.map((r) => (
-              <section key={r.date} className="hm-news-rel" aria-label={r.date}>
-                <p className="hm-news-date ltr">{r.date}</p>
+              <section key={r.date} className="hm-news-rel">
+                <p className="hm-news-date">{dayMonth(r.date)}</p>
                 <ul className="hm-news-list">
                   {r.items.map((it) => (
                     <li key={it.title}>
