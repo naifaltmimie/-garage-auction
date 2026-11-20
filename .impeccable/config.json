@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-20T19:31:26.189Z",
+        "reason": "lead triage: the boot splash's indeterminate loading bar (boot-sweep, 120px track), a loader that ends when the app mounts and is still under reduced motion; not scrolling content"
+      }
+    ]
+  }
+}
