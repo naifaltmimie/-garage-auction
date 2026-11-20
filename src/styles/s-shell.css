@@ -550,6 +550,9 @@
   line-height: 1.35;
   color: var(--ink);
   overflow-wrap: anywhere;
+  /* room over the first line for a hamza's ink, given back by the margin (none under: a clamped third line would show) */
+  padding-top: .3em;
+  margin-top: -.3em;
 }
 
 /* text facts with a middle dot between; the dot rides before each fact and, at a line's start, sits in the clipped

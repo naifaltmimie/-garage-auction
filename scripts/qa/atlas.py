@@ -31,6 +31,7 @@ What a run could not reach is written to OUT_ROOT/<folder>/_missed.txt.
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 
@@ -93,14 +94,15 @@ async def layout_moves(pg):
     touched = False
     moved = []
     if not (len(a1) == len(b) == len(a2) == len(b2)):
-        return [('(element count changed)', len(a1), len(b))], True
+        return [], False  # the page changed while it was measured (a reveal landing): nothing to compare
     for i, (x, y, z, w) in enumerate(zip(a1, b, a2, b2)):
         if x != z or y != w:
             continue  # moving on its own (an animation): not ours to judge
         own = x[4] != y[4]
         touched = touched or own
         # the fixed element itself may grow into its padding; its inline position and width stay, and so does every other box
-        if (x[0], x[2]) != (y[0], y[2]) or (not own and x[:4] != y[:4]):
+        # (half a pixel of slack on the fixed element: on a rotated tag its bounding box widens with its height)
+        if (own and (abs(x[0] - y[0]) > 0.5 or abs(x[2] - y[2]) > 0.5)) or (not own and x[:4] != y[:4]):
             moved.append((i, x[:4], y[:4]))
     out = []
     for i, x, y in moved[:6]:
@@ -144,7 +146,8 @@ class Atlas:
                 row['layout'] = [f'{p_}: {x} -> {y}' for p_, x, y in moves]
         except Exception as ex:  # noqa: BLE001
             row['errors'].append(f'check failed: {ex}'[:200])
-        row['errors'] += ERRS.pop(id(pg), [])
+        errs = ERRS.pop(id(pg), [])
+        row['errors'] += [e if errs.count(e) == 1 else f'{e} (x{errs.count(e)})' for e in dict.fromkeys(errs)]
         self.checks.append(row)
         for f in row['ink']:
             self.say(f"INK {name}: {f['cut']} {f['px']}px «{f['text']}» {f['el']} | clip {f['clip']}")
@@ -315,6 +318,16 @@ async def free_bid(pg, amount):
     return True
 
 
+async def over_reserve(pg):
+    """An amount past the top of the estimate in the console's fact line (past any reserve), or 600,000."""
+    try:
+        t = await pg.locator('.cs-facts').first.inner_text()
+        hi = max(int(x.replace(',', '')) for x in re.findall(r'\d[\d,]{4,}', t.split('التقدير')[-1].split('·')[0]))
+        return (hi * 11 // 10 // 5000 + 1) * 5000
+    except Exception:  # noqa: BLE001
+        return 600_000
+
+
 async def until(pg, want_phase, lot=None, limit=60):
     t0 = time.time()
     while time.time() - t0 < limit:
@@ -469,6 +482,9 @@ async def end_night(a, host, pages, tv=None, prefix=''):
     voters = [host] + [p for i, p in enumerate(pages[:2]) if p not in pages[:i]]
     for pg in voters:
         first = pg is sa
+        # a phone can still be drawing the showcase: wait for its voting screen
+        await until_sel(pg, '.e-voting:not(.is-wait), .e-voting.is-wait', 10)
+        await wait(0.3)
         if first:
             await a.shot(pg, f'{prefix}voting-untouched')
             await a.shot(pg, f'{prefix}voting-untouched-full', full=True)
@@ -478,7 +494,8 @@ async def end_night(a, host, pages, tv=None, prefix=''):
                 # nobody else bought a car: nothing to rate, the send button alone
                 if first:
                     await a.shot(pg, f'{prefix}voting-nothing-to-rate')
-                await need(a, pg, 'أرسل التقييم')
+                if not await need(a, pg, 'أرسل التقييم'):
+                    await a.shot(pg, f'{prefix}voting-no-send-{voters.index(pg)}')
                 await wait(0.6)
                 break
             await rate.nth([6, 3, 8, 5][i % 4]).click()
@@ -498,9 +515,13 @@ async def end_night(a, host, pages, tv=None, prefix=''):
             if first or pg is host:
                 await a.shot(pg, f'{prefix}voting-sent-{"player" if first else "host"}')
             break
-    if not await until(host, 'results', limit=30):
-        a.miss('results', 'host never reached results')
-        return
+    if not await until(host, 'results', limit=20):
+        await a.shot(host, f'{prefix}voting-host-still-waiting')
+        a.miss('results', 'a voter never sent: the host announces with the votes he has')
+        await need(a, host, 'اعرض النتيجة الحين', 3000)
+        if not await until(host, 'results', limit=20):
+            a.miss('results', 'host never reached results')
+            return
     await wait(0.4)
     await a.shot(host, f'{prefix}results-host-reveal-start')
     await wait(2.0)
@@ -822,9 +843,13 @@ async def main_run(p):
                 await bid_min(host)
                 await wait(0.35)
                 await a.shot(saud, 'clock-extended')
+                await a.shot(fahd, 'clock-extended-watcher')
                 await a.shot(host, 'clock-extended-host')
-                await wait(0.5)
-                await bid_min(saud)
+                await wait(1.0)
+                # above the reserve, so the car sells to him and both phones show the reveal's stages
+                amt = await over_reserve(saud)
+                if not await free_bid(saud, amt):
+                    a.miss('lot 2 win', f'سعود could not send {amt}')
             else:
                 a.miss('clock extended', 'ring never went hot on lot 2')
             await until(saud, ['sold', 'unsold', 'approval'], lot=n, limit=40)
@@ -844,6 +869,8 @@ async def main_run(p):
                     a.miss('sold reveal stage 2', 'the receipt never printed')
             elif ph2 == 'approval':
                 await a.shot(saud, 'approval')
+            else:
+                a.miss('sold reveal stages', f'lot 2 ended {ph2}')
             continue
 
         # ---------- an open car nobody bids on ----------
@@ -1114,7 +1141,9 @@ async def small_run(p, W, H, folder):
         await a.shot(saud, 'bid-log')
         await tap(saud, 'سكّر', exact=True)
     if await hot(saud):
-        await bid_min(saud)
+        # a late bid past the reserve: the clock stretches and the car sells to سعود
+        if not await free_bid(saud, await over_reserve(saud)):
+            await bid_min(saud)
         await wait(0.35)
         await a.shot(saud, 'clock-extended')
     await until(saud, ['sold', 'unsold', 'approval'], lot=1, limit=40)

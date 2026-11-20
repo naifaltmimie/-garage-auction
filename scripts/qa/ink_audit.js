@@ -10,8 +10,9 @@
 // Each line of a wrapped text node is measured on its own characters, so a descender on one line does not flag the
 // lines above it. Elements hidden by an ancestor's opacity or visibility are skipped, and so is a line under a finite
 // animation still running between it and its clip (a digit rolling through its cell is clipped on purpose).
-// Lines under a scaled ancestor are measured at their painted size: the font's ink metrics are scaled by the ratio of
-// the line box on screen to the font's own ascent + descent.
+// Lines under a scaled ancestor or CSS zoom are measured at their painted size: the font's ink metrics are scaled by
+// the ratio of the line box on screen to the font's own ascent + descent (this covers zoom, which the computed font
+// size leaves out, and transforms, which currentCSSZoom leaves out).
 window.auditInk = function auditInk(opts) {
   const tol = (opts && opts.tol) || 0.75;
   const cv = document.createElement('canvas').getContext('2d');
@@ -97,6 +98,8 @@ window.auditInk = function auditInk(opts) {
     if (!raw.trim()) continue;
     const el = t.parentElement;
     if (!el) continue;
+    // a RollNumber digit mid-roll is clipped by its window on purpose
+    if (el.closest('.rn-in, .rn-out')) continue;
     const clips = clipsOf(el);
     if (!clips.length) continue;
     if (!visible(el)) continue;
