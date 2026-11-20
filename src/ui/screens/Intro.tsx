@@ -1,96 +1,69 @@
+// The night's opening («الصالة مليانة والسيارات جاهزة»): the room's name and the auctioneer's call in the voice, the
+// night's terms as ruled rows with printed numbers, and the countdown as one large printed numeral, red only in its
+// last three seconds. The one authored moment is the numeral changing. Styles: src/styles/s-shell.css (shl-).
 import { memo, useLayoutEffect } from 'react';
 import { marketOf } from '../../engine/markets';
 import type { Core } from '../../engine/types';
-import { carsN, money } from '../../lib/util';
+import { money } from '../../lib/util';
+import { ScreenTitle } from '../components/kit/ScreenTitle';
+import { Rows } from '../components/kit/Rows';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
-import { LOGO } from '../components/Logo';
 
-
-/**
- * The hall opening: a short title sequence before the first lot. The lines land one after another
- * (CSS delays, transform/opacity only), then hold on the night's real numbers while the host's
- * clock runs out. Only the countdown leaf re-renders on clock ticks.
- */
 export function Intro({ room }: { room: RoomView }) {
   const core = room.snap.core!;
   const s = core.settings;
   const market = marketOf(s.mix);
   const bidders = core.players.filter((p) => !p.spectator).length;
-  // the host taps «ابدأ» at the foot of the lobby: open the title sequence from its first line
+  const host = core.players.find((p) => p.host);
+  const name = s.roomName?.trim() || `مزاد ${host?.name ?? 'الليلة'}`;
+  // the host taps «ابدأ» at the foot of the lobby: open the night from its first line
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, []);
   return (
-    <main className="shell narrow">
-      <div className="intro-screen fx-host idn-intro">
-        <div className="idn-seq">
-          <img className="idn-logo idn-step" style={{ ['--d' as string]: 0 }} src={LOGO.stack} width={96} height={84} alt="" aria-hidden="true" draggable={false} />
-          <h1 className="idn-call idn-step" style={{ ['--d' as string]: 0.6 }}>
-            {core.callout?.text ?? 'حيّاكم في مزاد الكراج'}
-          </h1>
-          {/* the run sheet: one list, the label on the right and the value on the left */}
-          <dl className="idn-sheet idn-step" style={{ ['--d' as string]: 1.4 }}>
-            <div>
-              <dt>السوق</dt>
-              <dd>{market.label}</dd>
-            </div>
-            <div>
-              <dt>السيارات</dt>
-              <dd className="ltr">{core.lotsTotal}</dd>
-            </div>
-            <div>
-              <dt>المزايدين</dt>
-              <dd className="ltr">{bidders}</dd>
-            </div>
-            <div>
-              <dt>ميزانية كل لاعب</dt>
-              <dd className="ltr">{money(s.budget)}</dd>
-            </div>
-            <div>
-              <dt>الكراج يشيل</dt>
-              <dd>{carsN(s.garage)}</dd>
-            </div>
-          </dl>
-          <IntroCount core={core} offset={room.offset} />
-          <p className="idn-hint idn-step" style={{ ['--d' as string]: 3 }}>
-            {s.dutch !== false ? 'فيه مزاد هولندي الليلة، السعر ينزل. ' : ''}اقرأ تقرير الفحص زين قبل تسوم.
-          </p>
-          {room.host && (
-            <button className="btn btn-ghost btn-block idn-go idn-step" style={{ ['--d' as string]: 3 }} onClick={room.host.advance}>
-              ابدأ الحين
-            </button>
-          )}
-        </div>
-      </div>
+    <main className="shell narrow shl-intro">
+      <ScreenTitle caption={<span className="shl-call">{core.callout?.text ?? 'حيّاكم في مزاد الكراج'}</span>}>{name}</ScreenTitle>
+      <Rows
+        className="shl-terms"
+        items={[
+          { k: 'السوق', v: market.label },
+          { k: 'السيارات', v: core.lotsTotal, print: true },
+          { k: 'المزايدين', v: bidders, print: true },
+          { k: 'ميزانية كل لاعب', v: money(s.budget), print: true },
+          { k: 'الكراج يشيل', v: <>{s.garage === 1 ? 'سيارة وحدة' : s.garage === 2 ? 'سيارتين' : <><span className="shl-num ltr">{s.garage}</span> سيارات</>}</> },
+        ]}
+      />
+      <IntroCount core={core} offset={room.offset} />
+      <p className="shl-intro-hint">
+        {s.dutch !== false ? 'فيه مزاد هولندي الليلة، السعر ينزل. ' : ''}اقرأ تقرير الفحص زين قبل تسوم.
+      </p>
+      {room.host && (
+        <button type="button" className="shl-chalk shl-intro-go" onClick={room.host.advance}>
+          ابدأ الحين
+        </button>
+      )}
     </main>
   );
 }
 
-/**
- * The only piece that follows the clock. The number is keyed per second (it clicks over like a
- * dial); the rail under it is one CSS animation started once with the time left at mount, and it
- * holds while the host pauses.
- */
 /** the seconds left, as said: ثانية، ثانيتين، 3 ثواني، 11 ثانية */
 const secs = (n: number) => (n === 1 ? 'ثانية' : n === 2 ? 'ثانيتين' : n <= 10 ? `${n} ثواني` : `${n} ثانية`);
 
+/** The only piece that follows the clock: one printed numeral, keyed per second so each new one lands once. */
 const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offset: number }) {
   const now = useNow(offset, 8);
   const { ms } = timeLeft(core, now);
   const sec = Math.max(1, Math.ceil(ms / 1000));
-  // the start lamps: one lights each second over the last five, like the grid before a race
-  const lit = Math.max(0, Math.min(5, 6 - sec));
   return (
-    <div className={`idn-count idn-step ${sec <= 1 ? 'final' : ''}`} style={{ ['--d' as string]: 2.2 }} role="timer" aria-label={`أول سيارة بعد ${secs(sec)}`}>
-      <span className="idn-lights" aria-hidden="true">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <i key={i} className={i < lit ? 'on' : undefined} />
-        ))}
+    <div className={`shl-count${sec <= 3 ? ' is-last' : ''}`} role="timer" aria-label={`أول سيارة بعد ${secs(sec)}`}>
+      <span className="shl-count-box" aria-hidden="true">
+        <span key={sec} className="shl-count-n ltr">
+          {sec}
+        </span>
       </span>
-      <span key={sec} className="idn-count-n fx-count ltr">
-        {sec}
+      <span className="shl-count-t" aria-hidden="true">
+        أول سيارة بعد {secs(sec)}
       </span>
-      <small>أول سيارة بعد {secs(sec)}</small>
     </div>
   );
 });

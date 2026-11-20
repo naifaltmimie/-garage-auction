@@ -1,0 +1,1269 @@
+/* ================================================================ package: end
+   Showcase, Voting, Results, the awards, the garage, the share poster dialog and «سجلي».
+   Fresh class names with the e- prefix. Imported after the kit sheets. */
+
+/* ---------------------------------------------------------------- ActionBar (kit): the sticky bottom block */
+
+.actbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--rubber-1);
+  box-shadow: 0 -14px 28px -18px rgba(0, 0, 0, .9);
+}
+
+.actbar.is-inline {
+  position: relative;
+  z-index: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.actbar-in {
+  display: grid;
+  gap: 8px;
+  max-width: 488px;
+  margin: 0 auto;
+}
+
+.actbar-line {
+  margin: 0;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: var(--ink-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.actbar .btn {
+  min-height: 56px;
+  touch-action: manipulation;
+}
+
+/* the page keeps room under its last line for the bar (the TV link sits after the screen) */
+body:has(.actbar:not(.is-inline)) {
+  padding-bottom: calc(var(--actbar-h, 96px) + 8px);
+}
+
+/* ---------------------------------------------------------------- shared */
+
+.e-page {
+  display: grid;
+  gap: 20px;
+  max-width: 560px;
+  padding-top: 20px;
+}
+
+/* the title starts where every other screen's title starts (the kit's default), so the app speaks with one voice */
+
+.e-you {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.e-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--f-print);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.e-delta.is-up {
+  color: var(--ok-700);
+}
+
+.e-delta.is-down,
+.e-delta.is-even {
+  color: var(--ink);
+}
+
+.e-delta-mark {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-hi);
+}
+
+.e-wait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 56px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.e-wait b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.e-wait .tire-loader {
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- the garage: a group, not a card */
+
+.e-garage {
+  display: grid;
+  min-width: 0;
+}
+
+.e-garage-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line-2);
+}
+
+.e-garage .paddle {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--alloy-lo);
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-family: var(--f-print);
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.e-garage .paddle.me {
+  border-color: var(--alloy-mid);
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+}
+
+.e-garage-name {
+  display: -webkit-box;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--f-ui);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.e-garage-count {
+  margin-inline-start: auto;
+  font-size: 18px;
+  color: var(--mute);
+}
+
+.e-cars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.e-car {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-car-ph {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--rubber-3);
+}
+
+.e-car-ph img,
+.e-car-ph svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.e-car-ph .e-car-img {
+  opacity: 0;
+  transition: opacity .2s cubic-bezier(.16, 1, .3, 1);
+}
+
+.e-car-ph .e-car-img.ok {
+  opacity: 1;
+}
+
+.e-car-body {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.e-car-model {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.e-car-trim {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.e-car-sub {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.e-car-nums {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 14px;
+  row-gap: 2px;
+  margin-top: 2px;
+}
+
+.e-num {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.e-num small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.e-num b {
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.e-car-delta {
+  font-size: 17px;
+  line-height: 21px;
+}
+
+.e-car-plate {
+  display: block;
+  margin-top: 6px;
+}
+
+.e-garage-free {
+  margin: 0;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.e-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding-block: 12px 4px;
+}
+
+.e-totals > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.e-totals > div:nth-child(2) {
+  text-align: center;
+}
+
+.e-totals > div:nth-child(3) {
+  text-align: end;
+}
+
+.e-totals dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.e-totals dd {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.e-totals dd .e-delta {
+  font-size: 20px;
+}
+
+.e-garage.is-compact .e-car {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding-block: 9px;
+}
+
+.e-garage.is-compact .e-car-ph {
+  width: 56px;
+  height: 42px;
+}
+
+/* ---------------------------------------------------------------- Showcase */
+
+.e-groups {
+  display: grid;
+  gap: 28px;
+}
+
+.btn.e-go {
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-s);
+  font-weight: 400;
+}
+
+/* ---------------------------------------------------------------- Voting */
+
+.e-skips {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+  text-align: center;
+}
+
+.e-vote-garage {
+  display: grid;
+  gap: 6px;
+  animation: e-in .28s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes e-in {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+
+.e-vote-step {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.e-vote-step .print {
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.e-vote-none {
+  margin: 0;
+  padding-block: 16px;
+  border-block: 1px solid var(--line-2);
+  font-size: 15px;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.e-keys.rate {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.e-keys .e-key {
+  min-width: 44px;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .14), 0 1px 0 rgba(0, 0, 0, .6);
+  font-family: var(--f-print);
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  touch-action: manipulation;
+  transition: transform .1s cubic-bezier(.16, 1, .3, 1), background-color .12s cubic-bezier(.16, 1, .3, 1), color .12s cubic-bezier(.16, 1, .3, 1);
+}
+
+.e-keys .e-key:active {
+  transform: translateY(2px);
+}
+
+.e-keys .e-key.is-on {
+  background: var(--rubber-0);
+  color: var(--plate);
+  box-shadow: inset 0 0 0 2px var(--plate);
+}
+
+.e-anchors {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.e-anchors b {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.e-vote-go {
+  display: flex;
+  gap: 8px;
+}
+
+.e-vote-go .e-go {
+  flex: 1;
+}
+
+.btn.e-back {
+  flex: none;
+  min-width: 96px;
+  font-size: 15px;
+}
+
+.e-voting.is-wait {
+  justify-items: center;
+}
+
+.e-vote-loader {
+  margin-block: 8px;
+}
+
+.e-left {
+  width: 100%;
+}
+
+.e-left-h {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line-2);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.e-left-h .print {
+  margin-inline-start: 4px;
+  font-size: 18px;
+  color: var(--ink-2);
+}
+
+.e-left ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.e-left li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-left .paddle {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--alloy-lo);
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-family: var(--f-print);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.e-left .paddle.me {
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+}
+
+.e-left-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.e-left small {
+  margin-inline-start: auto;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .e-vote-garage {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- Results */
+
+.e-champ {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 132px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--rubber-2);
+  border: 1px dashed var(--line-2);
+}
+
+/* the screen's one alloy surface */
+.e-champ.is-in {
+  border: 0;
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 0 rgba(0, 0, 0, .18), 0 10px 26px -14px rgba(0, 0, 0, .9);
+  animation: e-champ-in .3s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes e-champ-in {
+  from {
+    opacity: 0;
+    transform: scale(.96);
+  }
+}
+
+.e-champ-wait {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mute);
+  text-align: center;
+}
+
+.e-champ-who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.e-champ-name {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-xl);
+  line-height: 1.15;
+  color: var(--alloy-ink);
+  text-wrap: balance;
+}
+
+.e-champ-k {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2c2f35;
+}
+
+.e-champ-tie {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b3e45;
+}
+
+.e-you.is-dark {
+  background: var(--alloy-ink);
+  color: var(--alloy-hi);
+}
+
+.e-champ-score {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  margin: 0;
+}
+
+.e-champ-score b {
+  font-size: var(--t-print-xxl);
+  line-height: .95;
+  color: var(--alloy-ink);
+}
+
+.e-champ-score small {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c2f35;
+}
+
+.e-ranks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid var(--line-2);
+}
+
+.e-rank {
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  touch-action: manipulation;
+}
+
+button.e-rank-row:active {
+  background: var(--alloy-50);
+}
+
+.e-rank.is-in .e-rank-row {
+  animation: e-row-in .28s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes e-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.e-rank-n {
+  flex: none;
+  width: 26px;
+  font-size: 24px;
+  color: var(--mute);
+  text-align: center;
+}
+
+.e-rank .paddle {
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--alloy-lo);
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-family: var(--f-print);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.e-rank .paddle.me {
+  border-color: var(--alloy-mid);
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+}
+
+.e-rank-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.e-rank-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.e-rank-how > span {
+  white-space: nowrap;
+}
+
+.e-rank-how {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.e-rank-total {
+  display: grid;
+  flex: none;
+  justify-items: end;
+}
+
+.e-rank-total b {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.e-rank-total small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.e-rank-hide {
+  flex: 1;
+  height: 14px;
+  margin-inline-start: 44px;
+  border-radius: 4px;
+  background: var(--rubber-3);
+}
+
+.e-rank-garage {
+  padding: 0 0 12px;
+}
+
+.e-res-more {
+  display: flex;
+  gap: 8px;
+}
+
+.e-res-more .btn {
+  flex: 1;
+  min-height: 48px;
+  font-size: 15px;
+}
+
+.e-results .tire-loader {
+  margin: 48px auto;
+}
+
+/* ---------------------------------------------------------------- Awards: the ruled list */
+
+.e-sec-h {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line-2);
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-m);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.e-awards {
+  display: grid;
+  gap: 0;
+}
+
+.e-awards-empty {
+  margin: 0;
+  padding-block: 14px;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.e-aw-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.e-aw {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-aw-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.e-aw-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.e-aw-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.e-aw-fig {
+  display: grid;
+  flex: none;
+  justify-items: end;
+}
+
+.e-aw-fig b {
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.e-aw-fig b.is-up {
+  color: var(--ok-700);
+}
+
+.e-aw-fig small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.e-badges {
+  display: grid;
+  gap: 4px;
+  padding-top: 16px;
+}
+
+.e-badges-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mute);
+}
+
+.e-saved {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- Awards: the ceremony, one award to the screen */
+
+.e-stage {
+  position: fixed;
+  inset: 0;
+  bottom: var(--actbar-h, 96px);
+  z-index: 39;
+  display: grid;
+  place-items: center;
+  padding: 24px 20px;
+  background: var(--rubber-1);
+}
+
+.e-stage-tap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  background: none;
+  touch-action: manipulation;
+}
+
+.e-stage-aw {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 420px;
+  text-align: center;
+  animation: e-aw-in .3s cubic-bezier(.16, 1, .3, 1) both;
+  pointer-events: none;
+}
+
+@keyframes e-aw-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.e-stage-title {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-size: clamp(44px, 14vw, 64px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.e-stage-aw.is-grand .e-stage-title {
+  color: var(--alloy);
+}
+
+.e-stage-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.e-stage-fig {
+  display: grid;
+  justify-items: center;
+  margin: 8px 0 0;
+}
+
+.e-stage-fig b {
+  font-size: var(--t-print-xl);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.e-stage-fig.is-up b {
+  color: var(--ok-700);
+}
+
+.e-stage-fig small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.e-stage-line {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.e-stage-count {
+  margin: 18px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.e-stage-count .print {
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- the share dialog */
+
+.e-share-back {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: end center;
+  background: rgba(0, 0, 0, .72);
+}
+
+.e-share {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 100dvh;
+  overflow: auto;
+  padding: 16px 16px max(12px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--rubber-2);
+  outline: none;
+}
+
+.e-share-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 190px);
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+.e-share-btns {
+  display: grid;
+  gap: 8px;
+}
+
+.e-share-btns .btn {
+  min-height: 52px;
+}
+
+.e-share-btns .e-go {
+  min-height: 56px;
+}
+
+.e-share-row {
+  display: flex;
+  gap: 8px;
+}
+
+.e-share-row .btn {
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .e-champ.is-in,
+  .e-rank.is-in .e-rank-row,
+  .e-stage-aw {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- «سجلي» */
+
+.e-cr-back {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: end center;
+  background: rgba(0, 0, 0, .72);
+}
+
+.e-cr {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px 16px max(20px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--rubber-2);
+  outline: none;
+}
+
+.e-cr-head {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  margin-top: -8px;
+  padding-top: 8px;
+  background: var(--rubber-2);
+}
+
+.e-cr-title {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-size: var(--t-voice-l);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.btn.e-cr-close {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.e-cr-empty {
+  margin: 0;
+  padding-block: 14px;
+  border-block: 1px solid var(--line-2);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.e-cr-rows {
+  border-top: 2px solid var(--line-2);
+}
+
+.e-cr-rows .e-delta {
+  font-size: 20px;
+}
+
+.e-cr-best {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.e-cr-best-car {
+  font-family: var(--f-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  direction: rtl;
+}
+
+.e-cr-sub {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 24px 0 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line-2);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.e-cr-sub .print {
+  font-size: 18px;
+  color: var(--mute);
+}
+
+.e-cr-badges,
+.e-cr-nights {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.e-cr-badges li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 11px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-cr-badges b {
+  flex: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.e-cr-badges small {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+  text-align: end;
+}
+
+.e-cr-badges li.is-got b {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.e-cr-badges li.is-got small {
+  color: var(--ok-700);
+}
+
+.e-cr-nights li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.e-cr-night {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.e-cr-night b {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.e-cr-night small {
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.e-cr-nights .e-delta {
+  font-size: 19px;
+}
+
+/* the sheet itself takes focus only to hold it inside; it draws no ring of its own */
+.e-cr[tabindex='-1']:focus-visible,
+.e-share[tabindex='-1']:focus-visible {
+  outline: none;
+}
+
+.e-rank-ic {
+  flex: none;
+  color: var(--mute);
+}
+
+/* the kit page: the three marks side by side */
+.e-kit-deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 0;
+  font-size: 22px;
+}
+
+/* a long champion's name steps down a size so it keeps to two lines */
+.e-champ-name.is-mid {
+  font-size: var(--t-voice-l);
+}
+
+.e-champ-name.is-long {
+  font-size: var(--t-voice-m);
+}

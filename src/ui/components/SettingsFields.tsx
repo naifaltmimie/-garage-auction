@@ -74,7 +74,7 @@ export function MarketPicker({ value, set }: { value: Mix; set: SetSettings }) {
         <MarketRow key={id} id={id} on={value === id} onPick={() => pick(id)} count={depth[id] ?? 0} />
       ))}
       <button type="button" className="sf-more" aria-expanded={more} onClick={() => setMore((x) => !x)}>
-        <span>{more ? 'أخفِ الأسواق الثانية' : 'أسواق ثانية'}</span>
+        <span>{more ? 'سكّر الأسواق الثانية' : 'أسواق ثانية'}</span>
         {!more && <small>{rest.length} أسواق: سوبر كار، جموس، رياضي…</small>}
         <Icon name={more ? 'minus' : 'plus'} size={18} />
       </button>

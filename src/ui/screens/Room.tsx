@@ -1,52 +1,241 @@
 import { markSeen } from '../../lib/seen';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, Hist } from '../../engine/types';
-import { money, store } from '../../lib/util';
+import { NAME_MAX } from '../../engine/rules';
+import { HAPTIC, buzz, setFx } from '../../lib/fx';
+import { isCode, money, normalizeCode, store } from '../../lib/util';
 import { go, goHome, useBack } from '../App';
 import { Icon, Toasts } from '../components/Bits';
 import { TireLoader } from '../components/TireLoader';
-import { BrandLogo, LOGO, LogoMark } from '../components/Logo';
+import { LOGO, LogoMark } from '../components/Logo';
+import { HowToLines } from '../components/kit/HowToLines';
+import { ScreenTitle } from '../components/kit/ScreenTitle';
 import { joinAs, meFor, useRoom, type Me, type RoomView } from '../useRoom';
 import { Auction } from './Auction';
 import { Intro } from './Intro';
-import { CodePlate, Lobby } from './Lobby';
-import { TvLink } from './Tv';
+import { Lobby } from './Lobby';
 import { Results } from './Results';
 import { Showcase } from './Showcase';
 import { Standings } from './Standings';
 import { Voting } from './Voting';
-import { FxToggle } from '../components/Reactions';
-import { RoomMenu, RoomStatus, type MenuStep } from '../components/RoomMenu';
+import { useFx } from '../components/Reactions';
+import { RoomMenu, RoomStatus, ShellSheet, type MenuStep } from '../components/RoomMenu';
 
+/** The code on the lobby's white paper slip (the same piece and classes as the lobby's invitation), with a line under it. */
+function CodeSlip({ code, line }: { code: string; line: string }) {
+  return (
+    <div className="lby-paper shl-slip">
+      <div className="lby-paper-code">
+        <span className="lby-paper-k">كود الصالة</span>
+        <span className="code ltr">{code}</span>
+        <span className="lby-paper-k">{line}</span>
+      </div>
+    </div>
+  );
+}
+
+/** The small logo at the head of the join and wait screens, untouched. */
+function JoinLogo() {
+  return <img className="shl-logo" src={LOGO.stack} width={112} height={98} alt="مزاد الكراج" draggable={false} />;
+}
+
+/**
+ * Join by link: a friend scanned the code and lands here. The code on its slip, his name, and «ادخل الصالة» in a
+ * sticky bar in thumb reach; under the field, the game in three lines so a newcomer knows what he walked into.
+ */
 export function RoomGate({ code }: { code: string }) {
   const [me, setMe] = useState<Me | null>(() => meFor(code));
-  const [name, setName] = useState(() => store.get('mzk:name', ''));
+  const [remembered] = useState(() => store.get('mzk:name', ''));
+  const [name, setName] = useState(remembered);
+  const [tried, setTried] = useState(false);
   if (me) return <Room code={code} me={me} />;
+  const bad = name.trim().length < 2;
   return (
-    <main className="shell narrow">
-      <div className="center-screen">
+    <main className="shell narrow shl-join">
+      <form
+        className="shl-join-form"
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          setTried(true);
+          if (bad) return;
+          sound.unlock();
+          setMe(joinAs(code, name.trim()));
+        }}
+      >
+        <h1 className="shl-join-h">
+          <JoinLogo />
+        </h1>
+        <CodeSlip code={code} line="انعزمت على هالمزاد" />
+        <label className="lby-name shl-name">
+          <span className="lby-label">اسمك</span>
+          <input
+            className="lby-input"
+            value={name}
+            maxLength={NAME_MAX}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="مثلًا: سعود"
+            autoComplete="nickname"
+            autoCapitalize="words"
+            enterKeyHint="go"
+            autoFocus={!remembered}
+            aria-invalid={tried && bad}
+            aria-describedby="shl-name-err"
+          />
+          <small id="shl-name-err" className="lby-err" role="alert">
+            {tried && bad ? 'اكتب اسمك أول، حرفين على الأقل' : ''}
+          </small>
+        </label>
+        <section className="shl-how" aria-labelledby="shl-how-h">
+          <h2 className="shl-h" id="shl-how-h">
+            اللعبة
+          </h2>
+          <HowToLines />
+        </section>
+        <button type="button" className="shl-chalk shl-home" onClick={goHome}>
+          رجوع للرئيسية
+        </button>
+        <div className="lby-bar">
+          <div className="lby-bar-in">
+            <button type="submit" className="btn btn-primary btn-block lby-go">
+              ادخل الصالة
+            </button>
+          </div>
+        </div>
+      </form>
+    </main>
+  );
+}
+
+/**
+ * The wait before the room's first state arrives. Connecting: the tyre and one honest line. After 8 seconds
+ * connected with no room (S2-10): the code was wrong or the room is closed; the player fixes the code right here or
+ * keeps waiting. The room keeps listening the whole time: if it opens, the phone walks in.
+ */
+function RoomWait({ room, code, me }: { room: RoomView; code: string; me: Me }) {
+  const hosting = room.role === 'host';
+  const [waited, setWaited] = useState(0);
+  const [patience, setPatience] = useState(8);
+  const [fix, setFix] = useState(false);
+  const [draft, setDraft] = useState(code);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    const iv = setInterval(() => setWaited((w) => w + 1), 1000);
+    return () => clearInterval(iv);
+  }, []);
+  // once the phone has said «ما لقينا», it keeps saying it while the line blinks; «انتظر شوي» gives it 8 more seconds
+  const [said, setSaid] = useState(false);
+  const due = !hosting && room.net.connected && waited >= patience;
+  useEffect(() => {
+    if (due) setSaid(true);
+  }, [due]);
+  const lost = due || said;
+  if (!lost) {
+    // the host's phone only opens the line once the night's market has loaded, so that's its wait
+    const line = hosting
+      ? 'نجهّز سوق الليلة ونصفّ السيارات…'
+      : !room.net.connected
+        ? waited >= 8
+          ? 'النت ثقيل، للحين نحاول نتصل…'
+          : 'نتصل بالمزاد…'
+        : 'وصلنا، ننتظر رد الدلال…';
+    return (
+      <main className="shell narrow shl-wait">
+        <h1 className="shl-join-h">
+          <JoinLogo />
+        </h1>
+        <CodeSlip code={code} line={hosting ? 'نفتح الصالة' : 'ندوّر على الصالة'} />
+        <TireLoader label={line} size={72} className="shl-loader" />
+        <button type="button" className="shl-chalk shl-home" onClick={goHome}>
+          رجوع للرئيسية
+        </button>
+      </main>
+    );
+  }
+  const clean = normalizeCode(draft);
+  return (
+    <main className="shell narrow shl-wait shl-lost">
+      <ScreenTitle caption="تأكد من الكود عند اللي فتح الصالة، أو انتظر لين يفتحها.">ما لقينا صالة بهالكود</ScreenTitle>
+      {fix ? (
         <form
-          className="stack"
-          style={{ width: '100%', maxWidth: 420, gap: 16 }}
+          id="shl-fix"
+          className="shl-fix"
+          noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            if (name.trim().length < 2) return;
-            sound.unlock();
-            setMe(joinAs(code, name.trim()));
+            if (!isCode(clean)) {
+              setErr(clean.length === 0 ? 'اكتب كود الصالة، ست خانات' : `الكود ست خانات، كتبت ${clean.length}`);
+              return;
+            }
+            if (clean === code) {
+              setFix(false);
+              setSaid(false);
+              setPatience(waited + 8);
+              return;
+            }
+            joinAs(clean, me.name);
+            go(`/r/${clean}`);
           }}
         >
-          <img className="join-logo" src={LOGO.stack} width={220} height={193} alt="مزاد الكراج" draggable={false} />
-          <CodePlate code={code} />
-          <p className="mute join-line">انعزمت على المزاد. اكتب اسمك وادخل الصالة.</p>
-          <input className="input" autoFocus value={name} maxLength={18} onChange={(e) => setName(e.target.value)} placeholder="اسمك" autoComplete="nickname" />
-          <button className="btn btn-primary btn-block" disabled={name.trim().length < 2}>
-            ادخل الصالة
-          </button>
-          <button type="button" className="btn btn-quiet" onClick={() => go('/')}>
-            رجوع
-          </button>
+          <label className="lby-name">
+            <span className="lby-label">كود الصالة</span>
+            <input
+              className="lby-input shl-code-input"
+              value={clean}
+              autoFocus
+              dir="ltr"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="go"
+              maxLength={6}
+              aria-invalid={!!err}
+              aria-describedby="shl-fix-err"
+              onChange={(e) => {
+                setDraft(e.target.value);
+                if (err) setErr('');
+              }}
+            />
+            <small id="shl-fix-err" className="lby-err" role="alert">
+              {err}
+            </small>
+          </label>
         </form>
+      ) : (
+        <CodeSlip code={code} line="ما فيه صالة مفتوحة على هالكود" />
+      )}
+      <p className="shl-lost-line" role="status">
+        بننتظر معك، وإذا انفتحت الصالة تدخلها على طول.
+      </p>
+      <div className="lby-bar">
+        <div className="lby-bar-in">
+          {fix ? (
+            // a fresh element (key): the tap that opened the editor must not land on a submit button
+            <button key="go" type="submit" form="shl-fix" className="btn btn-primary btn-block lby-go">
+              ادخل الصالة
+            </button>
+          ) : (
+            <button key="fix" type="button" className="btn btn-primary btn-block lby-go" onClick={() => setFix(true)}>
+              عدّل الكود
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-quiet btn-block shl-close"
+            onClick={() => {
+              setFix(false);
+              setErr('');
+              setDraft(code);
+              setSaid(false);
+              setPatience(waited + 8);
+            }}
+          >
+            انتظر شوي
+          </button>
+        </div>
       </div>
     </main>
   );
@@ -120,73 +309,163 @@ function useHallSounds(core: Core | null, hist: Hist | null, myId: string) {
   }, [core?.phase, hist, myId, core]);
 }
 
-function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => void; onMenu: (s: MenuStep) => void }) {
-  const core = room.snap.core!;
-  const me = core.players.find((p) => p.id === room.myId);
+/** The sound switch's state, live. */
+function useSoundPrefs() {
   const [prefs, setPrefs] = useState(sound.prefs);
   useEffect(() => {
     const f = () => setPrefs({ ...sound.prefs });
     sound.listeners.add(f);
     return () => void sound.listeners.delete(f);
   }, []);
+  return prefs;
+}
+
+/**
+ * The top bar: one 56px bar, the same in every phase. Start: the menu. Centre: the logo outside the lots (not a
+ * button), during them the car counter on a paper sticker and the player's wallet. End: players, vibration and
+ * reactions, sound; each a 44px icon button whose off state is a slash through the icon in the mute tone.
+ * At 340px and under the counter drops its «/10» first (the hairline under the bar still shows the night's
+ * progress), then the wallet's amount steps down a size; nothing wraps or truncates at 320 with a 7-digit wallet.
+ */
+function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => void; onMenu: (s: MenuStep) => void }) {
+  const core = room.snap.core!;
+  const me = core.players.find((p) => p.id === room.myId);
+  const prefs = useSoundPrefs();
+  const fx = useFx();
   const inGame = !['lobby', 'results', 'showcase', 'voting'].includes(core.phase);
-  const off = !room.net.connected || room.net.hostGone;
-  const live = core.phase === 'bidding' || core.phase === 'sealed' || core.phase === 'dutch';
+  const lots = inGame && core.lotNo > 0;
   const progress = core.lotsTotal > 0 ? Math.min(1, Math.max(0, core.lotNo / core.lotsTotal)) : 0;
   return (
-    <header className={`topbar ${inGame ? 'ingame' : ''}`}>
-      <button className="iconbtn tb-btn tb-menu" aria-label="القائمة والخروج" aria-haspopup="dialog" onClick={() => onMenu('menu')}>
-        <Icon name="list" />
+    <header className="shl-bar">
+      <button type="button" className="shl-ib" aria-label="قائمة الصالة" aria-haspopup="dialog" onClick={() => onMenu('menu')}>
+        <Icon name="list" size={22} />
       </button>
-      {!inGame && (
-        <button className="brand" onClick={() => onMenu('leave')} aria-label="الرئيسية">
-          <BrandLogo />
-        </button>
-      )}
-      {inGame && core.lotNo > 0 && (
-        <div className={`tb-lot ${live ? 'is-live' : ''}`} aria-label={`${live ? 'على السوم، ' : ''}السيارة ${core.lotNo} من ${core.lotsTotal}`}>
-          {live && <i className="tb-live" aria-hidden="true" />}
-          <span className="tb-lot-n ltr">
-            <b>{String(core.lotNo).padStart(2, '0')}</b>/{core.lotsTotal}
-          </span>
-        </div>
-      )}
-      <div className="grow" />
-      {off && <span className="tb-off" role="status"><i />مقطوع</span>}
-      {/* the wallet rides along during the lots; outside them the bar carries the logo instead (both
-          don't fit beside three knobs on a 360px phone) */}
-      {me && !me.spectator && inGame && (
-        <div
-          className={`wallet ${me.cash < core.settings.budget * 0.15 ? 'low' : ''}`}
-          aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}
-        >
-          <div className="w-top">
-            <small>رصيدك</small>
-            <span className="wg">
-              <Icon name="car" size={13} />
-              <span className="ltr">{me.garage.length}/{core.settings.garage}</span>
+      <div className="shl-mid">
+        {!lots ? (
+          <img className="shl-bar-logo" src={LOGO.row} width={108} height={36} alt="مزاد الكراج" draggable={false} />
+        ) : (
+          <>
+            <span className="shl-lot ltr" role="img" aria-label={`السيارة ${core.lotNo} من ${core.lotsTotal}`}>
+              <b>{String(core.lotNo).padStart(2, '0')}</b>
+              <span className="shl-lot-of">/{core.lotsTotal}</span>
             </span>
-          </div>
-          <b className="ltr">{money(me.cash)}</b>
-        </div>
-      )}
-      <button
-        className="iconbtn tb-btn"
-        aria-pressed={prefs.voice}
-        aria-label={prefs.voice ? 'اسكت الدلال' : 'شغّل صوت الدلال'}
-        onClick={() => {
-          sound.unlock();
-          sound.setPrefs({ voice: !prefs.voice, sfx: true });
-        }}
-      >
-        <Icon name={prefs.voice ? 'sound' : 'mute'} />
-      </button>
-      <FxToggle />
-      <button className="iconbtn tb-btn" aria-label="الكراجات والترتيب" onClick={onPlayers}>
-        <Icon name="users" />
-      </button>
-      {inGame && <i className="tb-progress" style={{ ['--p' as string]: progress }} aria-hidden="true" />}
+            {me && !me.spectator ? (
+              <span className="shl-wallet" role="img" aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}>
+                <span className="shl-wallet-k">
+                  رصيدك
+                  <span className="shl-wallet-g ltr">
+                    {me.garage.length}/{core.settings.garage}
+                  </span>
+                </span>
+                <b className="shl-wallet-n ltr">{money(me.cash)}</b>
+              </span>
+            ) : (
+              <span className="shl-spec">تتفرج</span>
+            )}
+          </>
+        )}
+      </div>
+      <div className="shl-end">
+        <button type="button" className="shl-ib" aria-label={room.host ? 'اللاعبين والكراجات' : 'الكراجات والترتيب'} aria-haspopup="dialog" onClick={onPlayers}>
+          <Icon name="users" size={22} />
+        </button>
+        <button
+          type="button"
+          className={`shl-ib${fx ? '' : ' is-off'}`}
+          aria-pressed={fx}
+          aria-label="الاهتزاز والتعليقات"
+          title={fx ? 'الاهتزاز والتعليقات شغّالة' : 'الاهتزاز والتعليقات طافية'}
+          onClick={() => {
+            setFx(!fx);
+            if (!fx) buzz(HAPTIC.send);
+          }}
+        >
+          <Icon name="vibrate" size={22} />
+          <i className="shl-slash" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={`shl-ib${prefs.voice ? '' : ' is-off'}`}
+          aria-pressed={prefs.voice}
+          aria-label="صوت الدلال"
+          title={prefs.voice ? 'صوت الدلال شغّال' : 'صوت الدلال طافي'}
+          onClick={() => {
+            sound.unlock();
+            sound.setPrefs({ voice: !prefs.voice, sfx: true });
+          }}
+        >
+          <Icon name={prefs.voice ? 'sound' : 'mute'} size={22} />
+        </button>
+      </div>
+      {inGame && <i className="shl-progress" style={{ ['--p' as string]: progress }} aria-hidden="true" />}
     </header>
+  );
+}
+
+/**
+ * The bar and the status strip under it, stuck to the top together. Their height is written to `--top-total` while
+ * the room is open, so everything that sits under the bar (the car sheet's sticky tabs, toasts) sits under the strip.
+ */
+function RoomHead({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => void; onMenu: (s: MenuStep) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const set = () => root.style.setProperty('--top-total', `${Math.round(el.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty('--top-total');
+    };
+  }, []);
+  return (
+    <div ref={ref} className="shl-head">
+      <TopBar room={room} onPlayers={onPlayers} onMenu={onMenu} />
+      <RoomStatus room={room} />
+    </div>
+  );
+}
+
+/** A friend who walks in after the auction started (S2-14): told once, on his first look at the room, why he
+ *  watches and until when. A player the host moved to the stands later is not told this. */
+function useLateSheet(room: RoomView, code: string) {
+  const core = room.snap.core;
+  const decided = useRef(false);
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (!core || decided.current) return;
+    const me = core.players.find((p) => p.id === room.myId);
+    if (!me) return;
+    decided.current = true;
+    const key = `mzk:late:${code}`;
+    if (me?.spectator && core.phase !== 'lobby' && !store.get(key, false)) {
+      store.set(key, true);
+      setShow(true);
+    }
+  }, [core, room.myId, code]);
+  return [show, () => setShow(false)] as const;
+}
+
+function LateSheet({ onClose }: { onClose: () => void }) {
+  useBack(true, onClose);
+  return (
+    <ShellSheet
+      label="دخلت متفرج"
+      onClose={onClose}
+      foot={
+        <button type="button" className="btn btn-primary btn-block shl-go" onClick={onClose}>
+          تمام
+        </button>
+      }
+    >
+      <ScreenTitle as="h2" caption="المزاد بدأ قبل لا تدخل. تتفرج الحين، وتدخل اللعب بالمزاد الجاي إذا الدلال بدأ مزاد ثاني بنفس الشباب.">
+        دخلت متفرج
+      </ScreenTitle>
+      <p className="shl-sheet-note">تقدر تعلّق وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة اللاعبين.</p>
+    </ShellSheet>
   );
 }
 
@@ -200,7 +479,6 @@ function Room({ code, me }: { code: string; me: Me }) {
   const core = room.snap.core;
   const [players, setPlayers] = useState(false);
   const [menu, setMenu] = useState<MenuStep | null>(null);
-  const [waited, setWaited] = useState(0);
   useHallSounds(core, room.snap.hist, room.myId);
   // back gesture with nothing of ours open: close whatever sheet another screen has up, else ask first
   const hasCore = useRef(false);
@@ -256,37 +534,9 @@ function Room({ code, me }: { code: string; me: Me }) {
     };
   }, [core?.phase, core?.lotNo]);
 
-  useEffect(() => {
-    if (core) return;
-    const iv = setInterval(() => setWaited((w) => w + 1), 1000);
-    return () => clearInterval(iv);
-  }, [core]);
+  const [late, closeLate] = useLateSheet(room, code);
 
-  if (!core) {
-    const hosting = room.role === 'host';
-    const slow = waited > 8;
-    // the host's phone only opens the line once the night's market has loaded, so that's its wait
-    const line = hosting
-      ? 'نجهّز سوق الليلة ونصفّ السيارات…'
-      : !room.net.connected
-        ? 'نتصل بالمزاد…'
-        : slow
-          ? 'متصلين، بس الدلال ما فتح الصالة للحين'
-          : 'وصلنا، ننتظر الدلال يرد…';
-    return (
-      <main className="shell narrow">
-        <div className="center-screen ws-center">
-          <div className="wait-screen">
-            <div className="t-display ws-title">{hosting ? 'نفتح الصالة' : 'ندوّر على الصالة'}</div>
-            <CodePlate code={code} />
-            <TireLoader label={line} size={76} className="ws-loader" />
-            {!hosting && slow && <p className="ws-help">تأكد من الكود، أو خلّ الدلال يفتح الصفحة عنده.</p>}
-            <button className="btn btn-quiet" onClick={goHome}>رجوع</button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  if (!core) return <RoomWait room={room} code={code} me={me} />;
 
   let body: React.ReactNode;
   switch (core.phase) {
@@ -311,12 +561,11 @@ function Room({ code, me }: { code: string; me: Me }) {
 
   return (
     <>
-      <TopBar room={room} onPlayers={() => setPlayers(true)} onMenu={setMenu} />
-      <RoomStatus room={room} />
+      <RoomHead room={room} onPlayers={() => setPlayers(true)} onMenu={setMenu} />
       {body}
-      {['showcase', 'voting', 'results'].includes(core.phase) && <TvLink code={code} />}
       {players && <Standings room={room} onClose={() => setPlayers(false)} />}
       {menu && <RoomMenu room={room} start={menu} onClose={() => setMenu(null)} onPlayers={() => setPlayers(true)} />}
+      {late && !players && !menu && <LateSheet onClose={closeLate} />}
       <Toasts items={room.toasts} />
     </>
   );

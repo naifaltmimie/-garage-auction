@@ -135,11 +135,22 @@ async def bid_min(pg):
     return await click(pg, 'button.bid-main:not(:disabled)', 900)
 
 
+async def type_amount(pg, amount):
+    """Types an amount on the free-bid keypad, one key at a time."""
+    for ch in str(amount):
+        await pg.locator(f'.cs-k12[aria-label="{ch}"]').click(timeout=1500)
+
+
 async def free_bid(pg, amount):
-    if not await click(pg, '.chip-free:not(:disabled)', 900):
+    """Opens the free-bid keypad, types the amount and sends it (an extreme amount asks a second time)."""
+    if not await click(pg, '.cs-key.is-free:not(:disabled)', 900):
         return False
-    await pg.locator('.drawer input.amount-input').fill(str(amount))
-    return await click(pg, '.drawer button.bid-main:not(:disabled)', 900)
+    await type_amount(pg, amount)
+    if not await click(pg, '.cs-pad .bid-main:not(:disabled)', 900):
+        return False
+    await wait(0.25)
+    await click(pg, '.cs-pad .bid-main.is-ask:not(:disabled)', 500)
+    return True
 
 
 async def until(pg, want_phase, lot=None, limit=60):
@@ -417,7 +428,7 @@ async def main_run(p):
     if await tap(host, 'عدّل'):
         await wait(0.6)
         await a.shot(host, 'settings-sheet-top')
-        await host.evaluate("() => { const d = document.querySelector('.drawer'); if (d) d.scrollTop = 99999 }")
+        await host.evaluate("() => { const d = document.querySelector('.lby-sheet-body'); if (d) d.scrollTop = 99999 }")
         await wait(0.3)
         await a.shot(host, 'settings-sheet-bottom')
         await tap(host, 'تمام')
@@ -498,13 +509,13 @@ async def main_run(p):
                 await click(saud, '.rx-fab', 600)
             else:
                 a.miss('reactions tray', 'no .rx-fab on the player during bidding')
-            if await click(saud, '.chip-free:not(:disabled)', 800):
+            if await click(saud, '.cs-key.is-free:not(:disabled)', 800):
                 await wait(0.5)
                 await a.shot(saud, 'keypad-empty')
-                await saud.locator('.drawer input.amount-input').fill('123')
+                await type_amount(saud, 123)
                 await wait(0.2)
                 await a.shot(saud, 'keypad-too-low')
-                await tap(saud, 'رجوع')
+                await click(saud, '.cs-pad .cs-x', 800)
             await bid_min(saud)
             await wait(0.08)
             await a.shot(saud, 'bid-sending')
@@ -726,7 +737,7 @@ async def main_run(p):
             late = lpg
         if phn == 'bidding':
             await wait(0.3)
-            full = 'فل' in ((await saud.locator('.bidpanel').first.inner_text()) if await saud.locator('.bidpanel').count() else '')
+            full = 'فل' in ((await saud.locator('section.cs').first.inner_text()) if await saud.locator('section.cs').count() else '')
             if not full:
                 if await bid_min(saud):
                     wins['saud'] += 1
@@ -805,11 +816,11 @@ async def small_run(p, W, H, folder):
     await wait(0.5)
     await a.shot(saud, 'bidding-console-open')
     await a.shot(host, 'bidding-host')
-    if await click(saud, '.chip-free:not(:disabled)', 800):
+    if await click(saud, '.cs-key.is-free:not(:disabled)', 800):
         await wait(0.5)
-        await saud.locator('.drawer input.amount-input').fill('250000')
+        await type_amount(saud, 250000)
         await a.shot(saud, 'keypad')
-        await tap(saud, 'رجوع')
+        await click(saud, '.cs-pad .cs-x', 800)
     await bid_min(saud)
     await wait(0.6)
     await a.shot(saud, 'bid-holding')

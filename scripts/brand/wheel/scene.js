@@ -138,7 +138,7 @@ export function buildTyre({ segments = 1440, rows = 240 } = {}) {
     metalness: 0,
     bumpMap: tb,
     bumpScale: 28,
-    sheen: 0.5,
+    sheen: 0.25,
     sheenRoughness: 0.55,
     sheenColor: new THREE.Color(0x4a4d55),
     specularIntensity: 1.0,
@@ -361,6 +361,9 @@ export function buildRim() {
     const tip = new THREE.Mesh(tipG, M.nut); tip.position.set(x, y, HUB_Z - 0.022); g.add(tip);
   }
   // centre cap: the tag's red enamel in a thin alloy ring
+  // a raised centre boss round the cap, and a thin embossed ring between the nuts and the machined edge
+  g.add(new THREE.Mesh(lathe([[0.081, HUB_Z + 0.006], [0.094, HUB_Z + 0.0055], [0.1, HUB_Z + 0.002], [0.103, HUB_Z]], 192), M.hub));
+  g.add(new THREE.Mesh(lathe([[0.162, HUB_Z], [0.1645, HUB_Z + 0.0028], [0.168, HUB_Z + 0.0034], [0.1715, HUB_Z + 0.0028], [0.174, HUB_Z]], 256), M.hub));
   const capZ = HUB_Z + 0.006;
   g.add(new THREE.Mesh(lathe([[0.06, capZ + 0.004], [0.068, capZ + 0.005], [0.076, capZ + 0.002], [0.083, capZ - 0.01], [0.083, capZ - 0.05]], 192), M.lip));
   g.add(new THREE.Mesh(lathe([[0.0, capZ + 0.009], [0.035, capZ + 0.0085], [0.055, capZ + 0.006], [0.0605, capZ + 0.003]], 192), M.enamel));
@@ -393,7 +396,7 @@ export function buildBrake() {
   g.add(new THREE.Mesh(lathe([[0.69, -0.3], [0.64, -0.29], [0.6, -0.2], [0.59, -0.14]], 192), M.well));
 
   // the caliper: a rounded monoblock over the disc's edge at about ten o'clock, glossy red paint
-  const mid = 148 * DEG, half = 29 * DEG;
+  const mid = 210 * DEG, half = 29 * DEG; // about eight o'clock
   const cal = [];
   const N = 40;
   const r0 = 0.395, r1 = 0.605;
@@ -489,14 +492,15 @@ export function envStudio(renderer, { top = false } = {}) {
     flag(5, 2, [0, -4, 7]);
   } else {
     // a white studio: bright ceiling, a big key overhead to the left, a cool strip behind right, black flags for contrast
-    dome(s, 0.03, 0.2, 0.5);
+    dome(s, 0.01, 0.07, 0.25);
     box(12, 8, 3.4, 0xfff6ec, [-6, 7, 5]);
-    // high on the right, where the turned sidewall's upper-left bulge mirrors to: its long soft sheen
-    box(9, 5, 1.5, 0xfff6ec, [4.5, 6, 4.5]);
-    box(3, 12, 3.4, 0xcfdcff, [8, 1, -6]);
-    box(14, 3, 0.9, 0xffffff, [2, -2.5, 9]);
+    // a wide, low strip high on the right, where the turned sidewall's upper half mirrors to: its broad soft arc
+    box(16, 4, 3.6, 0xfff6ec, [5.5, 5.5, 3]);
+    // the rim light behind on the right, neutral so the rubber stays grey-black
+    box(3, 12, 3.0, 0xf4f4f4, [8, 1, -6]);
+    box(14, 3, 0.3, 0xffffff, [2, -2.5, 9]);
     // a big white card to the camera's right: the wheel is turned that way, so its machined faces reflect it
-    box(9, 6, 0.9, 0xffffff, [7, 0.5, 7]);
+    box(9, 6, 0.3, 0xffffff, [7, 0.5, 7]);
     flag(5, 3, [-6, -3.5, 6]);
     flag(3, 8, [-7, 0, -6]);
     flag(10, 2, [0, -3.2, -6]);

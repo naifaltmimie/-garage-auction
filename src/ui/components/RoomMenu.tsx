@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+// The room's menu sheet, the room's status strip, and the bottom sheet both the menu and the players sheet sit in.
+// Styles: src/styles/s-shell.css (prefix shl-).
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { goHome, useBack } from '../App';
+import { openTv } from '../screens/Tv';
 import type { RoomView } from '../useRoom';
-import { Icon } from './Bits';
+import { Icon, Portal, useSheet } from './Bits';
+import { ScreenTitle } from './kit/ScreenTitle';
 
 export type MenuStep = 'menu' | 'leave' | 'skip' | 'end';
 
@@ -9,7 +13,61 @@ const AUCTION_OFF = ['lobby', 'showcase', 'voting', 'results'];
 const PAUSABLE = ['preview', 'bidding', 'sealed', 'sold', 'unsold', 'intro', 'dutch'];
 const SKIPPABLE = ['preview', 'bidding', 'sealed', 'dutch'];
 
-/** The room's one way in to leaving and to the host's controls. Destructive steps ask first. */
+/**
+ * A bottom sheet over the room: a scrim that closes it on a tap, focus moved in and kept inside, Escape closes it.
+ * The scrim keeps the `drawer-back` hook the room's back gesture looks for. `step` refocuses the sheet when its
+ * content is swapped (a confirmation in place of the menu).
+ */
+export function ShellSheet({
+  label,
+  onClose,
+  step,
+  foot,
+  children,
+}: {
+  label: string;
+  onClose: () => void;
+  step?: string;
+  foot?: ReactNode;
+  children: ReactNode;
+}) {
+  const ref = useSheet<HTMLDivElement>(onClose);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    ref.current?.focus({ preventScroll: true });
+    ref.current?.querySelector('.shl-sheet-body')?.scrollTo(0, 0);
+  }, [step, ref]);
+  return (
+    <Portal>
+      <div className="drawer-back shl-scrim" onClick={onClose} aria-hidden="true" />
+      <div ref={ref} className="shl-sheet" role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}>
+        <div className="shl-sheet-body">{children}</div>
+        {foot && <div className="shl-sheet-foot">{foot}</div>}
+      </div>
+    </Portal>
+  );
+}
+
+/** One ruled menu row: an icon, the action, and one line of what it does. */
+function MenuRow({ icon, title, line, onClick, quiet }: { icon: Parameters<typeof Icon>[0]['name']; title: string; line: string; onClick: () => void; quiet?: boolean }) {
+  return (
+    <li>
+      <button type="button" className={`shl-row${quiet ? ' is-quiet' : ''}`} onClick={onClick}>
+        <Icon name={icon} size={22} className="shl-row-ic" />
+        <span className="shl-row-t">
+          <b>{title}</b>
+          <small>{line}</small>
+        </span>
+      </button>
+    </li>
+  );
+}
+
+/** The room's one way to leaving and to the host's controls. Destructive rows come last and ask first. */
 export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; start: MenuStep; onClose: () => void; onPlayers: () => void }) {
   const core = room.snap.core!;
   const [step, setStep] = useState<MenuStep>(start);
@@ -32,7 +90,14 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
     goHome();
   };
 
-  let body: React.ReactNode;
+  const close = (
+    <button type="button" className="btn btn-quiet btn-block shl-close" onClick={onClose}>
+      سكّر
+    </button>
+  );
+
+  let body: ReactNode;
+  let foot: ReactNode = close;
   if (step === 'leave') {
     const text = host
       ? ph === 'lobby'
@@ -45,24 +110,29 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
       : ph === 'lobby'
         ? 'تقدر ترجع تدخل بنفس الكود متى ما بغيت.'
         : 'فلوسك وكراجك محفوظة، وترجع لها من الرئيسية متى ما بغيت.';
-    body = (
-      <Confirm title={host ? 'تطلع وأنت الدلال؟' : 'تطلع من الصالة؟'} text={text}>
-        <button className="btn btn-primary btn-block rm-go" onClick={leave}>
+    body = <Confirm title={host ? 'تطلع وأنت الدلال؟' : 'تطلع من الصالة؟'} text={text} />;
+    foot = (
+      <div className="shl-acts">
+        <button type="button" className="btn btn-primary btn-block shl-go" onClick={leave}>
           {host && auction ? 'وقّف المزاد واطلع' : 'اطلع'}
         </button>
         {host && auction && (
-          <button className="btn btn-ghost btn-block rm-danger" onClick={() => setStep('end')}>
-            أنهِ المزاد للكل
+          <button type="button" className="shl-chalk" onClick={() => setStep('end')}>
+            خلّص المزاد للكل
           </button>
         )}
-        <button className="btn btn-quiet btn-block" onClick={cancel}>خلني</button>
-      </Confirm>
+        <button type="button" className="btn btn-quiet btn-block shl-close" onClick={cancel}>
+          خلني
+        </button>
+      </div>
     );
   } else if (step === 'skip') {
-    body = (
-      <Confirm title="تشيل هالسيارة؟" text="تنشال بدون بيع، وننتقل للي بعدها.">
+    body = <Confirm title="تشيل هالسيارة؟" text="تنشال بدون بيع، وننتقل للي بعدها." />;
+    foot = (
+      <div className="shl-acts">
         <button
-          className="btn btn-primary btn-block rm-danger-solid"
+          type="button"
+          className="btn btn-primary btn-block shl-go"
           onClick={() => {
             host?.skip();
             onClose();
@@ -70,98 +140,117 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
         >
           إيه، شيلها
         </button>
-        <button className="btn btn-quiet btn-block" onClick={cancel}>لا، خلها</button>
-      </Confirm>
+        <button type="button" className="btn btn-quiet btn-block shl-close" onClick={cancel}>
+          لا، خلها
+        </button>
+      </div>
     );
   } else if (step === 'end') {
-    body = (
-      <Confirm title="تنهي المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة.">
+    body = <Confirm title="تخلّص المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة." />;
+    foot = (
+      <div className="shl-acts">
         <button
-          className="btn btn-primary btn-block rm-danger-solid"
+          type="button"
+          className="btn btn-primary btn-block shl-go"
           onClick={() => {
             host?.endNow();
             onClose();
           }}
         >
-          أنهِ المزاد
+          إيه، خلّصه
         </button>
-        <button className="btn btn-quiet btn-block" onClick={() => (start === 'menu' ? setStep('menu') : setStep(start))}>لا، كمّل</button>
-      </Confirm>
+        <button type="button" className="btn btn-quiet btn-block shl-close" onClick={() => (start === 'menu' ? setStep('menu') : setStep(start))}>
+          لا، كمّل
+        </button>
+      </div>
     );
   } else {
+    const hostRows = !!host && auction;
     body = (
       <>
-        <div className="rm-head">
-          <h3>الصالة</h3>
-          <span className="code rm-code ltr">{room.code}</span>
-        </div>
-        {host && auction && (
-          <section className="rm-group" aria-label="تحكم الدلال">
-            <div className="t-label">تحكم الدلال</div>
-            {canPause &&
-              (core.paused ? (
-                <button className="rm-row on" onClick={() => { host.resume(); onClose(); }}>
-                  <span className="rm-ic"><Icon name="gavel" size={18} /></span>
-                  <span className="rm-tx"><b>كمّل المزاد</b><small>الساعة ترجع تمشي عند الكل</small></span>
-                </button>
-              ) : (
-                <button className="rm-row" onClick={() => { host.pause(); onClose(); }}>
-                  <span className="rm-ic"><Icon name="pause" size={18} /></span>
-                  <span className="rm-tx"><b>وقّف مؤقت</b><small>الساعة توقف عند الكل لين تكمّل</small></span>
-                </button>
-              ))}
-            {canSkip && (
-              <button className="rm-row" onClick={() => setStep('skip')}>
-                <span className="rm-ic"><Icon name="back" size={18} /></span>
-                <span className="rm-tx"><b>شيل السيارة</b><small>تنشال بدون بيع</small></span>
-              </button>
-            )}
-            <button className="rm-row danger" onClick={() => setStep('end')}>
-              <span className="rm-ic"><Icon name="close" size={18} /></span>
-              <span className="rm-tx"><b>أنهِ المزاد للكل</b><small>ننتقل للكراجات والنتيجة</small></span>
-            </button>
-          </section>
-        )}
-        <section className="rm-group">
-          <button className="rm-row" onClick={() => { onClose(); onPlayers(); }}>
-            <span className="rm-ic"><Icon name="users" size={18} /></span>
-            <span className="rm-tx">
-              <b>{host ? 'اللاعبين والكراجات' : 'الكراجات والترتيب'}</b>
-              <small>{host ? 'تشوف كراج كل واحد، وتطلّع اللي تبي' : 'وش شرى كل واحد ووين وصل'}</small>
-            </span>
-          </button>
-        </section>
-        <button className="btn btn-ghost btn-block rm-leave" onClick={() => setStep('leave')}>
-          اطلع من الصالة
-        </button>
-        <button className="btn btn-quiet btn-block" onClick={onClose}>سكّر</button>
+        <ScreenTitle as="h2" caption={<>كود الصالة <span className="shl-code ltr">{room.code}</span></>}>
+          الصالة
+        </ScreenTitle>
+        <ul className="shl-rows">
+          {hostRows &&
+            canPause &&
+            (core.paused ? (
+              <MenuRow
+                icon="play"
+                title="كمّل المزاد"
+                line="الساعة ترجع تمشي عند الكل"
+                onClick={() => {
+                  host.resume();
+                  onClose();
+                }}
+              />
+            ) : (
+              <MenuRow
+                icon="pause"
+                title="وقّف مؤقت"
+                line="الساعة توقف عند الكل لين تكمّل"
+                onClick={() => {
+                  host.pause();
+                  onClose();
+                }}
+              />
+            ))}
+          <MenuRow
+            icon="users"
+            title={host ? 'اللاعبين والكراجات' : 'الكراجات والترتيب'}
+            line={host ? 'تشوف كراج كل واحد، وتطلّع اللي تبي' : 'وش شرى كل واحد ووين وصل'}
+            onClick={() => {
+              onClose();
+              onPlayers();
+            }}
+          />
+          <MenuRow
+            icon="tv"
+            title="افتح شاشة العرض"
+            line="على التلفزيون أو اللابتوب، الكل يشوف السوم"
+            onClick={() => {
+              onClose();
+              openTv(room.code);
+            }}
+          />
+        </ul>
+        <ul className="shl-rows shl-rows-out" aria-label="نسألك قبل نسويها">
+          {hostRows && canSkip && <MenuRow quiet icon="close" title="شيل السيارة" line="تنشال بدون بيع، ونروح للي بعدها" onClick={() => setStep('skip')} />}
+          {hostRows && <MenuRow quiet icon="flag" title="خلّص المزاد للكل" line="ننتقل للكراجات والنتيجة" onClick={() => setStep('end')} />}
+          <MenuRow
+            quiet
+            icon="exit"
+            title="اطلع من الصالة"
+            line={host ? (auction ? 'المزاد يوقف لين ترجع' : 'الصالة تبقى مفتوحة') : 'فلوسك وكراجك محفوظة'}
+            onClick={() => setStep('leave')}
+          />
+        </ul>
       </>
     );
   }
 
   return (
-    <>
-      <div className="drawer-back" onClick={onClose} />
-      <div className="drawer rm-sheet" role="dialog" aria-modal="true" aria-label="قائمة الصالة">
-        {body}
-      </div>
-    </>
+    <ShellSheet label="قائمة الصالة" onClose={onClose} step={step} foot={foot}>
+      {body}
+    </ShellSheet>
   );
 }
 
-function Confirm({ title, text, children }: { title: string; text: string; children: React.ReactNode }) {
+function Confirm({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rm-confirm" key={title}>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      <div className="rm-actions">{children}</div>
+    <div className="shl-confirm" key={title}>
+      <ScreenTitle as="h2" caption={text}>
+        {title}
+      </ScreenTitle>
     </div>
   );
 }
 
 /**
- * One calm line under the top bar for the room's state: reconnecting, host away, or paused.
- * Fixed, so it never pushes the page around; its own 1 Hz check notices a silent host.
+ * The room's status, one full-width strip directly under the top bar: reconnecting, the host gone, the host away,
+ * or paused. It sits in the sticky head with the bar, so it never floats over content and the car sheet's sticky
+ * tabs stop under it. The region stays mounted (empty when all is well) so a screen reader hears each change.
+ * Its own 1 Hz check notices a silent host.
  */
 export function RoomStatus({ room }: { room: RoomView }) {
   const core = room.snap.core;
@@ -182,36 +271,43 @@ export function RoomStatus({ room }: { room: RoomView }) {
     const iv = setInterval(() => tick((n) => n + 1), 1000);
     return () => clearInterval(iv);
   }, [room.role]);
-  if (!core) return null;
   const player = room.role === 'player';
   const stale = player && room.net.lastHeard > 0 && Date.now() - room.net.lastHeard > 9000;
-  const auction = !AUCTION_OFF.includes(core.phase);
-  let tone: 'net' | 'pause' = 'pause';
+  const auction = !!core && !AUCTION_OFF.includes(core.phase);
+  let kind: 'net' | 'host' | 'away' | 'pause' | null = null;
   let text = '';
-  let action: React.ReactNode = null;
-  if (!room.net.connected || !online) {
-    tone = 'net';
-    text = 'الاتصال انقطع، نرجع نتصل…';
-  } else if (player && (room.net.hostGone || stale)) {
-    tone = 'net';
-    text = 'الدلال انقطع، ننتظره يرجع. خلك بالصفحة.';
-  } else if (core.paused && auction) {
-    text = core.away ? 'الدلال طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف مؤقت';
-    if (room.host)
-      action = (
-        <button className="rs-act" onClick={room.host.resume}>
-          كمّل
-        </button>
-      );
+  let action: ReactNode = null;
+  if (core) {
+    if (!room.net.connected || !online) {
+      kind = 'net';
+      text = 'مقطوع، نرجّع الخط…';
+    } else if (player && (room.net.hostGone || stale)) {
+      kind = 'host';
+      text = 'الدلال انقطع، ننتظره يرجع. خلك بالصفحة.';
+    } else if (core.paused && auction) {
+      kind = core.away ? 'away' : 'pause';
+      text = core.away ? 'الدلال طلع من الصفحة، المزاد واقف لين يرجع' : room.host ? 'وقّفت المزاد مؤقت' : 'المزاد واقف مؤقت، الدلال وقّفه';
+      if (room.host)
+        action = (
+          <button type="button" className="shl-strip-act" onClick={room.host.resume}>
+            كمّل
+          </button>
+        );
+    }
   }
-  if (!text) return null;
   return (
-    <div className={`room-status ${tone}`} role="status" aria-live="polite">
-      <span className="rs-pill">
-        <i aria-hidden="true" />
-        <span>{text}</span>
-        {action}
-      </span>
+    <div className={kind ? `shl-strip is-${kind}` : 'shl-strip is-empty'} role="status" aria-live="polite">
+      {kind && (
+        <>
+          {kind === 'net' || kind === 'host' ? (
+            <Icon name="tire" size={18} className="shl-strip-ic is-turning" />
+          ) : (
+            <Icon name="pause" size={18} weight="fill" className="shl-strip-ic" />
+          )}
+          <span className="shl-strip-t">{text}</span>
+          {action}
+        </>
+      )}
     </div>
   );
 }

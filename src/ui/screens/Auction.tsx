@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
 import { BidLog, Console } from '../components/Console';
 import { photoSrc } from '../components/Gallery';
@@ -6,6 +6,7 @@ import { LotSheet } from '../components/LotSheet';
 import { ApprovalReveal, SoldReveal, UnsoldReveal } from '../components/Reveal';
 import { ReactionLayer } from '../components/Reactions';
 import { TireLoader } from '../components/TireLoader';
+import { Sticker } from '../components/kit/Sticker';
 import { timeLeft, useNow, type RoomView } from '../useRoom';
 
 // the car sheet (photos, damage map, specs) is the heaviest part of the screen: it only redraws when its
@@ -41,6 +42,20 @@ export function Auction({ room }: { room: RoomView }) {
   const hist = room.snap.hist;
   const me = core.players.find((p) => p.id === room.myId);
   const [log, setLog] = useState(false);
+  // the status row's slot the reactions button docks into
+  const [rxSlot, setRxSlot] = useState<HTMLDivElement | null>(null);
+  // the page reserves the bidding block's height at its end, so nothing scrolls out of reach under it
+  const mainRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const block = main?.querySelector('.cs');
+    if (!main || !block || typeof ResizeObserver === 'undefined') return;
+    const set = () => main.style.setProperty('--cs-h', `${Math.ceil(block.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(block);
+    return () => ro.disconnect();
+  }, [core.phase, lot?.id]);
 
   const sale = hist?.sales.length ? hist.sales[hist.sales.length - 1] : null;
   const saleForLot = sale && lot && sale.lotId === lot.id ? sale : null;
@@ -72,13 +87,11 @@ export function Auction({ room }: { room: RoomView }) {
     );
   }
   return (
-    <main className="auction">
+    <main className="auction cs-page" ref={mainRef} data-cs-phase={core.phase}>
       <ClosingTicks room={room} />
       <div className="lot-wrap">
         {/* the lot number as a windshield sticker: white paper, black digits */}
-        <span className="lot-sticker" aria-label={`رقم ${lot.no}`}>
-          رقم <b className="ltr">{String(lot.no).padStart(2, '0')}</b>
-        </span>
+        <Sticker no={lot.no} className="cs-lotsticker" />
         <LotSheetMemo
           lot={lot}
           total={core.lotsTotal}
@@ -87,12 +100,12 @@ export function Auction({ room }: { room: RoomView }) {
           revealed={saleForLot && core.phase === 'sold' && lot.kind === 'covered' ? saleForLot.car : null}
         />
       </div>
-      <Console room={room} me={me} onLog={() => setLog(true)} />
+      <Console room={room} me={me} onLog={() => setLog(true)} rxSlot={setRxSlot} />
       {core.phase === 'sold' && saleForLot && saleForLot.buyer && <SoldReveal core={core} sale={saleForLot} myId={room.myId} offset={room.offset} />}
       {core.phase === 'unsold' && saleForLot && <UnsoldReveal core={core} sale={saleForLot} />}
       {core.phase === 'approval' && <ApprovalReveal core={core} />}
       {log && <BidLog core={core} myId={room.myId} onClose={() => setLog(false)} />}
-      <ReactionLayer room={room} />
+      <ReactionLayer room={room} dock={rxSlot} />
     </main>
   );
 }
