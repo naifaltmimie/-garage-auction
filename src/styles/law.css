@@ -77,45 +77,9 @@
   vertical-align: 2px;
 }
 
-/* the grade boxes: one hairline, the figure in chalk */
-.vbox.tone-mid,
-.vbox.tone-bad,
-.vbox.tone-good {
-  border-color: var(--line);
-}
-
-.vbox.tone-mid b {
-  color: var(--ink);
-}
-
 /* the sale-kind tag on the photo is a dark label, whatever the kind */
 .g-kind.gold {
   background: rgba(9, 9, 11, .82);
-}
-
-/* Home: the wheel leans out of the bottom corner, clear of the actions; the quiet buttons are solid over it */
-.hero-wheel {
-  left: -52%;
-  bottom: -30%;
-  opacity: .82;
-}
-
-.hero-cta .btn-ghost,
-.hero-cta .btn-quiet {
-  background: var(--rubber-2);
-}
-
-/* the stamp's small line is Arabic: joined letters, no tracking */
-.rv-stamp .rv-ink small {
-  font-size: 13px;
-  letter-spacing: 0;
-}
-
-/* the plate chip is paper, like the plate */
-.chip.plate-chip {
-  background: var(--plate);
-  border-color: transparent;
-  color: var(--plate-ink);
 }
 
 /* the keyboard ring is chalk on every interactive element, whatever an older sheet drew (base.css holds the rest of the browser surfaces) */

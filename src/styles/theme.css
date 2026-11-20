@@ -64,7 +64,6 @@
   --brand-hi: #ff4a4f;
   --brand-lo: #a8121a;
   --brand-50: rgba(229, 38, 45, .13);
-  --brand-100: rgba(229, 38, 45, .3);
   --green: var(--brand);
   --green-500: var(--brand-hi);
 
@@ -83,7 +82,6 @@
   --alloy: #d5d8de;
   --alloy-mid: #a9adb6;
   --alloy-lo: #6f737c;
-  --alloy-deck: #3b3e45;
   --alloy-ink: #0c0d0f;
   --alloy-face: linear-gradient(180deg, #fafbfc 0%, #dfe2e7 34%, #b4b8c1 68%, #8c909a 100%);
   --alloy-50: rgba(214, 218, 226, .1);
@@ -91,15 +89,12 @@
   /* the old gold names hold the alloy, so every screen follows */
   --gold: var(--alloy);
   --gold-hi: var(--alloy-hi);
-  --gold-lo: var(--alloy-mid);
   --gold-50: var(--alloy-50);
 
   --red: #ff4a4f;
   --red-50: rgba(255, 74, 79, .13);
   /* a caution is said in chalk with a mark, not in yellow */
-  --amber: var(--ink-2);
   --amber-50: rgba(255, 255, 255, .06);
-  --blue: #6aa6ff;
 
   /* real plates and paddles stay paper-white */
   --plate: #fbfbf8;
@@ -111,14 +106,9 @@
 
   /* textures */
   --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  --tex-tread: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='24' viewBox='0 0 40 24'%3E%3Cpath d='M-2 3 L20 13 L42 3' fill='none' stroke='%23000' stroke-opacity='.55' stroke-width='5.5' stroke-linejoin='miter'/%3E%3Cpath d='M-2 -.6 L20 9.4 L42 -.6' fill='none' stroke='%23fff' stroke-opacity='.05' stroke-width='1.1'/%3E%3C/svg%3E");
   --tex-tire: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='r' cx='.38' cy='.32' r='.75'%3E%3Cstop offset='0' stop-color='%23e9eaee'/%3E%3Cstop offset='.55' stop-color='%239a9da4'/%3E%3Cstop offset='1' stop-color='%2355585e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22.6' fill='%231a1b1e' stroke='%23050506' stroke-width='1.2'/%3E%3Cg fill='%232d2f35'%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(0 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(20 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(40 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(60 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(80 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(100 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(120 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(140 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(160 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(180 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(200 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(220 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(240 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(260 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(280 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(300 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(320 24 24)'/%3E%3Crect x='21.8' y='0.9' width='4.4' height='5.6' rx='1.1' transform='rotate(340 24 24)'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='15.4' fill='%230c0d0f'/%3E%3Ccircle cx='24' cy='24' r='12.6' fill='url(%23r)'/%3E%3Cg stroke='%232b2d33' stroke-width='3.4' stroke-linecap='round'%3E%3Cline x1='24.00' y1='20.40' x2='24.00' y2='13.40'/%3E%3Cline x1='27.42' y1='22.89' x2='34.08' y2='20.72'/%3E%3Cline x1='26.12' y1='26.91' x2='30.23' y2='32.58'/%3E%3Cline x1='21.88' y1='26.91' x2='17.77' y2='32.58'/%3E%3Cline x1='20.58' y1='22.89' x2='13.92' y2='20.72'/%3E%3C/g%3E%3Ccircle cx='24' cy='24' r='12.6' fill='none' stroke='%230c0d0f' stroke-width='1'/%3E%3Ccircle cx='24' cy='24' r='3.4' fill='%23e5262d'/%3E%3C/svg%3E");
 
   --spring: cubic-bezier(.3, 1.6, .5, 1);
-
-  /* the drawn zigzag tread is retired: the tyre shows only as the real rendered wheel
-     (public/brand/wheel, <Wheel/>) and its real tread texture, in a few deliberate places */
-  --tex-tread: none;
 }
 
 html {
@@ -175,14 +165,6 @@ body {
   color: var(--ink);
 }
 
-/* ---------------------------------------------------------------- the bars: matte rubber, one hairline */
-
-.topbar,
-.apphead {
-  background: var(--rubber-2);
-  box-shadow: inset 0 -1px 0 var(--line), 0 8px 20px -12px rgba(0, 0, 0, .8);
-}
-
 /* ---------------------------------------------------------------- surfaces: flat rubber; only a sheet over content casts a shadow */
 
 .card,
@@ -192,23 +174,8 @@ body {
   box-shadow: none;
 }
 
-.drawer {
-  background: var(--rubber-2);
-  border-color: var(--line);
-  box-shadow: 0 -12px 36px rgba(0, 0, 0, .6);
-}
-
-.drawer::before {
-  background: var(--rubber-5);
-}
-
 .notice {
   border-top-color: var(--line-2);
-}
-
-.banner {
-  color: var(--ink);
-  border-color: var(--line-2);
 }
 
 /* wells: inputs and steppers sit sunk into the rubber */
@@ -246,21 +213,6 @@ body {
   background: var(--rubber-3);
   border-color: var(--line-2);
   color: var(--ink-2);
-}
-
-.chip-gold,
-.chip-amber {
-  border-color: var(--line-2);
-  color: var(--ink);
-}
-
-.chip-red {
-  border-color: var(--line-2);
-  color: var(--ink);
-}
-
-.chip-green {
-  color: var(--ok-700);
 }
 
 /* ---------------------------------------------------------------- buttons: pushable blocks */
@@ -381,11 +333,6 @@ body {
   padding-bottom: 2px;
 }
 
-.btn.btn-sm.btn-primary,
-.btn.btn-sm.btn-gold {
-  font-size: 20px;
-}
-
 /* a unit beside a number on a button (ريال) stays in the text face */
 .btn.btn-primary small,
 .btn.btn-gold small,
@@ -499,8 +446,6 @@ body {
 
 .qr,
 .paddle,
-.mplate,
-.kp-face,
 .switch::after {
   color-scheme: light;
 }
@@ -509,9 +454,7 @@ body {
   background: var(--plate);
 }
 
-.g-studio,
-.rv-studio,
-.gcar-ph {
+.g-studio {
   background: radial-gradient(90% 80% at 50% 30%, #2a2c31, #121315 75%);
 }
 
@@ -519,52 +462,20 @@ body {
   background: linear-gradient(100deg, #1a1b1e 30%, #24262b 50%, #1a1b1e 70%);
 }
 
-.bid-chips button {
-  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 3px 0 #050506, 0 6px 12px -6px rgba(0, 0, 0, .7);
-  border-color: transparent;
-  color: var(--ink);
-}
-
-.bid-chips button:active:not(:disabled) {
-  background: linear-gradient(180deg, var(--rubber-4), var(--rubber-3));
-  transform: translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 1px 0 #050506;
-}
-
-.btn-top {
-  --face: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
-  --deck: #000;
-  --rim: var(--alloy-100);
-  color: var(--ink);
-}
-
 .result.first {
   background: linear-gradient(180deg, rgba(214, 218, 226, .16), rgba(214, 218, 226, .04));
   border-color: rgba(214, 218, 226, .4);
 }
 
-.vbox.tone-bad,
 .records li.warn,
 .surprise.bad,
-.rm-inline,
 .rx-f.t-bad .rx-pop {
   border-color: rgba(255, 74, 79, .32);
 }
 
-.vbox.tone-mid,
 .notes li,
-.dc-tag,
 .rx-f.t-gold .rx-pop {
   border-color: rgba(214, 218, 226, .32);
-}
-
-.rv-stamp {
-  border-color: var(--rubber-2);
-}
-
-.bm-spin {
-  border-top-color: #fff;
 }
 
 .tv-studio {
@@ -588,22 +499,12 @@ body {
   border-color: var(--alloy-mid);
 }
 
-.car-year b,
-.bp-line.top,
-.bid-chips b,
-.news-num,
-.rv-adlink b,
 .rx-fab {
   color: var(--ink);
 }
 
 .log li.me {
   background: var(--alloy-50);
-  color: var(--ink);
-}
-
-.rm-ic {
-  background: var(--rubber-4);
   color: var(--ink);
 }
 
@@ -620,24 +521,6 @@ body {
   stroke: #fff;
 }
 
-.pricebar {
-  background: var(--rubber-3);
-  border-color: var(--line);
-}
-
-.pricebar small {
-  color: var(--mute);
-}
-
-.dc-fill {
-  background: linear-gradient(270deg, var(--brand-lo), var(--brand));
-}
-
-.dc-est {
-  color: var(--ink-2);
-}
-
-.tv-leader b,
 .tv-feed li.top b,
 .tv-buyer b {
   color: var(--gold-hi);
@@ -645,10 +528,7 @@ body {
 
 /* ---------------------------------------------------------------- good news stays green */
 
-.gain,
-.gcar-nums b.gain,
-.aw-row-fig.gain .t-money,
-.cr-best .gain {
+.gain {
   color: var(--ok-700);
 }
 
@@ -656,10 +536,6 @@ body {
   background: var(--ok-50);
   color: var(--ok-700);
   border-color: var(--ok-100);
-}
-
-.tv-voted {
-  color: var(--ok-700);
 }
 
 /* ---------------------------------------------------------------- the bid button: caliper red */
@@ -681,63 +557,16 @@ body {
   color: var(--mute);
 }
 
-/* ---------------------------------------------------------------- details */
-
-.fx-paths-a {
-  opacity: .22;
-}
-
-.fx-paths-b {
-  stroke: rgba(255, 255, 255, .05);
-}
-
-.idn-logo {
-  display: block;
-  width: 156px;
-  height: auto;
-  margin: 0 auto 6px;
-  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .55));
-}
-
-.news-seal.news-tag {
-  width: auto;
-  height: auto;
-  background: none;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.news-seal.news-tag .logomark {
-  height: 40px;
-  width: auto;
-}
-
-/* the idle sheen (fx.css) runs on a screen's one primary action only: the bid button and Home's hero CTA */
-.btn-primary.bid-main:not(:disabled)::after,
-.btn-primary.btn-hero:not(:disabled)::after {
+/* the idle sheen (fx.css) runs on a screen's one primary action only: the bid button */
+.btn-primary.bid-main:not(:disabled)::after {
   opacity: 1;
-}
-
-.btn-primary.btn-hero:not(:disabled)::after {
-  content: '';
-  top: -2px;
-  bottom: -2px;
-  left: 0;
-  right: auto;
-  width: 34%;
-  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, .3) 50%, rgba(255, 255, 255, 0) 82%, transparent 100%);
-  transform: translateX(320%) skewX(-16deg);
-  animation: fx-sheen 5.6s var(--fx-in-out, ease-in-out) 1.6s infinite;
 }
 
 /* ---------------------------------------------------------------- type that used to sit dark-green on paper */
 
 .code,
 .countdown,
-.result .score .t-money,
-.idn-ledger dd,
-.idn-count-n {
+.result .score .t-money {
   color: #fff;
 }
 
@@ -747,8 +576,6 @@ body {
 
 /* paddles and the TV code tiles are paper: keep their ink dark */
 .paddle,
-.bp-bidder .paddle,
-.tv .paddle,
-.tv-code span {
+.tv .paddle {
   color: var(--plate-ink);
 }

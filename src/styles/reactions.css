@@ -243,17 +243,6 @@
   100% { transform: scaleX(0); }
 }
 
-/* ---------------------------------------------------------------- top-bar switch */
-
-.rx-toggle svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.rx-toggle[aria-pressed='false'] { color: rgba(255, 255, 255, .55); }
-
 @media (max-width: 370px) {
   .rx-fab { width: 44px; height: 44px; }
   .rx-tray { gap: 5px; padding: 8px; }

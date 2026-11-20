@@ -61,10 +61,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* the big screen shows the car's plate larger */
-.tv .tv-plate .splate.us.lg { --h: 140px; }
-.tv .tv-plate .splate.eu.lg { --h: 84px; }
-
 /* ---------------------------------------------------------------- the kit's plate gallery (#/kit) */
 .kpl {
   padding: 28px 16px 40px;

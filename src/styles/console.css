@@ -9,13 +9,6 @@
   bottom: var(--rx-f, calc(var(--rx-b) + 12px));
 }
 
-/* keep the slot opposite the clock free while the switch sits there */
-[data-rxdock='panel'] .auction .bidpanel .bp-status,
-[data-rxdock='panel'] .auction .bidpanel .dc-head {
-  padding-inline-end: 54px;
-  min-height: 46px;
-}
-
 /* over a sale sheet the switch sits in the bottom corner; the sheet ends with room for it */
 [data-rxdock='sheet'] .overlay .reveal::after {
   content: '';
@@ -25,12 +18,7 @@
 
 /* ------------------------------------------------ numbers that never shift the layout */
 
-.bp-num b,
-.ring b,
-.bid-chips b,
-.bid-chips small,
-.bp-foot b,
-.dc-counter {
+.ring b {
   font-variant-numeric: tabular-nums;
 }
 
@@ -45,7 +33,6 @@
   transform: scale(.975);
   filter: brightness(.94);
 }
-.bid-chips button,
 .dc-take {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

@@ -429,14 +429,6 @@ svg.ic {
   min-width: 0;
 }
 
-.kit-cap {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dim);
-}
-
 .kit-icon-btns {
   display: flex;
   flex-wrap: wrap;
