@@ -6,7 +6,15 @@
 
 /* ---------------------------------------------------------------- rolling number */
 .rn {
+  /* Barlow Condensed in a 1em line: the baseline sits .9em down, digits rise .72em above it (round ones
+     overshoot .02em both ways), the comma drops .11em below. --rn-top and --rn-win cut each digit's window to
+     that ink plus .01em of antialiasing, so a rolling digit never shows above the tallest digit or below the
+     baseline (under a pixel at 68px); the padding gives the line back its full 1em, so the number sits exactly
+     where a plain 1em line of digits would. */
+  --rn-top: .17em;
+  --rn-win: .76em;
   display: inline-flex;
+  padding-block: var(--rn-top) calc(1em - var(--rn-top) - var(--rn-win));
   direction: ltr;
   unicode-bidi: isolate;
   font-family: var(--f-print);
@@ -16,28 +24,36 @@
   white-space: nowrap;
 }
 .rn-cell {
-  position: relative;
-  display: inline-block;
-  padding-block: .08em;
-  margin-block: -.08em;
-  /* the window: clips the travel above and below, never the glyph's sides */
-  clip-path: inset(0 -.15em);
+  /* the window, clipped at its own box (overflow: clip is not a scroll container, so the window keeps the
+     text's baseline). A little side room keeps the bold glyphs' edges, given back by margin. */
+  display: inline-grid;
+  height: var(--rn-win);
+  overflow: clip;
+  padding-inline: .06em;
+  margin-inline: -.06em;
 }
-.rn-d { display: block; }
-.rn-sep { display: inline-block; }
-.rn-out {
-  position: absolute;
-  inset: .08em 0 auto 0;
+/* a separator never rolls, so its window is open: the comma's tail hangs below the digits' window */
+.rn-cell.rn-sep { overflow: visible; }
+.rn-d {
+  grid-area: 1 / 1;
+  display: block;
+  height: 1em;
+  /* the window's geometry assumes a 1em line, whatever line-height the number's host sets */
+  line-height: 1;
+  margin-top: calc(-1 * var(--rn-top));
   text-align: center;
 }
+/* the travel is exactly one window: the leaving digit is gone the frame the new one is home */
 .rn-in.rn-up { animation: rn-in-up 280ms cubic-bezier(.16, 1, .3, 1) both; }
 .rn-out.rn-up { animation: rn-out-up 280ms cubic-bezier(.16, 1, .3, 1) both; }
 .rn-in.rn-down { animation: rn-in-down 280ms cubic-bezier(.16, 1, .3, 1) both; }
 .rn-out.rn-down { animation: rn-out-down 280ms cubic-bezier(.16, 1, .3, 1) both; }
-@keyframes rn-in-up { from { transform: translateY(118%); } }
-@keyframes rn-out-up { to { transform: translateY(-118%); } }
-@keyframes rn-in-down { from { transform: translateY(-118%); } }
-@keyframes rn-out-down { to { transform: translateY(118%); } }
+.rn-fade { animation: rn-fade 280ms cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes rn-in-up { from { transform: translateY(var(--rn-win)); } }
+@keyframes rn-out-up { to { transform: translateY(calc(-1 * var(--rn-win))); } }
+@keyframes rn-in-down { from { transform: translateY(calc(-1 * var(--rn-win))); } }
+@keyframes rn-out-down { to { transform: translateY(var(--rn-win)); } }
+@keyframes rn-fade { from { opacity: 0; } }
 
 /* ---------------------------------------------------------------- price tag
    Geometry (physical, the nose is on the left in either direction): --nose is the chamfer's depth,
@@ -159,6 +175,11 @@
   line-height: .84;
   letter-spacing: -.005em;
   color: var(--plate-ink);
+}
+.ptag-num.rn {
+  /* the tag sets its number in a tight .84em line: the roll windows keep the same box and baseline */
+  padding-block: .09em 0;
+  margin-bottom: -.01em;
 }
 .ptag-unit {
   font: 600 14px/1 var(--f-ui);
@@ -515,6 +536,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rn-in, .rn-out, .ptag-body[data-tick], .stamp2, .rcpt-paper { animation: none !important; }
+  .rn-in, .rn-out, .rn-fade, .ptag-body[data-tick], .stamp2, .rcpt-paper { animation: none !important; }
   .rn-out { display: none; }
 }

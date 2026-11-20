@@ -1,6 +1,9 @@
-// A printed number whose digits roll. Each digit sits in a fixed-width tabular cell; only the cells whose digit
-// changes move, sliding up when the value rises and down when it falls. Separators never move, so the width
-// only changes when the number gains or loses a digit. Reduced motion swaps the digit with no travel (CSS).
+// A printed number whose digits roll. Each digit sits in its own window, cut to the digits' ink (from just above
+// the tallest digit to just below the baseline, not the whole line), and clipped to it; only the windows whose
+// digit changes move, the old digit leaving by exactly one window height while the new one enters from the other
+// side (up when the value rises, down when it falls), so no part of a rolling digit ever shows above or below
+// the printed digits. Separators never move; one born with a new digit fades in with it. The width only changes
+// when the number gains or loses a digit. Reduced motion swaps the digit with no travel (CSS).
 // The cell keying (digits counted from the right, separators keyed to the digit after them) is ported from
 // "Rolling Digits" by edwinvakayil on 21st.dev, rebuilt as plain React state and CSS keyframes, no library.
 import { memo, useLayoutEffect, useRef, useState, type AnimationEvent } from 'react';
@@ -10,8 +13,8 @@ type Dir = 'up' | 'down';
 
 const isDigit = (c: string) => c >= '0' && c <= '9';
 
-/** One digit window: the current digit in flow, the leaving digit stacked over it while it rolls away. */
-const Cell = memo(function Cell({ char, dir, born }: { char: string; dir: Dir; born: boolean }) {
+/** One window: the current character, and the leaving one stacked in the same grid cell while it rolls away. */
+const Cell = memo(function Cell({ char, dir, born, sep }: { char: string; dir: Dir; born: boolean; sep?: boolean }) {
   const [roll, setRoll] = useState<{ from: string | null; n: number; dir: Dir }>({ from: null, n: born ? 1 : 0, dir });
   const last = useRef(char);
 
@@ -28,13 +31,13 @@ const Cell = memo(function Cell({ char, dir, born }: { char: string; dir: Dir; b
 
   const moving = roll.n > 0 && (roll.from !== null || born);
   return (
-    <span className="rn-cell">
+    <span className={sep ? 'rn-cell rn-sep' : 'rn-cell'} aria-hidden={sep || undefined}>
       {roll.from !== null && (
         <span key={`o${roll.n}`} className={`rn-d rn-out rn-${roll.dir}`} aria-hidden>
           {roll.from}
         </span>
       )}
-      <span key={`i${roll.n}`} className={`rn-d${moving ? ` rn-in rn-${roll.dir}` : ''}`} onAnimationEnd={done}>
+      <span key={`i${roll.n}`} className={`rn-d${moving ? (sep ? ' rn-fade' : ` rn-in rn-${roll.dir}`) : ''}`} onAnimationEnd={done}>
         {char}
       </span>
     </span>
@@ -64,9 +67,7 @@ export function RollNumber({ value, className }: { value: number; className?: st
         isDigit(c) ? (
           <Cell key={keys[i]} char={c} dir={dir} born={mounted.current} />
         ) : (
-          <span key={keys[i]} className="rn-sep" aria-hidden>
-            {c}
-          </span>
+          <Cell key={keys[i]} char={c} dir={dir} born={mounted.current} sep />
         ),
       )}
     </span>
