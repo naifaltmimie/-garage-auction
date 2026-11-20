@@ -9,18 +9,18 @@ import { damageLine } from '../../engine/lotgen';
 import { marketOf } from '../../engine/markets';
 import { reactBus, REACT_BY_KEY } from '../../engine/reactions';
 import { gradeWord } from '../../engine/realism';
-import { lotsFor, VERDICT_LABEL } from '../../engine/rules';
+import { lotsFor } from '../../engine/rules';
 import type { CarPub, Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
 import { bidsN, carsN, isCode, money, normalizeCode, signed } from '../../lib/util';
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
-import { saleShown, useSaleStage, type SaleStage } from '../saleStage';
+import { saleShown, useSaleStage, verdictSaid, type SaleStage } from '../saleStage';
 import { timeLeft, useNow } from '../useRoom';
 import { computeAwards } from '../components/Awards';
 import { Delta } from '../components/Garage';
 import { Icon, QR } from '../components/Bits';
-import { useClockValue } from '../components/DutchConsole';
+import { Board as DutchBoard, useClockValue } from '../components/DutchConsole';
 import { HowToLines } from '../components/kit/HowToLines';
 import { Pairs, type Pair } from '../components/kit/Pairs';
 import { PriceTag } from '../components/kit/PriceTag';
@@ -250,7 +250,8 @@ function TopBand({ core, code, sale, offset }: { core: Core | null; code: string
         </span>
       )}
       <span className="tv-band-join">
-        <span className="tv-band-join-k">ادخل من جوالك</span>
+        <span className="tv-band-join-k">ادخل من جوالك:</span>
+        <span className="tv-band-host ltr">{location.host}</span>
         <span className="tv-band-code ltr">{code}</span>
       </span>
     </header>
@@ -295,7 +296,9 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
           <div className="tv-slip-code">
             <span className="tv-slip-k">كود الصالة</span>
             <span className="tv-slip-n ltr">{code}</span>
-            <span className="tv-slip-k">صوّر الباركود أو اكتب الكود</span>
+            <span className="tv-slip-k">صوّر الباركود، أو افتح</span>
+            <span className="tv-slip-host ltr">{location.host}</span>
+            <span className="tv-slip-k">واكتب الكود</span>
           </div>
           <i className="tv-slip-cut" aria-hidden="true" />
           <QR text={link} size={480} />
@@ -511,8 +514,11 @@ function CarHead({ lot }: { lot: LotPub }) {
     <div className="tv-carhead">
       <div className="tv-carhead-top">
         <h2 className="tv-model">
-          {car.modelAr}
-          {car.trimAr || car.trim ? <span className="tv-trim"> {car.trimAr || car.trim}</span> : null}
+          {/* the model and its trim as one name in its own direction («812 Superfast», «G63 AMG») */}
+          <bdi>
+            {car.modelAr}
+            {car.trimAr || car.trim ? <span className="tv-trim"> {car.trimAr || car.trim}</span> : null}
+          </bdi>
         </h2>
         <span className="tv-plate-row">
           {/* a special plate's name and worth, at the board's size (the plate's own caption is a phone's size) */}
@@ -528,7 +534,7 @@ function CarHead({ lot }: { lot: LotPub }) {
         </span>
       </div>
       <p className="tv-spec">
-        {car.makeAr} · <span className="ltr">{car.year}</span> · {specLine(car)}
+        <bdi>{car.makeAr}</bdi> · <span className="ltr">{car.year}</span> · {specLine(car)}
       </p>
       <Pairs className="tv-pairs" items={keyFacts(car, lot)} />
     </div>
@@ -657,33 +663,41 @@ function DutchTag({ core, plan, offset, estimate }: { core: Core; plan: NonNulla
   const k = useContext(KCtx);
   const price = useClockValue(offset, 12, (now) => dutchPriceAt(plan, dutchElapsed(core.timer, timeLeft(core, now).ms)), [core.timer, core.paused, plan]);
   const prog = dutchProgress(plan, price);
+  const onFloor = price <= plan.floor;
+  // the phone's tension: chalk while it falls, red for the last steps and the floor
+  const heat = onFloor || prog >= 0.9 ? 3 : prog >= 0.72 ? 2 : prog >= 0.45 ? 1 : 0;
+  const pos = (v: number) => Math.max(0, Math.min(1, (plan.start - v) / Math.max(1, plan.start - plan.floor)));
+  // the board is sized for the start price, so it never grows or shrinks while the price falls
+  const digits = String(Math.round(plan.start)).length;
   return (
-    <div className="tv-dutch">
-      <div className="tv-tag" style={{ zoom: 3.3 * k } as CSSProperties}>
-        <PriceTag state="live" label="السعر الحين" amount={price} compact />
+    // the phone's own board and rail (DutchConsole / s-console.css), scaled up whole: one price, one object
+    <div className="cs--dutch tv-dutch" data-heat={heat}>
+      <div className="cs-board tv-dboard" style={{ zoom: (digits >= 7 ? 2.3 : digits === 6 ? 2.65 : 2.9) * k } as CSSProperties}>
+        <span className="tv-dboard-k">السعر الحين</span>
+        <div className="cs-board-w">
+          <DutchBoard value={price} />
+          <span className="cs-board-u">ريال</span>
+        </div>
       </div>
-      <div className="tv-rail" aria-hidden="true">
-        <span className="tv-rail-track">
-          <i className="tv-rail-fill" style={{ transform: `scaleX(${prog})` }} />
-          <i className="tv-rail-pin" style={{ insetInlineStart: `${prog * 100}%` }} />
-        </span>
-        <span className="tv-rail-ends">
+      <div className="cs-rail tv-drail" aria-hidden="true" style={{ zoom: 2.4 * k } as CSSProperties}>
+        <div className="cs-track">
+          {estimate && <span className="cs-band" style={{ insetInlineStart: `${pos(estimate[1]) * 100}%`, width: `${(pos(estimate[0]) - pos(estimate[1])) * 100}%` }} />}
+          <span className="cs-fill" style={{ transform: `scaleX(${prog})`, transitionDuration: `${plan.every}ms` }} />
+        </div>
+        <div className="cs-ends">
           <span>
-            بدأ من <span className="ltr">{money(plan.start)}</span>
+            بدأ <span className="ltr">{money(plan.start)}</span>
           </span>
+          {estimate && (
+            <span className="cs-ends-est">
+              التقدير <span className="ltr">{money(estimate[0])}–{money(estimate[1])}</span>
+            </span>
+          )}
           <span>
             أقل سعر <span className="ltr">{money(plan.floor)}</span>
           </span>
-        </span>
-      </div>
-      {estimate && (
-        <div className="tv-est">
-          <span className="tv-est-k">التقدير</span>
-          <span className="tv-est-v ltr">
-            {money(estimate[0])} – {money(estimate[1])}
-          </span>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -700,8 +714,11 @@ function PlayerStrip({ core }: { core: Core }) {
           <Paddle n={p.paddle} />
           <span className="tv-pcell-name">{p.name}</span>
           <span className="tv-pcell-cash ltr">{money(p.cash)}</span>
-          <span className="tv-pcell-cars ltr">
-            {p.garage.length}/{core.settings.garage}
+          <span className="tv-pcell-cars" aria-label={`${p.garage.length} من ${core.settings.garage} سيارات`}>
+            <Icon name="car" size={20} className="tv-pcell-car" />
+            <span className="ltr">
+              {p.garage.length}/{core.settings.garage}
+            </span>
           </span>
         </li>
       ))}
@@ -893,12 +910,12 @@ function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number
   const name = buyer?.name ?? 'واحد طلع';
   const shown = saleShown(sale, stage);
   const up = (shown.profit ?? 0) >= 0;
-  const word = shown.settled ? VERDICT_LABEL[sale.verdict] : up ? 'ربح' : 'خسارة';
+  const said = verdictSaid(sale.verdict, shown, false, name);
   const surprise = stage >= 3 ? sale.surprise : null;
   const sealed = !!sale.sealedBids?.length;
   const carName = (
     <>
-      {sale.car.makeAr} {sale.car.modelAr} <span className="ltr">{sale.car.year}</span>
+      <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> <span className="ltr">{sale.car.year}</span>
     </>
   );
   return (
@@ -932,7 +949,8 @@ function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number
               <p className={`tv-verdict-k${stage >= 1 ? ' is-on' : ''}`}>سعرها الصدق بالسوق</p>
               <div className="tv-value">
                 {shown.value === null ? (
-                  <span className="tv-value-blank" aria-hidden="true" />
+                  // the number is on its way: nothing before the caption, then the tyre turns where it will land
+                  stage >= 1 ? <TireLoader className="tv-value-wait" size={Math.round(170 * k)} /> : null
                 ) : (
                   <>
                     <CountRoll target={shown.value} />
@@ -952,9 +970,9 @@ function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number
               <div className="tv-word-row">
                 {shown.profit !== null && (
                   <>
-                    <span className="tv-word">{word}</span>
+                    <span className="tv-word">{said.word}</span>
                     <span className={`tv-diff ltr${up ? ' is-up' : ' is-down'}`}>{signed(shown.profit)}</span>
-                    <span className="tv-word-who">{up ? `لـ ${name}` : `على ${name}`}</span>
+                    {said.who && <span className="tv-word-who">{said.who}</span>}
                   </>
                 )}
               </div>
@@ -1008,7 +1026,7 @@ function Unsold({ core, sale }: { core: Core; sale: Sale }) {
       <section className="tv-car">
         <HammerPhoto sale={sale} stamp="unsold" uncover={false} />
         <p className="tv-hammer-car">
-          {sale.car.makeAr} {sale.car.modelAr} <span className="ltr">{sale.car.year}</span>
+          <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> <span className="ltr">{sale.car.year}</span>
         </p>
       </section>
       <section className="tv-hammer-side">
@@ -1079,7 +1097,7 @@ function ShowcaseBoard({ core, hist }: { core: Core; hist: Hist | null }) {
                 {shown.map((x) => (
                   <li key={x.lotId} className="tv-gar-car">
                     <span className="tv-gar-model">
-                      {x.car.modelAr} <span className="ltr">{x.car.year}</span>
+                      <bdi>{x.car.modelAr}</bdi> <span className="ltr">{x.car.year}</span>
                     </span>
                     <Delta v={x.profit} className="tv-gar-delta" />
                     {!compact && (
@@ -1127,7 +1145,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
   return (
     <div className="tv-end">
       <header className="tv-end-head">
-        <h1 className="tv-end-title">{voting ? 'التقييم السري' : 'الكراجات'}</h1>
+        <h1 className="tv-end-title">{voting ? 'الشباب يقيّمون الكراجات' : 'الكراجات'}</h1>
         <p className="tv-end-sub">
           {voting ? (
             <>
@@ -1138,7 +1156,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
           )}
         </p>
       </header>
-      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : ''}`} style={{ ['--cols' as string]: voting ? 'var(--u5) minmax(0,1fr) var(--u14) var(--u20) var(--u14)' : 'var(--u5) minmax(0,1fr) var(--u14) var(--u20)' } as CSSProperties}>
+      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : rows.length <= 4 ? ' is-few' : ''}`} style={{ ['--cols' as string]: voting ? 'var(--u5) minmax(0,1fr) var(--u14) var(--u20) var(--u14)' : 'var(--u5) minmax(0,1fr) var(--u14) var(--u20)' } as CSSProperties}>
           <div role="row" className="tv-tr tv-th">
             <span role="columnheader" className="tv-c-rank">#</span>
             <span role="columnheader" className="tv-c-who">المزايد</span>
@@ -1247,7 +1265,7 @@ function ResultsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
           </span>
         </header>
       )}
-      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : ''}`} style={{ ['--cols' as string]: 'var(--u5) minmax(0,1fr) var(--u12) var(--u20) var(--u12) var(--u12)' } as CSSProperties}>
+      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : rows.length <= 4 ? ' is-few' : ''}`} style={{ ['--cols' as string]: 'var(--u5) minmax(0,1fr) var(--u12) var(--u20) var(--u12) var(--u12)' } as CSSProperties}>
           <div role="row" className="tv-tr tv-th">
             <span role="columnheader" className="tv-c-rank">#</span>
             <span role="columnheader" className="tv-c-who">المزايد</span>
