@@ -1,0 +1,795 @@
+/* ================================================================ the car's file (LotSheet, Gallery, DamageMap)
+   What a player reads before he bids: the photo, the title and the plate, six facts at a glance, the price rows,
+   the دلال's story, then the tabs (inspection, records, the seller's ad, the spec). Ruled rows and plain text on
+   rubber, no boxes. Tokens only; motion is transform and opacity. The bidding block docks over the bottom of this
+   screen and the page keeps its own height free at the end (.auction padding), so nothing here sits under it. */
+
+.sh {
+  --sh-g: 16px;
+  display: block;
+}
+
+/* ================================================================ photo */
+
+/* the root keeps .gallery (the bidding block caps it on short phones); these rules replace the old ones */
+.sh-photo.gallery {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 4 / 3;
+  max-height: 58dvh;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--rubber-0);
+}
+
+/* the blurred fill behind portrait photos */
+.sh-photo > .sh-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(16px) brightness(.5) saturate(1.05);
+  transform: scale(1.15);
+  opacity: 0;
+  transition: opacity .3s cubic-bezier(.16, 1, .3, 1);
+  pointer-events: none;
+}
+.sh-photo > .sh-fill.ok { opacity: 1; }
+
+.sh-track {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+}
+.sh-track::-webkit-scrollbar { display: none; }
+
+/* a photo on its way is a still rubber frame (no shimmer); the photo fades in over it */
+.sh-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  background: var(--rubber-2);
+  box-shadow: none;
+  transform: none;
+  cursor: zoom-in;
+  touch-action: pan-x pan-y;
+  contain: strict;
+}
+.sh-slide:has(.sh-img.ok) { background: transparent; }
+.sh-slide:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+
+.sh-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity .28s cubic-bezier(.16, 1, .3, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.sh-img.ok { opacity: 1; }
+
+/* no photos at all: the drawn silhouette on a lit floor of rubber */
+.sh-studio {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 14% 8% 10%;
+  background: radial-gradient(70% 45% at 50% 82%, var(--rubber-4), var(--rubber-1) 75%);
+}
+.sh-studio svg { width: 100%; max-width: 440px; height: auto; }
+
+/* the covered car: its one photo blurred and darkened, the words on the tarp */
+.sh-photo.is-covered .sh-img {
+  object-fit: cover;
+  filter: blur(22px) brightness(.45) saturate(.5);
+  transform: scale(1.15);
+}
+.sh-photo.is-covered .sh-slide { cursor: default; }
+.sh-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(60% 60% at 50% 45%, transparent, rgba(0, 0, 0, .5));
+  pointer-events: none;
+}
+.sh-cover span {
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-size: var(--t-voice-l);
+  line-height: 1.2;
+  color: var(--ink);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .7);
+}
+
+/* the counter: small, quiet, readable over any photo, at the bottom start corner */
+.sh-count {
+  position: absolute;
+  z-index: 2;
+  bottom: 10px;
+  inset-inline-start: 14px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 10px rgba(0, 0, 0, .6);
+  pointer-events: none;
+}
+.sh-count span { color: var(--ink-2); }
+
+/* arrows only where there is a mouse */
+.sh-nav {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(11, 12, 13, .72);
+  color: var(--ink);
+  box-shadow: none;
+}
+.sh-nav.prev { inset-inline-start: 10px; }
+.sh-nav.next { inset-inline-end: 10px; }
+/* the back arrow points to the start side (right); the next photo lies to the end side */
+.sh-nav.next .ic { transform: scaleX(-1); }
+.sh-nav.prev .ic { transform: none; }
+.sh-nav:disabled { opacity: 0; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 700px) {
+  .sh-photo:hover .sh-nav { display: grid; }
+}
+
+/* ================================================================ the viewer */
+
+.sh-lb {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+  background: var(--rubber-0);
+  color: var(--ink);
+  overscroll-behavior: contain;
+  animation: sh-in .22s cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes sh-in {
+  from { opacity: 0; }
+}
+
+.sh-lb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px;
+}
+.sh-lb-count { font-size: 18px; line-height: 1; }
+.sh-lb-count span { color: var(--mute); }
+.sh-lb-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--rubber-3);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: none;
+  touch-action: manipulation;
+  transition: transform .12s cubic-bezier(.16, 1, .3, 1);
+}
+.sh-lb-close:active { transform: scale(.96); }
+
+.sh-lb-track {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  touch-action: pan-x pinch-zoom;
+}
+.sh-lb-track::-webkit-scrollbar { display: none; }
+.sh-lb-slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+.sh-lb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity .25s cubic-bezier(.16, 1, .3, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.sh-lb-img.ok { opacity: 1; }
+
+/* ================================================================ the body under the photo */
+
+.sh-body {
+  position: relative;
+  z-index: 2;
+  padding: 16px var(--sh-g) 4px;
+  background: var(--bg);
+}
+
+/* ---------------------------------------------------------------- header: title, one line, the plate, facts */
+
+.sh-head {
+  display: grid;
+  gap: 6px;
+}
+
+.sh-title {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* the line and the plate share a row; a long plate drops under the line rather than squeeze it */
+.sh-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+}
+
+.sh-meta {
+  flex: 1 1 170px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.sh-mk { display: block; }
+.sh-make { font-weight: 700; color: var(--ink); }
+.sh-meta .spec-line { display: block; }
+/* the long plate never shares the row with the line: it takes its own, at the end side */
+.sh-line:has(.splate.eu) .sh-meta { flex-basis: 100%; }
+.sh-meta .spec-line { color: var(--ink-2); }
+.sh-year {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.sh-plate {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+.sh-plate-note {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+.sh-facts { margin-top: 2px; }
+
+/* the covered car */
+.sh-honest {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.sh-hints {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sh-hints li {
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.sh-hints li:last-child { border-bottom: 0; }
+
+/* ---------------------------------------------------------------- Pairs (kit): two columns of ruled facts */
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 20px;
+  margin: 0;
+}
+.pr {
+  min-width: 0;
+  padding-block: 10px 11px;
+  border-bottom: 1px solid var(--line-2);
+}
+.pr:nth-last-child(-n + 2):nth-child(odd),
+.pr:nth-last-child(-n + 2):nth-child(odd) ~ .pr { border-bottom: 0; }
+.pr dt {
+  margin: 0 0 3px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--mute);
+}
+.pr dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.pr-v { min-width: 0; overflow-wrap: anywhere; }
+.pr dd small {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.pr-mark { flex: none; }
+.pr-mark.good { color: var(--ok-700); }
+i.pr-mark.bad {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.sh-glance { margin-top: 12px; border-top: 1px solid var(--line-2); }
+
+.sh-num {
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: .01em;
+}
+.sh-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), 0 0 0 1px rgba(0, 0, 0, .5);
+}
+
+/* ---------------------------------------------------------------- the price rows */
+
+.sh-price {
+  margin-top: 6px;
+  border-top: 1px solid var(--line-2);
+}
+.sh-price .rows-r { align-items: center; padding-block: 10px; }
+.sh-price .rows-r:last-child { border-bottom: 1px solid var(--line-2); }
+.sh-price dd { white-space: nowrap; }
+.sh-money {
+  font-size: var(--t-print-m);
+  line-height: 1;
+  color: var(--ink);
+}
+.sh-unit { font-size: 13px; font-weight: 500; color: var(--mute); }
+.sh-none { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.sh-fee {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the story */
+
+.sh-sec { margin-top: 26px; }
+
+.sh-h {
+  margin: 0 0 8px;
+  font-family: var(--f-ui);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.sh-sec .sh-h + .sh-story { margin-top: 0; }
+.sh-story {
+  display: grid;
+  gap: 6px;
+}
+.sh-story p {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.sh-q { font-weight: 700; color: var(--ink); }
+.sh-story + .sh-h { margin-top: 22px; }
+
+.sh-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sh-list li {
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.sh-list li:first-child { border-top: 1px solid var(--line-2); }
+
+/* ================================================================ tabs */
+
+.sh-tabs {
+  margin-top: 22px;
+  background: var(--bg);
+}
+
+/* sticks right under the top bar; the chosen tab carries a chalk underline */
+.sh-tabbar {
+  position: sticky;
+  top: var(--top-total);
+  z-index: 20;
+  display: flex;
+  padding-inline: calc(var(--sh-g) - 6px);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line-2);
+}
+.sh-tabbar button {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--mute);
+  font-family: var(--f-ui);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: color .15s cubic-bezier(.16, 1, .3, 1);
+}
+.sh-tabbar button > span { display: inline-block; transition: transform .12s cubic-bezier(.16, 1, .3, 1); }
+.sh-tabbar button:active > span { transform: scale(.95); }
+.sh-tabbar button[aria-selected='true'] { color: var(--ink); font-weight: 700; }
+.sh-tabbar button::after {
+  content: '';
+  position: absolute;
+  inset-inline: 10px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transition: transform .2s cubic-bezier(.16, 1, .3, 1);
+}
+.sh-tabbar button[aria-selected='true']::after { transform: scaleX(1); }
+.sh-tabbar button:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+
+.sh-tabdot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-start: 4px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  vertical-align: 6px;
+}
+
+.sh-pane {
+  padding: 14px var(--sh-g) 8px;
+  /* a section chosen under the stuck bar starts below it */
+  scroll-margin-top: calc(var(--top-total) + 44px);
+}
+.sh-pane > .sh-h { margin-top: 26px; }
+
+.sh-rows .rows-r { align-items: center; }
+.sh-rows dt { max-width: 46%; }
+.sh-rows dd {
+  display: block;
+  font-size: 15px;
+  text-wrap: pretty;
+}
+/* the mark rides inline before the value, so a value that wraps keeps it on its first line */
+.sh-rows dd > .pr-mark {
+  display: inline-block;
+  margin-inline-end: 6px;
+  vertical-align: 1px;
+}
+.sh-rows dd > i.pr-mark { vertical-align: 2px; }
+.sh-rows .is-unknown dd { color: var(--mute); }
+.sh-of { font-size: 13px; font-weight: 500; color: var(--mute); }
+.sh-codes {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.sh-typ { margin-inline-start: 2px; color: var(--mute); }
+
+.sh-plain {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.sh-fine {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.sh-hist li {
+  display: grid;
+  gap: 2px;
+}
+.sh-hist b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the seller's ad, in his words */
+
+.sh-adtitle {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.sh-quote {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.sh-quote p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.sh-quote p:first-child::before { content: '«'; color: var(--mute); }
+.sh-quote p:last-child::after { content: '»'; color: var(--mute); }
+
+.sh-extras { font-size: 14px; }
+
+/* ================================================================ the body map */
+
+.sh-map {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  margin-bottom: 6px;
+}
+.dm {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dm-wheel { fill: var(--rubber-0); stroke: var(--line-2); stroke-width: .8; }
+.dm-glass { fill: var(--rubber-4); }
+.dm-p {
+  stroke: var(--rubber-0);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.dm-p.on { stroke: var(--ink); stroke-width: 2.2; }
+.dm-front { font-family: var(--f-ui); font-size: 6px; font-weight: 600; fill: var(--mute); }
+
+/* the paint states: original sits quiet in the rubber; refinish rises through alloy; the hurt panels are red;
+   unknown is a sunk hole. The letter on every panel carries the meaning, the fill only helps. */
+.dm-ok { fill: var(--rubber-5); }
+.dm-spot { fill: var(--alloy-lo); }
+.dm-paint { fill: var(--alloy-mid); }
+.dm-dent { fill: var(--alloy); }
+.dm-replaced { fill: var(--brand); }
+.dm-damaged { fill: var(--brand-lo); }
+.dm-unknown { fill: var(--rubber-1); stroke-dasharray: 2 1.5; }
+.dm-unknown.dm-p { stroke: var(--dim); }
+
+.dm-t {
+  font-family: var(--f-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.dm-t-ok { fill: var(--dim); }
+.dm-t-spot, .dm-t-paint, .dm-t-dent { fill: var(--alloy-ink); }
+.dm-t-replaced, .dm-t-damaged { fill: var(--alloy-hi); }
+.dm-t-unknown { fill: var(--mute); }
+
+/* the same letter in the same paint, beside words */
+.dm-key {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-end: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--alloy-ink);
+}
+.dm-key.dm-ok { background: var(--rubber-5); color: var(--ink-2); }
+.dm-key.dm-spot { background: var(--alloy-lo); }
+.dm-key.dm-paint { background: var(--alloy-mid); }
+.dm-key.dm-dent { background: var(--alloy); }
+.dm-key.dm-replaced { background: var(--brand); color: var(--alloy-hi); }
+.dm-key.dm-damaged { background: var(--brand-lo); color: var(--alloy-hi); }
+.dm-key.dm-unknown { background: var(--rubber-1); color: var(--mute); box-shadow: inset 0 0 0 1px var(--dim); }
+
+.dm-legend {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dm-legend li {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.sh-map-side { display: grid; gap: 14px; padding-top: 6px; }
+.sh-picked {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mute);
+}
+.sh-picked:has(.dm-key) { color: var(--ink); }
+
+.sh-panels { border-top: 1px solid var(--line-2); }
+.sh-panels .rows-r { align-items: center; padding-block: 10px; }
+.sh-panels dt { display: flex; align-items: center; max-width: 60%; color: var(--ink); font-weight: 600; }
+.sh-panels dd {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  font-size: 15px;
+}
+.sh-mic { font-size: 12.5px; font-weight: 500; color: var(--mute); }
+.sh-mic .print { font-size: 15px; color: var(--ink-2); }
+
+/* ================================================================ small phones */
+
+@media (max-width: 359px) {
+  .sh { --sh-g: 14px; }
+  .sh-title { font-size: 28px; }
+  .sh-map { grid-template-columns: 128px minmax(0, 1fr); gap: 14px; }
+  .sh-tabbar button { font-size: 13.5px; padding: 0 2px; }
+  .pairs { column-gap: 14px; }
+}
+
+/* wide screens: the photo and the body take the column's rounded shape */
+@media (min-width: 980px) {
+  .sh-photo.gallery { border-radius: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-lb { animation: none; }
+  .sh-img, .sh-lb-img, .sh-photo > .sh-fill, .sh-tabbar button::after { transition: none; }
+}
+
+/* ================================================================ #/kit: the sheet's states */
+
+.ksh-top {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 30;
+  height: var(--top-total);
+  background: var(--rubber-2);
+  border-bottom: 1px solid var(--line);
+}
+.ksh-solo { padding-top: var(--top-total); }
+.ksh-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ksh-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--dim);
+  text-underline-offset: 4px;
+}
+.sh-rows dd > .sh-codes { display: block; margin-top: 2px; }

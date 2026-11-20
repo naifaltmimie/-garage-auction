@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Body } from '../../engine/types';
+import { Icon } from './Bits';
 import { Silhouette } from './Silhouette';
 
 // Ad photos load straight from the listing CDN (no referrer). Haraj photos are kept as "h:<path>":
@@ -57,8 +58,9 @@ export function Photo({ u, full, className, onDead }: { u: string; full?: boolea
 
 const noop = () => {};
 
-/** Swipeable ad gallery: native scroll-snap, photo count, dots, tap to open full screen.
- *  Falls back to a studio silhouette when there are no photos (or every one is dead). */
+/** The car's photos: full width, native scroll-snap, a small quiet counter, tap to open the viewer.
+ *  Falls back to the studio silhouette when there are no photos (or every one is dead).
+ *  The root keeps the class `gallery` as the hook the bidding block uses to cap the photo on short phones. */
 export function Gallery({
   photos,
   body,
@@ -111,46 +113,53 @@ export function Gallery({
   const backdrop = list[cur];
 
   return (
-    <div className={`gallery ${covered ? 'covered' : ''} ${list.length ? '' : 'empty'}`}>
+    <div className={`gallery sh-photo${covered ? ' is-covered' : ''}${list.length ? '' : ' is-empty'}`}>
       {list.length ? (
         <>
           {/* phone photos are mostly portrait: one soft fill of the current photo sits behind the frame */}
-          {backdrop && <Photo key={`fill-${backdrop}`} u={backdrop} className="g-fill" onDead={noop} />}
-          <div className="g-track" ref={track} onScroll={onScroll}>
-            {list.map((u, k) => (
-              <div className="g-slide" key={u} onClick={() => !covered && setZoom(k)}>
-                {k < want && <Photo u={u} className="g-img" onDead={() => drop(u)} />}
-              </div>
-            ))}
+          {backdrop && !covered && <Photo key={`fill-${backdrop}`} u={backdrop} className="sh-fill" onDead={noop} />}
+          <div className="sh-track" ref={track} onScroll={onScroll}>
+            {list.map((u, k) =>
+              covered ? (
+                <div className="sh-slide" key={u}>
+                  {k < want && <Photo u={u} className="sh-img" onDead={() => drop(u)} />}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="sh-slide"
+                  key={u}
+                  aria-label={`افتح الصور، الصورة ${k + 1} من ${list.length}`}
+                  onClick={() => setZoom(k)}
+                >
+                  {k < want && <Photo u={u} className="sh-img" onDead={() => drop(u)} />}
+                </button>
+              ),
+            )}
           </div>
         </>
       ) : (
-        <div className="g-studio">
+        <div className="sh-studio">
           <Silhouette body={body} color={covered ? '#2a2c31' : color} mono={covered} />
         </div>
       )}
       {covered && (
-        <div className="g-cover" aria-hidden="true">
-          <span>؟</span>
+        <div className="sh-cover" aria-hidden="true">
+          <span>تحت الغطا</span>
         </div>
       )}
-      <div className="g-badges">{children}</div>
+      {children}
       {list.length > 1 && !covered && (
         <>
-          <div className="g-count ltr" aria-label={`الصورة ${cur + 1} من ${list.length}`}>
+          <div className="sh-count print ltr" aria-hidden="true">
             {cur + 1}
             <span>/{list.length}</span>
           </div>
-          <div className="g-dots" aria-hidden="true">
-            {list.slice(0, 9).map((u, k) => (
-              <i key={u} className={k === cur ? 'on' : ''} />
-            ))}
-          </div>
-          <button className="g-nav prev" aria-label="الصورة السابقة" onClick={() => go(cur - 1)} disabled={cur === 0}>
-            ›
+          <button type="button" className="sh-nav prev" aria-label="الصورة السابقة" onClick={() => go(cur - 1)} disabled={cur === 0}>
+            <Icon name="back" size={18} />
           </button>
-          <button className="g-nav next" aria-label="الصورة التالية" onClick={() => go(cur + 1)} disabled={cur >= list.length - 1}>
-            ‹
+          <button type="button" className="sh-nav next" aria-label="الصورة التالية" onClick={() => go(cur + 1)} disabled={cur >= list.length - 1}>
+            <Icon name="back" size={18} />
           </button>
         </>
       )}
@@ -160,42 +169,59 @@ export function Gallery({
 }
 
 /** Full-screen viewer, portalled to <body> so no ancestor transform or overflow can trap it.
- *  Swipe sideways for the next photo, swipe down or tap سكّر to close; pinch is the browser's own. */
+ *  Swipe sideways for the next photo, swipe down, Escape or سكّر to close; pinch is the browser's own. */
 function Lightbox({ photos, start, onClose, onDead }: { photos: string[]; start: number; onClose: () => void; onDead: (u: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const close = useRef<HTMLButtonElement>(null);
   const [i, setI] = useState(start);
   const touch = useRef<{ x: number; y: number } | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (el) el.scrollTo({ left: -start * el.clientWidth });
+    close.current?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', esc);
+    const back = document.activeElement as HTMLElement | null;
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      const el = ref.current;
+      if (!el) return;
+      // the arrows move the way the photos read: right to left
+      if (e.key === 'ArrowLeft') el.scrollBy({ left: -el.clientWidth, behavior: 'smooth' });
+      if (e.key === 'ArrowRight') el.scrollBy({ left: el.clientWidth, behavior: 'smooth' });
+      // the close button is the only stop inside the viewer: Tab stays on it
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        close.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', key);
     const root = document.documentElement;
     const prev = root.style.overflow;
     root.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('keydown', esc);
+      window.removeEventListener('keydown', key);
       root.style.overflow = prev;
+      back?.focus?.({ preventScroll: true });
     };
   }, [onClose]);
 
   return createPortal(
-    <div className="lightbox" role="dialog" aria-modal="true" aria-label="صور الإعلان">
-      <div className="lb-bar">
-        <span className="ltr lb-count">
+    <div className="sh-lb" role="dialog" aria-modal="true" aria-label="صور الإعلان">
+      <div className="sh-lb-bar">
+        <span className="sh-lb-count print ltr" role="status">
           {i + 1}
           <span>/{photos.length}</span>
         </span>
-        <button className="lb-close" onClick={onClose} aria-label="سكّر الصور">
+        <button ref={close} type="button" className="sh-lb-close" onClick={onClose}>
+          <Icon name="close" size={18} />
           سكّر
         </button>
       </div>
       <div
-        className="lb-track"
+        className="sh-lb-track"
         ref={ref}
         onScroll={() => {
           const el = ref.current;
@@ -218,12 +244,12 @@ function Lightbox({ photos, start, onClose, onDead }: { photos: string[]; start:
         }}
       >
         {photos.map((u, k) => (
-          <div className="lb-slide" key={u}>
+          <div className="sh-lb-slide" key={u}>
             {/* the gallery's light copy shows at once; the heavy original fades in over it, only for the photo on screen and its neighbours */}
             {Math.abs(k - i) <= 1 && (
               <>
-                <Photo u={u} className="lb-img lb-lo" onDead={() => onDead(u)} />
-                {k === i && <Photo u={u} full className="lb-img lb-hi" onDead={noop} />}
+                <Photo u={u} className="sh-lb-img" onDead={() => onDead(u)} />
+                {k === i && <Photo u={u} full className="sh-lb-img sh-lb-hi" onDead={noop} />}
               </>
             )}
           </div>

@@ -6,6 +6,8 @@ import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
 import { KitObjects } from '../components/kit/KitObjects';
 import { KitPlates } from '../components/kit/KitPlates';
+import { KitSheet, KitSheetSolo, sheetStateFromUrl } from '../components/kit/KitSheet';
+import { Pairs } from '../components/kit/Pairs';
 import { Rows } from '../components/kit/Rows';
 import { ScreenTitle } from '../components/kit/ScreenTitle';
 
@@ -41,6 +43,12 @@ function Sec({ title, note, children }: { title: string; note?: string; children
 }
 
 export default function Kit() {
+  const solo = sheetStateFromUrl();
+  if (solo) return <KitSheetSolo id={solo} />;
+  return <KitPage />;
+}
+
+function KitPage() {
   const [speed, setSpeed] = useState<'fast' | 'normal' | 'calm'>('normal');
   const [garage, setGarage] = useState(5);
   const [players, setPlayers] = useState(6);
@@ -239,6 +247,21 @@ export default function Kit() {
         <Field label="سيارات تحت الغطا" hint="تسوم وأنت ما تدري وش تحت الغطا">
           <Switch on={covered} onChange={setCovered} label="سيارات تحت الغطا" />
         </Field>
+      </Sec>
+
+      <Sec title="الحقائق بعمودين" note="حقائق قصيرة يقراها اللاعب بنظرة: العنوان صغير فوق القيمة، خط تحت كل زوج، والسيئة عليها نقطة حمرا.">
+        <Pairs
+          items={[
+            { k: 'الممشى', v: <><span className="print ltr sh-num">182,000</span> كم</> },
+            { k: 'المواصفات', v: 'سعودي وكالة' },
+            { k: 'درجة الفحص', v: <><span className="print ltr sh-num">4.4</span> ممتاز</>, tone: 'good' },
+            { k: 'الضرر', v: 'صدمة أمامية', tone: 'bad' },
+          ]}
+        />
+      </Sec>
+
+      <Sec title="ملف السيارة" note="الشاشة اللي يقراها اللاعب قبل لا يسوم، بكل حالاتها. كل وحدة تنفتح لحالها بمقاس الجوال.">
+        <KitSheet />
       </Sec>
 
       <KitObjects />
