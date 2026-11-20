@@ -91,6 +91,9 @@ svg.ic {
 
 .facts {
   overflow: hidden;
+  /* room under the last line for the ink below Readex's descent (the dots of ي, the tails of ج ع م), given back */
+  padding-bottom: .3em;
+  margin-bottom: -.3em;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.6;

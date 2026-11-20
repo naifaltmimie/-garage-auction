@@ -596,6 +596,9 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  /* room for the ink under the line (Readex's Arabic runs below its descent), given back */
+  padding-bottom: .3em;
+  margin-bottom: -.3em;
   font-size: 13px;
   font-weight: 500;
   color: var(--mute);

@@ -222,6 +222,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* room above and below the tight line for the Arabic ink (a hamza, a final ي), given back */
+  padding-block: .3em;
+  margin-block: -.3em;
 }
 .ptag-none {
   font: 600 14px/1.3 var(--f-ui);
