@@ -384,8 +384,7 @@
   .srv-photo { margin-inline: -14px; }
   .srv-bar { margin-inline: -14px; padding-inline: 14px; }
   .srv-value-n { font-size: 46px; }
-  .srv-verdict-k.is-on { opacity: 1; }
-.srv-value { min-height: 50px; }
+  .srv-value { min-height: 50px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
