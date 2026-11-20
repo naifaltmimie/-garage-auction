@@ -1,48 +1,34 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+// Open a night: the host's name, the market in three rows, everything else folded under one optional row,
+// and «افتح الصالة» always in thumb reach. With the defaults the room is open after the name and one tap.
+import { useEffect, useRef, useState } from 'react';
 import { sound } from '../../audio/sound';
-import { depthOf } from '../../data/depth';
 import { loadMarket } from '../../data/market';
-import { MARKETS } from '../../engine/markets';
-import { BUDGETS, DEFAULT_SETTINGS, GARAGE_SIZES } from '../../engine/rules';
-import type { Settings, Speed } from '../../engine/types';
-import { arDigits, money, roomCode, store } from '../../lib/util';
+import { DEFAULT_SETTINGS } from '../../engine/rules';
+import type { Settings } from '../../engine/types';
+import { roomCode, store } from '../../lib/util';
 import { go } from '../App';
-import { toNum } from '../components/Console';
+import { Icon } from '../components/Bits';
+import { Facts } from '../components/kit/Facts';
+import { ScreenTitle } from '../components/kit/ScreenTitle';
+import { MarketPicker, SettingsFields, settingsFacts } from '../components/SettingsFields';
 import { createHostRoom } from '../useRoom';
-
-function Toggle({ on, set, title, note }: { on: boolean; set: (v: boolean) => void; title: string; note: string }) {
-  return (
-    <button type="button" className="toggle" role="switch" aria-checked={on} onClick={() => set(!on)}>
-      <span>
-        <b>{title}</b>
-        <small>{note}</small>
-      </span>
-      <span className="switch" />
-    </button>
-  );
-}
 
 export function Create() {
   const [name, setName] = useState(() => store.get('mzk:name', ''));
   const [s, setS] = useState<Settings>({ ...DEFAULT_SETTINGS });
-  const [custom, setCustom] = useState('');
   const [tried, setTried] = useState(false);
+  const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((x) => ({ ...x, [k]: v }));
-  const preset = BUDGETS.find((b) => b.amount === s.budget);
-  const ok = name.trim().length >= 2 && s.budget >= 50_000;
-  // how many real ads each market has at its own budget
-  const depth = useMemo(
-    () => Object.fromEntries(MARKETS.map((m) => [m.id, depthOf({ ...DEFAULT_SETTINGS, mix: m.id, budget: m.budget })])),
-    [],
-  );
+  const [hadName] = useState(() => name.trim().length >= 2);
+  const set = (p: Partial<Settings>) => setS((x) => ({ ...x, ...p }));
+  const nameBad = name.trim().length < 2;
   // this phone is about to host: fetch the car market while the settings are being picked
   useEffect(() => {
     loadMarket().catch(() => {});
   }, []);
 
   const submit = () => {
-    if (!ok) {
+    if (nameBad) {
       // the button stays live: a tap on it says what's missing instead of sitting there greyed out
       setTried(true);
       nameRef.current?.focus();
@@ -55,173 +41,88 @@ export function Create() {
   };
 
   return (
-    <main className="shell narrow create">
-      <div className="page-head">
-        <button className="btn btn-quiet" onClick={() => go('/')}>رجوع</button>
+    <main className="shell narrow lby-create">
+      <div className="lby-top">
+        <button type="button" className="lby-chalk lby-back" onClick={() => go('/')}>
+          <Icon name="back" size={18} />
+          رجوع
+        </button>
       </div>
       <form
-        className="stack"
-        style={{ gap: 18 }}
+        className="lby-form"
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
       >
-        <div>
-          <h1 className="section-title">افتح الصالة</h1>
-          <p className="section-sub">أنت الدلال، وتسوم مع الشباب بعد.</p>
-        </div>
+        <ScreenTitle caption="أنت الدلال، وتسوم مع الشباب بعد">افتح صالة</ScreenTitle>
 
-        <section className="card form-card">
-        <label className="field">
-          <span>اسمك</span>
+        <label className="lby-name">
+          <span className="lby-label">اسمك</span>
           <input
             ref={nameRef}
-            className="input"
+            className="lby-input"
             value={name}
-            maxLength={18}
+            maxLength={24}
             onChange={(e) => setName(e.target.value)}
-            placeholder="نايف"
+            placeholder="مثلًا: نايف"
             autoComplete="nickname"
-            enterKeyHint="next"
-            aria-invalid={tried && name.trim().length < 2}
-            aria-describedby={tried && name.trim().length < 2 ? 'create-name-hint' : undefined}
+            autoCapitalize="words"
+            enterKeyHint="go"
+            autoFocus={!hadName}
+            aria-invalid={tried && nameBad}
+            aria-describedby={tried && nameBad ? 'lby-name-err' : undefined}
           />
-          {tried && name.trim().length < 2 && (
-            <small id="create-name-hint" className="field-hint" role="alert">
-              اكتب اسمك أول، حرفين على الأقل
-            </small>
+          <small id="lby-name-err" className="lby-err" role="alert">
+            {tried && nameBad ? 'اكتب اسمك أول، حرفين على الأقل' : ''}
+          </small>
+        </label>
+
+        <section className="lby-sec" aria-labelledby="lby-mk-h">
+          <h2 className="lby-h" id="lby-mk-h">
+            سوق الليلة
+          </h2>
+          <MarketPicker value={s.mix} set={set} />
+        </section>
+
+        <section className="lby-more">
+          <button type="button" className="lby-more-btn" aria-expanded={open} aria-controls="lby-more-body" onClick={() => setOpen((x) => !x)}>
+            <span className="lby-more-t">
+              <b>تفاصيل المزاد (اختياري)</b>
+              <Facts items={settingsFacts(s)} />
+            </span>
+            <span className="lby-more-ic" aria-hidden="true">
+              <Icon name={open ? 'minus' : 'plus'} size={18} />
+            </span>
+          </button>
+          {open && (
+            <div className="lby-more-body" id="lby-more-body">
+              <label className="lby-name lby-roomname">
+                <span className="lby-label">اسم الصالة</span>
+                <span className="lby-hint">يطلع للشباب فوق الصالة وعلى شاشة العرض</span>
+                <input
+                  className="lby-input"
+                  value={s.roomName}
+                  maxLength={28}
+                  onChange={(e) => set({ roomName: e.target.value })}
+                  placeholder={name.trim() ? `مزاد ${name.trim()}` : 'مزاد الليلة'}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                />
+              </label>
+              <SettingsFields s={s} set={set} />
+            </div>
           )}
-        </label>
-        <label className="field">
-          <span>اسم الصالة</span>
-          <input className="input" value={s.roomName} maxLength={28} onChange={(e) => set('roomName', e.target.value)} placeholder={name ? `مزاد ${name}` : 'مزاد الليلة'} />
-        </label>
-
         </section>
 
-        <section className="card form-card">
-        <div className="field">
-          <span>سوق الليلة</span>
-          <div className="markets" role="radiogroup" aria-label="سوق الليلة">
-            {MARKETS.map((m) => (
-              <button
-                type="button"
-                key={m.id}
-                role="radio"
-                className="market"
-                aria-checked={s.mix === m.id}
-                onClick={() => {
-                  setS((x) => ({ ...x, mix: m.id, budget: m.budget }));
-                  setCustom('');
-                }}
-              >
-                <b>{m.label}</b>
-                <small>{m.note}</small>
-                <span className="market-count">{arDigits(depth[m.id] ?? 0)} سيارة</span>
-              </button>
-            ))}
+        <div className="lby-bar">
+          <div className="lby-bar-in">
+            <button type="submit" className="btn btn-primary btn-block lby-go">
+              افتح الصالة
+            </button>
           </div>
         </div>
-
-        <div className="field">
-          <span>ميزانية كل لاعب</span>
-          <div className="budgets">
-            {BUDGETS.map((b) => (
-              <button type="button" key={b.key} className="budget" aria-pressed={s.budget === b.amount} onClick={() => { set('budget', b.amount); setCustom(''); }}>
-                <b>{b.label}</b>
-                <span className="t-money">{money(b.amount)}</span>
-                <small>{b.note}</small>
-              </button>
-            ))}
-          </div>
-          <input
-            className="input"
-            inputMode="numeric"
-            placeholder="أو اكتب مبلغ ثاني"
-            value={custom}
-            onChange={(e) => {
-              const v = e.target.value.replace(/[^\d٠-٩]/g, '');
-              setCustom(v);
-              const n = toNum(v);
-              if (n >= 50_000) set('budget', Math.min(50_000_000, n));
-            }}
-            style={{ direction: 'ltr', textAlign: 'center', fontWeight: 900, fontSize: 20 }}
-          />
-          {!preset && <small className="mute">ميزانية خاصة: {money(s.budget)} ريال</small>}
-        </div>
-        </section>
-
-        <section className="card form-card">
-
-        <div className="field">
-          <span>كم سيارة يشيل الكراج</span>
-          <div className="seg">
-            {GARAGE_SIZES.map((n) => (
-              <button type="button" key={n} aria-pressed={s.garage === n} onClick={() => set('garage', n)} aria-label={`${n} سيارات`}>
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="row between wrap">
-          <div className="field">
-            <span>أقصى عدد لاعبين</span>
-            <div className="stepper">
-              <button type="button" onClick={() => set('maxPlayers', Math.max(2, s.maxPlayers - 1))} aria-label="أقل">−</button>
-              <output>{arDigits(s.maxPlayers)}</output>
-              <button type="button" onClick={() => set('maxPlayers', Math.min(10, s.maxPlayers + 1))} aria-label="أكثر">+</button>
-            </div>
-          </div>
-          <div className="field">
-            <span>عدد السيارات بالمزاد</span>
-            <div className="stepper">
-              <button type="button" onClick={() => set('lots', s.lots <= 8 ? 0 : s.lots - 2)} aria-label="أقل">−</button>
-              <output style={{ fontSize: s.lots ? 28 : 18 }}>{s.lots ? arDigits(s.lots) : 'تلقائي'}</output>
-              <button type="button" onClick={() => set('lots', Math.min(40, (s.lots || 10) + 2))} aria-label="أكثر">+</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="field">
-          <span>سرعة المزاد</span>
-          <div className="seg">
-            {([['fast', 'سريع'], ['normal', 'عادي'], ['calm', 'هادي']] as [Speed, string][]).map(([k, l]) => (
-              <button type="button" key={k} aria-pressed={s.speed === k} onClick={() => set('speed', k)}>
-                {l}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        </section>
-
-        <div className="stack" style={{ gap: 8 }}>
-          <Toggle on={s.estimate} set={(v) => set('estimate', v)} title="تقدير الدلال يظهر" note="سعر تقريبي على كل سيارة، طفّه لو تبيها أصعب" />
-          <Toggle on={s.covered} set={(v) => set('covered', v)} title="سيارات تحت الغطا" note="تسوم وأنت ما تدري وش تحت الغطا" />
-          <Toggle on={s.sealed} set={(v) => set('sealed', v)} title="الظرف المختوم" note="سوم سري مرة وحدة، وأعلى ظرف ياخذها" />
-          <Toggle on={s.dutch !== false} set={(v) => set('dutch', v)} title="المزاد الهولندي (ينزل السعر)" note="السعر يبدأ عالي وينزل، وأول واحد يقول أبيها ياخذها" />
-          <Toggle on={s.fee > 0} set={(v) => set('fee', v ? 2.5 : 0)} title="السعي والضريبة" note="سعي 2.5% وضريبته 15% و150 ريال نقل ملكية، مثل الحراج" />
-        </div>
-
-        <div className="card form-card">
-        <div className="field">
-          <span>وزن تقييم الشباب في النتيجة</span>
-          <div className="seg">
-            {[0.3, 0.5, 0.7].map((w) => (
-              <button type="button" key={w} aria-pressed={s.ratingWeight === w} onClick={() => set('ratingWeight', w)}>
-                <span className="ltr">{Math.round(w * 100)}%</span>
-              </button>
-            ))}
-          </div>
-          <small className="mute">الباقي على الشطارة: كم ربحت من السيارات اللي شريتها</small>
-        </div>
-        </div>
-
-        <button className="btn btn-gold btn-block create-go" style={{ minHeight: 58, fontSize: 19 }}>
-          افتح الصالة
-        </button>
       </form>
     </main>
   );

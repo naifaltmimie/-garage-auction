@@ -1,17 +1,19 @@
-import { useState } from 'react';
+// The lobby: the host gathers the friends and starts; a player waits calmly and can't press anything by mistake.
+// Host: the room's name, the invitation on paper (code, QR, copy, send), the big-screen row, the players as ruled
+// rows, the conditions in one line with «عدّل», and the start button in a sticky bottom bar.
+// Player: the room's name, the wait, the conditions, the players, the code with a share action, the game in three lines.
+import { useEffect, useState } from 'react';
 import { sound } from '../../audio/sound';
-import { depthOf } from '../../data/depth';
-import { BUDGETS, GARAGE_SIZES, lotsFor } from '../../engine/rules';
-import { MARKETS } from '../../engine/markets';
-import type { Mix, Speed } from '../../engine/types';
-import { carsN, money } from '../../lib/util';
-import { Icon, QR } from '../components/Bits';
-import { TvGlyph, openTv } from './Tv';
-import { MiniPlate, Paddle } from '../components/Plate';
+import { Icon, Portal, QR, useSheet } from '../components/Bits';
+import { Facts, type Fact } from '../components/kit/Facts';
+import { ScreenTitle } from '../components/kit/ScreenTitle';
+import { Paddle } from '../components/Plate';
+import { MarketPicker, SettingsFields, settingsFacts } from '../components/SettingsFields';
+import { TireLoader } from '../components/TireLoader';
+import type { PlayerPub as Player } from '../../engine/types';
 import type { RoomView } from '../useRoom';
 import { useBack } from '../App';
-import { useEffect } from 'react';
-import { Wheel } from '../components/Wheel';
+import { openTv } from './Tv';
 
 /** The room code on a white paper plate, like a real number plate: black letters, a thin dark border, two screws. */
 export function CodePlate({ code, className, onClick }: { code: string; className?: string; onClick?: () => void }) {
@@ -29,25 +31,34 @@ export function CodePlate({ code, className, onClick }: { code: string; classNam
   );
 }
 
-const SPEED_AR: Record<Speed, string> = { fast: 'سريع', normal: 'عادي', calm: 'هادي' };
-const MIX_AR = Object.fromEntries(MARKETS.map((x) => [x.id, x.label])) as Record<Mix, string>;
+/** A short "done" word that goes back after a moment (copied, sent). */
+function useFlash(ms = 1800): [string | null, (k: string) => void] {
+  const [k, setK] = useState<string | null>(null);
+  useEffect(() => {
+    if (!k) return;
+    const t = setTimeout(() => setK(null), ms);
+    return () => clearTimeout(t);
+  }, [k, ms]);
+  return [k, setK];
+}
 
 export function Lobby({ room }: { room: RoomView }) {
   const core = room.snap.core!;
   const s = core.settings;
   const link = `${location.origin}/#/r/${room.code}`;
-  const [copied, setCopied] = useState(false);
+  const [flash, setFlash] = useFlash();
   const [edit, setEdit] = useState(false);
-  // removing someone takes a second tap on the same button within a few seconds
   const [kickAsk, setKickAsk] = useState<string | null>(null);
-  useEffect(() => {
-    if (!kickAsk) return;
-    const t = setTimeout(() => setKickAsk(null), 3500);
-    return () => clearTimeout(t);
-  }, [kickAsk]);
   const active = core.players.filter((p) => !p.spectator);
   const host = core.players.find((p) => p.host);
-  const msg = `${s.roomName || 'مزاد الكراج'} فاتح الحين\nادخل الصالة وسُم معنا:\n${link}\nكود الصالة: ${room.code}`;
+  const isHost = !!room.host;
+  const title = s.roomName.trim() || (host ? `مزاد ${host.name}` : 'مزاد الكراج');
+  const msg = `${title} فاتح الحين\nادخل الصالة وسُم معنا:\n${link}\nكود الصالة: ${room.code}`;
+
+  // someone removed or gone: drop a pending kick question about them
+  useEffect(() => {
+    if (kickAsk && !core.players.some((p) => p.id === kickAsk)) setKickAsk(null);
+  }, [kickAsk, core.players]);
 
   const share = async () => {
     try {
@@ -60,262 +71,289 @@ export function Lobby({ room }: { room: RoomView }) {
     }
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
-  const copy = async () => {
+  const copyCode = async () => {
     try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      await navigator.clipboard.writeText(room.code);
+      setFlash('code');
     } catch {
-      /* ignore */
+      /* no clipboard: the code is on screen to read out */
     }
   };
 
+  const players = (
+    <section className="lby-sec" aria-labelledby="lby-pl-h">
+      <div className="lby-sec-head">
+        <h2 className="lby-h" id="lby-pl-h">
+          المزايدين
+        </h2>
+        <span className="lby-count">
+          <span className="ltr">{active.length}</span> من <span className="ltr">{s.maxPlayers}</span>
+        </span>
+      </div>
+      <ul className="lby-players">
+        {core.players.map((p) => (
+          <PlayerRow
+            key={p.id}
+            p={p}
+            me={p.id === room.myId}
+            canKick={isHost && !p.host}
+            asking={kickAsk === p.id}
+            onAsk={() => setKickAsk(p.id)}
+            onCancel={() => setKickAsk(null)}
+            onKick={() => {
+              setKickAsk(null);
+              room.host!.kick(p.id);
+            }}
+          />
+        ))}
+      </ul>
+      {active.length < 2 && (
+        <p className="lby-empty" role="status">
+          <b>ما دخل أحد للحين</b>
+          <span>{isHost ? 'أرسل لهم الرابط، أو خلهم يصوّرون الكود' : 'أول ما يدخل أحد يطلع هنا'}</span>
+        </p>
+      )}
+    </section>
+  );
+
+  const conditions = (
+    <section className="lby-sec lby-cond" aria-labelledby="lby-cond-h">
+      <div className="lby-sec-head">
+        <h2 className="lby-h" id="lby-cond-h">
+          شروط المزاد
+        </h2>
+        {isHost && (
+          <button type="button" className="lby-chalk" onClick={() => setEdit(true)}>
+            <Icon name="settings" size={18} />
+            عدّل
+          </button>
+        )}
+      </div>
+      <div className="lby-cond-line" role={isHost ? undefined : 'status'} aria-live={isHost ? undefined : 'polite'}>
+        <Facts items={settingsFacts(s, { market: true })} />
+      </div>
+    </section>
+  );
+
+  if (!isHost) {
+    return (
+      <main className="shell narrow lby lby-player">
+        <ScreenTitle caption={host ? `${host.name} هو الدلال الليلة` : undefined}>{title}</ScreenTitle>
+        <div className="lby-wait">
+          <TireLoader size={64} label="بانتظار الدلال يبدأ" />
+        </div>
+        {conditions}
+        {players}
+        <section className="lby-sec codebox lby-coderow" aria-label="كود الصالة">
+          <span className="lby-coderow-k">كود الصالة</span>
+          <span className="code ltr">{room.code}</span>
+          <button type="button" className="lby-chalk" onClick={share}>
+            <Icon name="share" size={18} />
+            أرسل الرابط
+          </button>
+        </section>
+        {!sound.prefs.voice && <VoiceRow />}
+        <section className="lby-sec" aria-labelledby="lby-how-h">
+          <h2 className="lby-h" id="lby-how-h">
+            اللعبة
+          </h2>
+          <ul className="lby-how">
+            <li>
+              <Icon name="gavel" size={20} />
+              سُم بزر واحد
+            </li>
+            <li>
+              <Icon name="car" size={20} />
+              اللي ترسي عليه ياخذها
+            </li>
+            <li>
+              <Icon name="trophy" size={20} />
+              آخر الليل تقيّمون الكراجات
+            </li>
+          </ul>
+        </section>
+      </main>
+    );
+  }
+
+  const n = active.length;
+  const full = n >= s.maxPlayers;
   return (
-    <main className="shell" style={{ maxWidth: 980 }}>
-      <div className="stack" style={{ gap: 14 }}>
-        <div className="rise lb-head">
-          <h1 className="lb-title">{host ? `مزاد ${host.name}` : s.roomName || 'مزاد الكراج'}</h1>
+    <main className="shell narrow lby lby-host">
+      <ScreenTitle caption="خلّ جوالك مفتوح على الصفحة، المزاد يمشي من عندك">{title}</ScreenTitle>
+
+      <section className="codebox lby-invite" aria-label="الدعوة">
+        <div className="lby-paper">
+          <div className="lby-paper-code">
+            <span className="lby-paper-k">كود الصالة</span>
+            <span className="code ltr">{room.code}</span>
+            <span className="lby-paper-k">صوّر الرمز أو اكتب الكود</span>
+          </div>
+          <i className="lby-paper-cut" aria-hidden="true" />
+          <QR text={link} size={104} />
         </div>
+        <div className="lby-acts">
+          <button type="button" className="lby-chalk" onClick={copyCode}>
+            <Icon name={flash === 'code' ? 'check' : 'copy'} size={18} />
+            <span aria-live="polite">{flash === 'code' ? 'انتسخ الكود' : 'انسخ الكود'}</span>
+          </button>
+          <button type="button" className="lby-chalk" onClick={share}>
+            <Icon name="share" size={18} />
+            أرسل الرابط
+          </button>
+        </div>
+      </section>
 
-        {!room.host && (
-          <section className="lobby-wait" aria-label="بانتظار الدلال">
-            <Wheel size={112} spin="slow" className="has-ground" />
-            <h2 className="lw-title">بانتظار الدلال يبدأ</h2>
-            <p className="lw-sub">
-              {host ? <><b>{host.name}</b> يفتح المزاد بأي لحظة، </> : null}جهّز نفسك
-            </p>
-            <div className="lw-rack" aria-label={`بالصالة ${active.length}`}>
-              {active.map((p) => (
-                <span className="lw-seat" key={p.id}>
-                  <Paddle n={p.paddle} me={p.id === room.myId} />
-                  <small>{p.name}</small>
-                  {p.id === room.myId && <em className="lw-me">أنت</em>}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+      <button type="button" className="lby-row" onClick={() => openTv(room.code)}>
+        <Icon name="tv" size={22} />
+        <span className="lby-row-t">
+          <b>افتح شاشة العرض</b>
+          <small>على التلفزيون أو اللابتوب، الكل يشوف السوم</small>
+        </span>
+        <Icon name="arrow-left" size={18} className="lby-row-go" />
+      </button>
 
-        <div className="lobby-grid">
-          <section className="codebox lb-block">
-            <div className="t-label">كود الصالة</div>
-            <div className="cb-pair">
-              <CodePlate code={room.code} onClick={copy} />
-              <QR text={link} />
-            </div>
-            <div className="share-row">
-              <button className={`btn ${room.host ? 'btn-ghost' : 'btn-primary'}`} onClick={share}>
-                <Icon name="share" /> أرسل الرابط للشباب
-              </button>
-              <button className="btn btn-ghost" onClick={copy} aria-label="انسخ الرابط">
-                <Icon name="copy" /> {copied ? 'انتسخ' : 'انسخ'}
-              </button>
-            </div>
-            <small className="mute">اللي جنبك يصوّر الكود، واللي بعيد ترسل له الرابط</small>
-            {room.role === 'host' && (
-              <button className="btn btn-ghost btn-block tv-open" onClick={() => openTv(room.code)}>
-                <TvGlyph /> افتح شاشة العرض
-              </button>
+      {players}
+      {conditions}
+
+      <div className="lby-bar">
+        <div className="lby-bar-in">
+          <p className="lby-bar-line" role="status">
+            {n < 2 ? (
+              'أنت لحالك بالصالة · جرّب قبل لا يدخلون'
+            ) : (
+              <>
+                بالصالة <span className="ltr">{n}</span> · {full ? 'الصالة فلّت' : 'ننتظر أحد؟'}
+              </>
             )}
-          </section>
-
-          <div className="stack" style={{ gap: 14 }}>
-            <section className="lb-block">
-              <div className="card-head">
-                <h2>المزايدين</h2>
-                <span className="chip">
-                  <span className="ltr">
-                    {active.length}/{s.maxPlayers}
-                  </span>
-                </span>
-              </div>
-              <div className="players">
-                {core.players.map((p) => (
-                  <div className="player-row" key={p.id}>
-                    <Paddle n={p.paddle} me={p.id === room.myId} />
-                    <div className="grow">
-                      <div className="name">
-                        {p.name} {p.id === room.myId && <em className="lw-me">أنت</em>}
-                      </div>
-                      <div className="row" style={{ gap: 6, marginTop: 2 }}>
-                        <MiniPlate letters={p.plate} />
-                        {p.host && <span className="chip chip-host">الدلال</span>}
-                        {p.spectator && <span className="chip">متفرج</span>}
-                      </div>
-                    </div>
-                    <span className={`netdot ${p.online ? '' : 'off'}`} title={p.online ? 'متصل' : 'مقطوع'} />
-                    {room.host && !p.host && (
-                      <button
-                        className={`btn ${kickAsk === p.id ? 'btn-primary rm-danger-solid' : 'btn-quiet'}`}
-                        style={kickAsk === p.id ? undefined : { color: 'var(--red)' }}
-                        onClick={() => {
-                          if (kickAsk === p.id) {
-                            setKickAsk(null);
-                            room.host!.kick(p.id);
-                          } else setKickAsk(p.id);
-                        }}
-                        aria-label={kickAsk === p.id ? `أكّد تطليع ${p.name}` : `طلّع ${p.name}`}
-                      >
-                        {kickAsk === p.id ? 'أكيد؟' : 'طلّع'}
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {active.length < 2 && (
-                  <div className="empty-slot" role="status">
-                    <span className="es-tx">
-                      <b>بانتظار الشباب يدخلون…</b>
-                      <small>أرسل لهم الرابط، أو خلهم يصوّرون الكود</small>
-                    </span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="lb-block">
-              <div className="card-head">
-                <h2>شروط المزاد</h2>
-                {room.host && (
-                  <button className="btn btn-quiet" onClick={() => setEdit(true)}>
-                    عدّل
-                  </button>
-                )}
-              </div>
-              <dl className="settings-list">
-                <div>
-                  <dt>ميزانية كل لاعب</dt>
-                  <dd className="t-money" style={{ fontSize: 19 }}>{money(s.budget)}</dd>
-                </div>
-                <div>
-                  <dt>الكراج</dt>
-                  <dd>{carsN(s.garage)}</dd>
-                </div>
-                <div>
-                  <dt>السيارات بالمزاد</dt>
-                  <dd>{carsN(Math.max(1, Math.min(lotsFor(s, active.length), depthOf(s))))}</dd>
-                </div>
-                <div>
-                  <dt>السرعة والسوق</dt>
-                  <dd>
-                    {SPEED_AR[s.speed]}، {MIX_AR[s.mix]}
-                  </dd>
-                </div>
-                <div>
-                  <dt>تقدير الدلال</dt>
-                  <dd>{s.estimate ? 'يظهر' : 'مخفي'}</dd>
-                </div>
-                <div>
-                  <dt>السعي</dt>
-                  <dd>{s.fee > 0 ? <><span className="ltr">{s.fee}%</span> وضريبته</> : 'بدون'}</dd>
-                </div>
-                <div>
-                  <dt>طرق البيع</dt>
-                  <dd>{['علني', s.covered ? 'تحت الغطا' : null, s.sealed ? 'ظرف مختوم' : null, s.dutch !== false ? 'هولندي' : null].filter(Boolean).join('، ')}</dd>
-                </div>
-                <div>
-                  <dt>النتيجة</dt>
-                  <dd>
-                    <span className="ltr">{Math.round(s.ratingWeight * 100)}%</span> تقييم، <span className="ltr">{Math.round((1 - s.ratingWeight) * 100)}%</span> شطارة
-                  </dd>
-                </div>
-              </dl>
-            </section>
-          </div>
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary btn-gold btn-block lby-go"
+            onClick={() => {
+              sound.unlock();
+              room.host!.start();
+            }}
+          >
+            {n < 2 ? 'ابدأ تجربة لحالك' : 'ابدأ المزاد'}
+          </button>
         </div>
-
-        {room.role === 'player' && !sound.prefs.voice && (
-          <div className="lb-block row between">
-            <span className="mute" style={{ fontWeight: 600 }}>كل واحد ببيته؟ شغّل صوت الدلال على جوالك</span>
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                sound.unlock();
-                sound.setPrefs({ voice: true });
-              }}
-            >
-              شغّل الصوت
-            </button>
-          </div>
-        )}
-
-        {room.host ? (
-          <div className="stack" style={{ gap: 6 }}>
-            <button
-              className="btn btn-gold btn-block"
-              style={{ minHeight: 60, fontSize: 19 }}
-              onClick={() => {
-                sound.unlock();
-                room.host!.start();
-              }}
-            >
-              {active.length < 2 ? 'ابدأ تجربة لحالك' : 'ابدأ المزاد'}
-            </button>
-            <small className="mute" style={{ textAlign: 'center' }}>خل جوالك مفتوح على الصفحة، المزاد يمشي من عندك</small>
-          </div>
-        ) : null}
       </div>
 
-      {edit && room.host && <SettingsDrawer room={room} onClose={() => setEdit(false)} />}
+      {edit && <SettingsSheet room={room} onClose={() => setEdit(false)} />}
     </main>
   );
 }
 
-function SettingsDrawer({ room, onClose }: { room: RoomView; onClose: () => void }) {
-  useBack(true, onClose);
-  const s = room.snap.core!.settings;
-  const set = room.host!.settings;
+/** One bidder as a ruled row: paddle, name, the facts about him, and for the host a «طلّع» that asks first. */
+function PlayerRow({
+  p,
+  me,
+  canKick,
+  asking,
+  onAsk,
+  onCancel,
+  onKick,
+}: {
+  p: Player;
+  me: boolean;
+  canKick: boolean;
+  asking: boolean;
+  onAsk: () => void;
+  onCancel: () => void;
+  onKick: () => void;
+}) {
+  const facts: Fact[] = [];
+  if (me) facts.push('أنت');
+  if (p.host) facts.push('الدلال');
+  if (p.spectator) facts.push('متفرج');
+  if (!p.online) facts.push({ t: 'مقطوع', tone: 'warn' });
   return (
-    <>
-      <div className="drawer-back" onClick={onClose} />
-      <div className="drawer" role="dialog" aria-label="شروط المزاد">
-        <h3>شروط المزاد</h3>
-        <div className="stack">
-          <div className="markets markets-compact" role="radiogroup" aria-label="سوق الليلة">
-            {MARKETS.map((m) => (
-              <button type="button" key={m.id} role="radio" className="market" aria-checked={s.mix === m.id} onClick={() => set({ mix: m.id, budget: m.budget })}>
-                <b>{m.label}</b>
-              </button>
-            ))}
+    <li className={`lby-p ${asking ? 'is-asking' : ''}`}>
+      <div className="lby-p-main">
+        <Paddle n={p.paddle} me={me} />
+        <div className="lby-p-t">
+          <span className="lby-p-name">{p.name}</span>
+          {facts.length > 0 && <Facts items={facts} className="lby-p-facts" />}
+        </div>
+        {canKick && !asking && (
+          <button type="button" className="lby-chalk lby-kick" onClick={onAsk} aria-label={`طلّع ${p.name}`}>
+            طلّع
+          </button>
+        )}
+      </div>
+      {asking && (
+        <div className="lby-ask" role="alert">
+          <span>تطلّع {p.name} من الصالة؟</span>
+          <div className="lby-ask-acts">
+            <button type="button" className="lby-chalk" onClick={onCancel}>
+              لا، خله
+            </button>
+            <button type="button" className="lby-danger" onClick={onKick}>
+              إيه، طلّعه
+            </button>
           </div>
-          <div className="budgets">
-            {BUDGETS.map((b) => (
-              <button type="button" key={b.key} className="budget" aria-pressed={s.budget === b.amount} onClick={() => set({ budget: b.amount })}>
-                <b>{b.label}</b>
-                <span className="t-money">{money(b.amount)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="seg">
-            {GARAGE_SIZES.map((n) => (
-              <button key={n} aria-pressed={s.garage === n} onClick={() => set({ garage: n })} aria-label={`كراج ${n} سيارات`}>
-                {n}
-              </button>
-            ))}
-          </div>
-          <div className="seg">
-            {(['fast', 'normal', 'calm'] as Speed[]).map((k) => (
-              <button key={k} aria-pressed={s.speed === k} onClick={() => set({ speed: k })}>
-                {SPEED_AR[k]}
-              </button>
-            ))}
-          </div>
-          <div className="seg">
-            {[0, 12, 16, 20, 24, 30].map((n) => (
-              <button key={n} aria-pressed={s.lots === n} onClick={() => set({ lots: n })}>
-                {n ? n : 'تلقائي'}
-              </button>
-            ))}
-          </div>
-          <div className="seg">
-            <button aria-pressed={s.estimate} onClick={() => set({ estimate: !s.estimate })}>التقدير {s.estimate ? 'يظهر' : 'مخفي'}</button>
-            <button aria-pressed={s.covered} onClick={() => set({ covered: !s.covered })}>تحت الغطا</button>
-            <button aria-pressed={s.sealed} onClick={() => set({ sealed: !s.sealed })}>ظرف مختوم</button>
-            <button aria-pressed={s.dutch !== false} aria-label="المزاد الهولندي (ينزل السعر)" title="المزاد الهولندي (ينزل السعر)" onClick={() => set({ dutch: s.dutch === false })}>هولندي</button>
-            <button aria-pressed={s.fee > 0} onClick={() => set({ fee: s.fee > 0 ? 0 : 2.5 })}>السعي</button>
-          </div>
-          <button className="btn btn-primary btn-block" onClick={onClose}>تمام</button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** The player's own voice switch, for nights where everyone plays from home. */
+function VoiceRow() {
+  const [on, setOn] = useState(sound.prefs.voice);
+  if (on) return null;
+  return (
+    <button
+      type="button"
+      className="lby-row"
+      onClick={() => {
+        sound.unlock();
+        sound.setPrefs({ voice: true });
+        setOn(true);
+      }}
+    >
+      <Icon name="sound" size={22} />
+      <span className="lby-row-t">
+        <b>شغّل صوت الدلال</b>
+        <small>كل واحد ببيته؟ تسمعه من جوالك</small>
+      </span>
+    </button>
+  );
+}
+
+/** The host's settings sheet: the market and every setting, the same fields Create shows. Changes apply at once. */
+function SettingsSheet({ room, onClose }: { room: RoomView; onClose: () => void }) {
+  useBack(true, onClose);
+  const ref = useSheet<HTMLDivElement>(onClose);
+  const core = room.snap.core!;
+  const s = core.settings;
+  const set = room.host!.settings;
+  const n = core.players.filter((p) => !p.spectator).length;
+  return (
+    <Portal>
+      <div className="drawer-back lby-sheet-back" onClick={onClose} />
+      <div ref={ref} className="lby-sheet" role="dialog" aria-modal="true" aria-labelledby="lby-sheet-h" tabIndex={-1}>
+        <div className="lby-sheet-head">
+          <ScreenTitle as="h2" caption="الشباب يشوفون أي تغيير على طول">
+            <span id="lby-sheet-h">شروط المزاد</span>
+          </ScreenTitle>
+        </div>
+        <div className="lby-sheet-body">
+          <section className="lby-sec" aria-labelledby="lby-sheet-mk">
+            <h3 className="lby-h" id="lby-sheet-mk">
+              سوق الليلة
+            </h3>
+            <MarketPicker value={s.mix} set={set} />
+          </section>
+          <SettingsFields s={s} set={set} players={n} />
+        </div>
+        <div className="lby-sheet-foot">
+          <button type="button" className="btn btn-primary btn-block lby-go" onClick={onClose}>
+            تمام
+          </button>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
