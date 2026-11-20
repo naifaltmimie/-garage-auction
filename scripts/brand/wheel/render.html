@@ -3,27 +3,30 @@
 <head>
 <meta charset="utf-8">
 <title>wheel render</title>
-<script type="importmap">{ "imports": { "three": "/three/three.module.js", "three/": "/three/" } }</script>
+<script type="importmap">{ "imports": { "three": "/three/three.module.js", "three/": "/three/", "three/addons/": "/jsm/" } }</script>
 <style>html,body{margin:0;background:#111214}</style>
 </head>
 <body>
 <script type="module">
 import * as THREE from 'three';
-import { buildTyre, buildRim, buildBrake, envAxis, envStudio, treadDepth } from './scene.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { buildTyre, buildRim, buildBrake, envAxis, envStudio, treadDepth, buildTreadPlane, PITCHES } from './scene.js';
 
 const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
-let parts;
-function getParts() {
-  if (!parts) parts = { tyre: buildTyre(), rim: buildRim(), brake: buildBrake() };
-  return parts;
-}
+// tuning knobs, settable from render.py through window.P before a render
+window.P = Object.assign({ exposure: 1.0, heroExposure: 1.25, fullExposure: 1.15, keyLight: 3, rimLight: 1.1, heroYaw: 32, heroPitch: 9, aoRadius: 0.2 }, window.P || {});
+
+const cache = {};
+const part = (k, f) => (cache[k] ||= f());
 const E = 1 / 0.94; // 3% margin on each side
 
 function ortho() {
@@ -32,15 +35,42 @@ function ortho() {
   return c;
 }
 
-function treadCanvas(w, h, pitches, mode) {
-  // the tread face laid flat: x = rolling direction (pitches across, tiles), y = across the tread
+function shot(scene, cam, w, h) {
+  renderer.setSize(w, h, false);
+  renderer.render(scene, cam);
+  return renderer.domElement.toDataURL('image/png');
+}
+
+function shadowPlane() {
+  // the soft dark ellipse under the tyre: a wide penumbra and a tight contact core, alpha only
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const x = c.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, 1024, 512);
+  const blob = (sx, sy, a0, a1) => {
+    x.save(); x.translate(512, 256); x.scale(sx, sy);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, 256);
+    g.addColorStop(0, `rgba(255,255,255,${a0})`); g.addColorStop(0.5, `rgba(255,255,255,${a1})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, 256, 0, Math.PI * 2); x.fill(); x.restore();
+  };
+  x.globalCompositeOperation = 'lighter';
+  blob(1.95, 0.98, 0.55, 0.22);
+  blob(0.95, 0.62, 0.6, 0.3);
+  blob(0.45, 0.45, 0.55, 0.3);
+  const t = new THREE.CanvasTexture(c);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, alphaMap: t, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = -0.997;
+  return m;
+}
+
+function treadCanvas(w, h, pitches) {
+  // the height map laid flat: x = rolling direction (whole pitches, tiles), y = across the tread; white = contact, black = groove
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const x = c.getContext('2d'); const img = x.createImageData(w, h);
   for (let j = 0; j < h; j++) {
-    const v = (j / (h - 1)) * 2 - 1;
+    const v = ((j + 0.5) / h) * 2 - 1;
     for (let i = 0; i < w; i++) {
-      const d = treadDepth((i / w) * pitches, v * 1.02);
-      const val = mode === 'contact' ? (d < 0.3 ? 255 : 0) : Math.round(255 * (1 - d));
+      const val = Math.round(255 * (1 - treadDepth(((i + 0.5) / w) * pitches, v)));
       const k = (j * w + i) * 4;
       img.data[k] = img.data[k + 1] = img.data[k + 2] = val; img.data[k + 3] = 255;
     }
@@ -49,43 +79,79 @@ function treadCanvas(w, h, pitches, mode) {
   return c;
 }
 
-window.renderLayer = async (name, size) => {
-  renderer.setSize(size, size, false);
+window.renderLayer = async (name, size, h = size) => {
+  const P = window.P;
+  renderer.toneMappingExposure = P.exposure;
   const scene = new THREE.Scene();
-  let cam = ortho();
-  const { tyre, rim, brake } = getParts();
+  const tyre = part('tyre', () => buildTyre());
+  const rim = part('rim', buildRim);
+  const brake = part('brake', buildBrake);
   if (name === 'wheel' || name === 'brake') {
-    scene.environment = envAxis(renderer);
-    scene.add(name === 'wheel' ? tyre : brake);
-    if (name === 'wheel') scene.add(rim);
-  } else if (name === 'full') {
-    scene.environment = envStudio(renderer, true);
-    scene.add(tyre, rim, brake);
-  } else if (name === 'hero') {
-    scene.environment = envStudio(renderer, false);
-    const g = new THREE.Group(); g.add(tyre, rim, brake);
-    g.rotation.y = (32 * Math.PI) / 180;
-    scene.add(g);
-    cam = new THREE.PerspectiveCamera(22, 1, 0.1, 50);
-    cam.position.set(0, 1.1, 6.2); cam.lookAt(0, 0, 0);
-  } else if (name === 'tread') {
-    const hc = treadCanvas(2048, 1024, 8, 'height');
-    const t = new THREE.CanvasTexture(hc); t.wrapS = THREE.RepeatWrapping;
-    const m = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.92, bumpMap: t, bumpScale: 6 });
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
-    scene.add(plane);
-    const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(-1, 0.25, 0.35); scene.add(sun);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.12));
-    cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20); cam.position.z = 5;
-    renderer.setClearColor(0x0d0d0f, 1);
-    renderer.render(scene, cam);
-    renderer.setClearColor(0x000000, 0);
-    return renderer.domElement.toDataURL('image/png');
-  } else if (name === 'contact') {
-    return treadCanvas(size, size / 2, 8, 'contact').toDataURL('image/png');
+    scene.environment = part('envAxis', () => envAxis(renderer));
+    if (name === 'wheel') scene.add(tyre, rim); else scene.add(brake);
+    return shot(scene, ortho(), size, size);
   }
-  renderer.render(scene, cam);
-  return renderer.domElement.toDataURL('image/png');
+  if (name === 'full') {
+    renderer.toneMappingExposure = P.fullExposure;
+    scene.environment = part('envTop', () => envStudio(renderer, { top: true }));
+    scene.add(tyre, rim, brake);
+    return shot(scene, ortho(), size, size);
+  }
+  if (name === 'hero') {
+    renderer.toneMappingExposure = P.heroExposure;
+    scene.environment = part('envStudio', () => envStudio(renderer));
+    const big = part('tyreHi', () => buildTyre({ segments: 4320, rows: 560 }));
+    const g = new THREE.Group();
+    g.add(big, rim, brake, shadowPlane());
+    g.rotation.y = (P.heroYaw * Math.PI) / 180;
+    scene.add(g);
+    // the key's direct part, so the tread blocks cast their shading; the cool rim from behind right
+    const key = new THREE.DirectionalLight(0xfff4ea, P.keyLight ?? 1.6); key.position.set(-5, 6, 4); scene.add(key);
+    const rimL = new THREE.DirectionalLight(0xcfdcff, P.rimLight ?? 1.4); rimL.position.set(5, 2.5, -8); scene.add(rimL);
+    const cam = new THREE.PerspectiveCamera(20, 1, 0.5, 40);
+    const dist = 7.4, pitch = (P.heroPitch * Math.PI) / 180;
+    cam.position.set(0, dist * Math.sin(pitch), dist * Math.cos(pitch));
+    cam.lookAt(0, -0.04, 0);
+    renderer.setSize(size, size, false);
+    // pass 1: the lit frame on a transparent background (the contact shadow lands in its alpha)
+    scene.background = null;
+    renderer.setClearColor(0x000000, 0);
+    renderer.render(scene, cam);
+    const color = renderer.domElement.toDataURL('image/png');
+    // pass 2: ambient occlusion alone (GTAO, denoised), which render.py multiplies into the frame in linear light
+    const composer = new EffectComposer(renderer);
+    composer.setSize(size, size);
+    composer.addPass(new RenderPass(scene, cam));
+    const ao = new GTAOPass(scene, cam, size, size);
+    ao.updateGtaoMaterial({ radius: P.aoRadius, distanceExponent: 1.5, thickness: 1.0, scale: 1.0, samples: 16 });
+    ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+    ao.output = GTAOPass.OUTPUT.Denoise;
+    ao.normalMaterial.side = THREE.DoubleSide; // the lathed parts are drawn from both sides, so their depth must be too
+    composer.addPass(ao);
+    composer.render();
+    const occl = renderer.domElement.toDataURL('image/png');
+    composer.dispose(); ao.dispose();
+    return JSON.stringify({ color, ao: occl });
+  }
+  if (name === 'tread') {
+    // the tread face seen straight on, matte, under a raking light from the upper left; whole pitches so it tiles
+    const pitches = P.treadPitches || 15;
+    const { geo, W, H } = buildTreadPlane(pitches, 1);
+    const m = new THREE.MeshStandardMaterial({ color: 0x3c3c42, roughness: 0.88, metalness: 0, vertexColors: true });
+    scene.add(new THREE.Mesh(geo, m));
+    const sun = new THREE.DirectionalLight(0xffffff, 3.4); sun.position.set(-0.6, 0.7, 0.4); scene.add(sun);
+    const back = new THREE.DirectionalLight(0xcfd8ff, 0.35); back.position.set(0.6, -0.5, 0.5); scene.add(back);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x000000, 0.25));
+    const cam = new THREE.OrthographicCamera(-W / 2, W / 2, H / 2, -H / 2, 0.1, 10); cam.position.z = 2;
+    renderer.setClearColor(0x0d0d0f, 1);
+    const out = shot(scene, cam, size, h);
+    renderer.setClearColor(0x000000, 0);
+    return out;
+  }
+  if (name === 'height') {
+    return treadCanvas(size, h, P.treadPitches || 15).toDataURL('image/png');
+  }
+  throw new Error('unknown layer ' + name);
 };
 window.ready = true;
 </script>
