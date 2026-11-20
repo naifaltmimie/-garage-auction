@@ -2,6 +2,7 @@
 // Styles: src/styles/s-shell.css (prefix shl-).
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { goHome, useBack } from '../App';
+import { openTv } from '../screens/Tv';
 import type { RoomView } from '../useRoom';
 import { Icon, Portal, useSheet } from './Bits';
 import { ScreenTitle } from './kit/ScreenTitle';
@@ -201,6 +202,15 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
             onClick={() => {
               onClose();
               onPlayers();
+            }}
+          />
+          <MenuRow
+            icon="tv"
+            title="افتح شاشة العرض"
+            line="على التلفزيون أو اللابتوب، الكل يشوف السوم"
+            onClick={() => {
+              onClose();
+              openTv(room.code);
             }}
           />
         </ul>

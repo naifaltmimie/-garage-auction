@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { VERDICT_LABEL } from '../../engine/rules';
 import type { Comp, Core, PlayerPub, Sale } from '../../engine/types';
-import { km, money, signed } from '../../lib/util';
+import { bidsN, km, money, signed } from '../../lib/util';
 import { saleShown, useSaleStage, type SaleStage } from '../saleStage';
 import { countRender } from './Console';
 import { photoSrc } from './Gallery';
@@ -54,7 +54,7 @@ function Buyer({ sale, buyer, mine }: { sale: Sale; buyer: PlayerPub | undefined
         ? sale.sealedBids.length === 1
           ? 'الظرف الوحيد'
           : `أعلى ظرف من ${sale.sealedBids.length}`
-        : `بعد ${sale.bids} سوم`;
+        : `بعد ${bidsN(sale.bids)}`;
   return (
     <div className={`srv-buyer${mine ? ' is-mine' : ''}`}>
       <div className="srv-who">

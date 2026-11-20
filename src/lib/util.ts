@@ -99,11 +99,19 @@ export function vibrate(p: number | number[]) {
   }
 }
 
-/** Arabic count of cars: سيارة واحدة، سيارتين، 3 سيارات، 11 سيارة. */
+/** Arabic count of cars: سيارة وحدة، سيارتين، 3 سيارات، 11 سيارة. */
 export function carsN(n: number): string {
   if (n === 0) return 'ولا سيارة';
   if (n === 1) return 'سيارة وحدة';
   if (n === 2) return 'سيارتين';
   if (n <= 10) return `${n} سيارات`;
   return `${n} سيارة`;
+}
+
+/** Arabic count of bids: سومة وحدة، سومتين، 5 سومات، 12 سومة. */
+export function bidsN(n: number): string {
+  if (n <= 1) return 'سومة وحدة';
+  if (n === 2) return 'سومتين';
+  if (n <= 10) return `${n} سومات`;
+  return `${n} سومة`;
 }

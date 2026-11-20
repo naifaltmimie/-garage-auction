@@ -187,7 +187,7 @@ export function Lobby({ room }: { room: RoomView }) {
           <div className="lby-paper-code">
             <span className="lby-paper-k">كود الصالة</span>
             <span className="code ltr">{room.code}</span>
-            <span className="lby-paper-k">صوّر الرمز أو اكتب الكود</span>
+            <span className="lby-paper-k">صوّر الباركود أو اكتب الكود</span>
           </div>
           <i className="lby-paper-cut" aria-hidden="true" />
           <QR text={link} size={104} />
