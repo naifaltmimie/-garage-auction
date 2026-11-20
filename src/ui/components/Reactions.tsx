@@ -1,7 +1,8 @@
 // Live reactions over the auction (live-stream style) + the haptics that go with the game.
 // Everything here is presentation: the host checks and relays reactions (net/room.ts), and the
 // clock comes from host time (timeLeft), never from a local countdown.
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { REACTIONS, REACT_BY_KEY, REACT_COOLDOWN_MS, REACT_PHASES, reactBus, type ReactEvent } from '../../engine/reactions';
 import { HAPTIC, buzz, fxOn, onFx, setFx } from '../../lib/fx';
 import { randId } from '../../lib/util';
@@ -30,50 +31,35 @@ export function useFx(): boolean {
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
-/** Room left between the top bar and whatever is anchored to the bottom (bid panel, sale sheet). */
+/**
+ * Where things sit: `b` is the height of whatever is anchored to the bottom (the bidding block, or nothing while a
+ * sale sheet is up), `lane` the room the floating reactions rise through above it, and `sheet` whether a sale
+ * overlay is up (the button then sits in the bottom corner of the sheet instead of in the block's status row).
+ */
 function useLane(phase: string, lotId: string | undefined) {
-  const [geo, setGeo] = useState({ b: 300, lane: 240, f: -1 });
+  const [geo, setGeo] = useState({ b: 300, lane: 240, sheet: false });
   useEffect(() => {
     let raf = 0;
     const measure = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const H = window.innerHeight;
-        let b = 0;
-        let anchor: Element | null = null;
-        document.querySelectorAll('.bidpanel, .overlay > *').forEach((el) => {
-          const r = el.getBoundingClientRect();
-          // only bottom-anchored blocks count; a tall sheet just shortens the lane
-          if (r.height > 0 && r.top > H * 0.3 && r.bottom >= H - 40 && H - r.top > b) {
-            b = H - r.top;
-            anchor = el;
-          }
-        });
-        // the switch docks inside the bid panel's status row (opposite the clock), so it never sits on
-        // the car's title or on the bid buttons; above a sale sheet it floats just over the sheet
-        // f: -1 float above the anchor, -2 bottom corner over a full sale sheet, else the docked offset
-        let f = -1;
-        const row = anchor && (anchor as Element).matches('.bidpanel') ? (anchor as Element).querySelector('.bp-status, .dc-head') : null;
-        if (document.querySelector('.overlay')) f = -2;
-        else if (row) {
-          const s = row.getBoundingClientRect();
-          f = Math.round(H - s.bottom + (s.height - 46) / 2);
-        }
+        const sheet = !!document.querySelector('.overlay');
+        const block = document.querySelector('.cs');
+        const b = block && !sheet ? Math.max(0, H - block.getBoundingClientRect().top) : 0;
         const top = document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 58;
-        const lane = Math.max(120, Math.min(460, H - b - 62 - top - 18));
-        setGeo((g) =>
-          Math.abs(g.b - b) < 2 && Math.abs(g.lane - lane) < 2 && Math.abs(g.f - f) < 2 ? g : { b: Math.round(b), lane: Math.round(lane), f },
-        );
+        const lane = Math.max(120, Math.min(460, H - b - top - 30));
+        setGeo((g) => (Math.abs(g.b - b) < 2 && Math.abs(g.lane - lane) < 2 && g.sheet === sheet ? g : { b: Math.round(b), lane: Math.round(lane), sheet }));
       });
     };
     measure();
     const t1 = setTimeout(measure, 120);
     const t2 = setTimeout(measure, 600);
     let ro: ResizeObserver | null = null;
-    const panel = document.querySelector('.bidpanel');
-    if (panel && typeof ResizeObserver !== 'undefined') {
+    const block = document.querySelector('.cs');
+    if (block && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(measure);
-      ro.observe(panel);
+      ro.observe(block);
     }
     window.addEventListener('resize', measure);
     return () => {
@@ -87,7 +73,30 @@ function useLane(phase: string, lotId: string | undefined) {
   return geo;
 }
 
-export function ReactionLayer({ room }: { room: RoomView }) {
+/** Over a sale sheet the button hides once the sheet is scrolled past half, so it never sits on the sheet's end. */
+function useSheetScrolled(active: boolean) {
+  const [past, setPast] = useState(false);
+  useEffect(() => {
+    if (!active) {
+      setPast(false);
+      return;
+    }
+    // whichever box inside the sale overlay scrolls (the sheet or the overlay itself) decides
+    const on = (e?: Event) => {
+      const t = e?.target;
+      const el = (t instanceof HTMLElement && t.closest('.overlay') ? t : document.querySelector('.overlay .reveal')) as HTMLElement | null;
+      if (!el) return setPast(false);
+      const room = el.scrollHeight - el.clientHeight;
+      setPast(room > 8 && el.scrollTop / room > 0.5);
+    };
+    on();
+    document.addEventListener('scroll', on, true);
+    return () => document.removeEventListener('scroll', on, true);
+  }, [active]);
+  return past;
+}
+
+export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLElement | null }) {
   const core = room.snap.core!;
   const on = useFx();
   const live = REACT_PHASES.has(core.phase);
@@ -234,25 +243,71 @@ export function ReactionLayer({ room }: { room: RoomView }) {
     room.act({ t: 'react', k, c });
   };
 
+  // the button docks into the block's status row; over a sale sheet it sits in the sheet's bottom corner
+  const docked = !geo.sheet && !!dock && dock.isConnected;
+  const past = useSheetScrolled(geo.sheet);
+  const showFab = on && live && !(geo.sheet && past);
+  useEffect(() => {
+    if (past) setOpen(false);
+  }, [past]);
+
+  // the tray opens above its button, three by two, so it never covers the price or the red action
+  const [trayAt, setTrayAt] = useState<{ b: number; e: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = fabRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+      setTrayAt({ b: Math.round(window.innerHeight - r.top + 8), e: Math.round(rtl ? r.left : window.innerWidth - r.right) });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [open, docked, geo.b]);
+
   const style = {
     ['--rx-b' as string]: `${geo.b}px`,
     ['--lane' as string]: `${geo.lane}px`,
-    ...(geo.f >= 0 ? { ['--rx-f' as string]: `${geo.f}px` } : geo.f === -2 ? { ['--rx-f' as string]: 'calc(12px + var(--safe-b))' } : null),
+    ...(trayAt ? { ['--rx-tb' as string]: `${trayAt.b}px`, ['--rx-te' as string]: `${trayAt.e}px` } : null),
   } as CSSProperties;
 
-  // the bid panel (or the sale sheet) keeps a slot free for the switch only while the switch is there
-  const docked = on && live && geo.f !== -1 ? (geo.f === -2 ? 'sheet' : 'panel') : '';
+  // the sale sheet keeps room at its end for the button while the button is there
+  const mark = on && live ? (geo.sheet ? 'sheet' : docked ? 'panel' : '') : '';
   useEffect(() => {
     const el = document.documentElement;
-    if (docked) el.dataset.rxdock = docked;
+    if (mark) el.dataset.rxdock = mark;
     else delete el.dataset.rxdock;
     return () => {
       delete el.dataset.rxdock;
     };
-  }, [docked]);
+  }, [mark]);
+
+  const fab = (
+    <button
+      ref={fabRef}
+      type="button"
+      className={`rx-fab${open ? ' open' : ''}${docked ? ' is-docked' : ' is-float'}`}
+      aria-expanded={open}
+      aria-label={open ? 'سكّر التفاعلات' : 'تفاعل مع السيارة'}
+      onClick={() => setOpen((o) => !o)}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        {open ? (
+          <path d="M7 7l10 10M17 7L7 17" />
+        ) : (
+          <>
+            <path d="M12 3.6c-4.9 0-8.6 3.2-8.6 7.3 0 2.2 1.1 4.1 2.9 5.5l-.8 3.5 3.9-2c.8.2 1.7.3 2.6.3 4.9 0 8.6-3.2 8.6-7.3S16.9 3.6 12 3.6z" />
+            <path d="M8.7 12.3c.8 1.3 1.9 2 3.3 2s2.5-.7 3.3-2" />
+            <path d="M9 9.2h.01M15 9.2h.01" />
+          </>
+        )}
+      </svg>
+    </button>
+  );
 
   return (
-    <div className="rx" style={style}>
+    <div className={`rx${geo.sheet ? ' is-sheet' : ''}`} style={style}>
       <Haptics room={room} />
       {on && (
         <div className="rx-lane" aria-hidden="true">
@@ -268,9 +323,9 @@ export function ReactionLayer({ room }: { room: RoomView }) {
           ))}
         </div>
       )}
-      {on && live && (
+      {showFab && (
         <>
-          {open && (
+          {open && trayAt && (
             <div className="rx-tray" ref={trayRef} role="group" aria-label="تفاعل مع السيارة">
               <i key={cool} className={`rx-cool ${cool ? 'run' : ''}`} aria-hidden="true" />
               {REACTIONS.map((r) => (
@@ -286,26 +341,7 @@ export function ReactionLayer({ room }: { room: RoomView }) {
               ))}
             </div>
           )}
-          <button
-            ref={fabRef}
-            type="button"
-            className={`rx-fab ${open ? 'open' : ''}`}
-            aria-expanded={open}
-            aria-label={open ? 'سكّر التفاعلات' : 'تفاعل مع السيارة'}
-            onClick={() => setOpen((o) => !o)}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {open ? (
-                <path d="M7 7l10 10M17 7L7 17" />
-              ) : (
-                <>
-                  <path d="M12 3.6c-4.9 0-8.6 3.2-8.6 7.3 0 2.2 1.1 4.1 2.9 5.5l-.8 3.5 3.9-2c.8.2 1.7.3 2.6.3 4.9 0 8.6-3.2 8.6-7.3S16.9 3.6 12 3.6z" />
-                  <path d="M8.7 12.3c.8 1.3 1.9 2 3.3 2s2.5-.7 3.3-2" />
-                  <path d="M9 9.2h.01M15 9.2h.01" />
-                </>
-              )}
-            </svg>
-          </button>
+          {docked ? createPortal(fab, dock!) : fab}
         </>
       )}
     </div>

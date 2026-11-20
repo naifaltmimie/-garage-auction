@@ -1,0 +1,887 @@
+/* The bidding block (Console.tsx, DutchConsole.tsx), its sheets (free bid, bid log), the lot sticker on the
+   photo, and where the reactions button and tray sit around it. One rubber surface docked to the bottom with
+   one hairline on top; no card inside it. Tokens only; motion is transform and opacity. */
+
+/* ================================================================ page */
+
+/* the page keeps the block's measured height free at its end, so nothing scrolls out of reach under it */
+.auction.cs-page {
+  padding-bottom: calc(var(--cs-h, 300px) + 16px);
+}
+.cs-page .cs-lotsticker {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  inset-inline-end: 14px;
+  pointer-events: none;
+}
+/* the photo gives way to the block, so the car's make and model stay readable above it on every phone
+   (about 38vh on a 320x640 phone; untouched on tall phones) */
+.cs-page .gallery {
+  max-height: clamp(150px, calc(100dvh - var(--cs-h, 300px) - 210px), 58dvh);
+}
+
+/* ================================================================ the block */
+
+.cs {
+  --cs-gap: 6px;
+  --cs-main: 56px;
+  --cs-key: 52px;
+  /* the action area (main + keys) keeps one height whatever stands in it: hold, calm, sending */
+  --cs-act: calc(var(--cs-main) + var(--cs-gap) + var(--cs-key));
+  position: fixed;
+  z-index: 40;
+  inset-inline: 0;
+  bottom: 0;
+  max-width: 760px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cs-gap);
+  padding: 6px 16px max(12px, var(--safe-b));
+  background: var(--rubber-2) var(--tex-grain);
+  border-top: 1px solid var(--line-2);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -14px 30px -18px rgba(0, 0, 0, .9);
+  color: var(--ink);
+}
+.cs.is-short {
+  --cs-gap: 5px;
+  --cs-key: 48px;
+}
+/* outbid, or beaten to it: the top hairline turns red for the 2.6 s the line is up */
+.cs.is-outbid {
+  border-top-color: var(--brand);
+  box-shadow: inset 0 1px 0 var(--brand), 0 -14px 30px -18px rgba(0, 0, 0, .9);
+}
+.cs .nb { white-space: nowrap; }
+.cs .ltr { unicode-bidi: isolate; direction: ltr; }
+
+/* ---------------------------------------------------------------- host bar */
+.cs-host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 4px 2px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.cs-host-k {
+  font: 600 var(--t-cap) / 1.3 var(--f-ui);
+  color: var(--mute);
+  white-space: nowrap;
+}
+.cs-host-b {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+.cs-hkey {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--rubber-4);
+  color: var(--ink);
+  font: 700 14px/1 var(--f-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .1s var(--ease);
+}
+.cs-hkey:active { transform: scale(.96); }
+@media (max-width: 389px) {
+  .cs-host { gap: 8px; }
+  .cs-host-b { gap: 10px; }
+  .cs-hkey { padding: 0 10px; font-size: 13.5px; }
+  .cs-hkey svg { display: none; }
+}
+.cs-hkey.is-on {
+  background: var(--plate);
+  border-color: var(--plate);
+  color: var(--plate-ink);
+}
+
+/* ---------------------------------------------------------------- status row */
+.cs-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+}
+.cs-call {
+  margin: 0;
+  font-size: var(--t-voice-s);
+  line-height: 1.3;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-call .print {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.cs-call.is-alert { color: var(--brand-hi); }
+@media (max-width: 389px) {
+  .cs-call .cs-call-x { display: none; }
+}
+.cs-rx {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.cs-rx:empty { visibility: hidden; }
+
+/* the clock: chalk digits in a ring, red only in the last five seconds */
+.cs-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.cs-ring > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.cs-ring-track { fill: none; stroke: var(--rubber-5); stroke-width: 3.5; }
+.cs-ring-bar {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .12s linear;
+}
+.cs-ring-n {
+  position: relative;
+  font: 800 20px/1 var(--f-print);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.cs-ring-pause { position: relative; color: var(--ink); }
+.cs-ring.hot .cs-ring-bar { stroke: var(--brand); }
+.cs-ring.hot .cs-ring-n { color: var(--brand-hi); }
+
+/* the dutch mark stands where the clock stands */
+.cs-dmark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3.5px var(--rubber-5);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- fact line */
+.cs-facts {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  /* the tag's string rises into the inline end of this line */
+  padding-inline-end: 34px;
+  list-style: none;
+  overflow: hidden;
+  font: 500 14px/22px var(--f-ui);
+  color: var(--ink-2);
+  white-space: nowrap;
+  min-height: 22px;
+}
+.cs-facts li { flex: none; display: inline-flex; align-items: center; gap: 4px; }
+.cs-facts li[data-off] { display: none; }
+.cs-facts li + li::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  margin-inline: 7px 3px;
+  border-radius: 50%;
+  background: var(--mute);
+}
+.cs-facts .ltr { color: var(--ink); font-weight: 600; }
+.cs-facts .is-good { color: var(--ok-700); }
+.cs-fact-mark { color: var(--ok-700); }
+.cs-fact-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+/* ---------------------------------------------------------------- price tag in the block */
+.cs .cs-tag {
+  /* the string climbs into the fact line's free end instead of an empty band above the tag */
+  --top: 14px;
+}
+.cs .cs-tag.ptag-compact { --top: 6px; }
+.cs-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -2px 0 0;
+  font: 700 14px/1.2 var(--f-ui);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-who .paddle {
+  width: 26px;
+  height: 26px;
+  font: 800 13px/1 var(--f-print);
+  border: 0;
+  background: var(--plate);
+  color: var(--plate-ink);
+  box-shadow: inset 0 0 0 2px var(--plate-ink);
+}
+.cs-who .paddle.me { background: var(--plate-ink); color: var(--plate); box-shadow: inset 0 0 0 2px var(--alloy-mid); }
+
+/* ---------------------------------------------------------------- the one red action */
+.cs-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--cs-main);
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 46%, rgba(0, 0, 0, .12)),
+    var(--brand);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -2px 0 var(--brand-lo), 0 6px 14px -8px rgba(0, 0, 0, .8);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .1s var(--ease), filter .1s;
+}
+.cs-main:active:not(:disabled) {
+  transform: scale(.975);
+  filter: brightness(.92);
+}
+.cs-main-l {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-voice-s);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.cs-main-l:not(.voice) { font: 700 16px/1.2 var(--f-ui); }
+.cs-main-a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+.cs-main-a b {
+  font-size: 28px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.cs-main-a small { font: 600 13px/1 var(--f-ui); opacity: .9; }
+.cs-main-why {
+  flex: 1;
+  text-align: center;
+  font: 700 15px/1.3 var(--f-ui);
+}
+.cs-main:disabled {
+  cursor: default;
+  background: var(--rubber-4);
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.cs-main.is-sending:disabled {
+  background: var(--brand-lo);
+  color: #fff;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3);
+  animation: cs-sent .22s var(--ease) both;
+}
+/* S1-1: the amount just changed; the button is frozen for 350 ms with a chalk outline */
+.cs-main.is-frozen,
+.cs-raise.is-frozen .cs-key:not(:disabled) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.cs-main.is-ask {
+  background: var(--brand-lo);
+  box-shadow: inset 0 0 0 2px var(--brand-hi), 0 6px 14px -8px rgba(0, 0, 0, .8);
+}
+@keyframes cs-sent {
+  0% { transform: scale(.97); }
+  100% { transform: scale(1); }
+}
+.cs-spin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  animation: cs-spin .8s linear infinite;
+}
+@keyframes cs-spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------------- raise keys (rubber) */
+.cs-raise {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.cs-raise.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cs-key {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: var(--cs-key);
+  padding: 4px 4px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -3px 0 rgba(0, 0, 0, .35);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .1s var(--ease);
+}
+.cs-key:active:not(:disabled) { transform: translateY(1px) scale(.97); }
+.cs-key b {
+  font-size: 20px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cs-key small {
+  font: 500 13px/1.2 var(--f-ui);
+  color: var(--mute);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cs-key.is-free b { font: 700 15px/1.1 var(--f-ui); }
+.cs-key:disabled {
+  cursor: default;
+  background: var(--rubber-3);
+  box-shadow: none;
+  border-color: var(--line);
+  color: var(--dim);
+}
+.cs-key:disabled small { color: var(--dim); }
+/* a chosen suggestion: alloy, the player's own thing */
+.cs-key[aria-pressed='true'] {
+  background: var(--alloy-face);
+  border-color: var(--alloy-hi);
+  color: var(--alloy-ink);
+  box-shadow: inset 0 -2px 0 var(--alloy-lo);
+}
+.cs-key[aria-pressed='true'] small { color: rgba(12, 13, 15, .72); }
+
+/* ---------------------------------------------------------------- foot */
+.cs-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: -6px;
+}
+.cs-foot-t {
+  margin: 0;
+  min-width: 0;
+  font: 500 var(--t-cap) / 1.35 var(--f-ui);
+  color: var(--mute);
+}
+.cs-foot-t .ltr { color: var(--ink-2); font-weight: 600; }
+.cs-foot .cs-foot-t .nb,
+.cs-stack > span { display: block; }
+/* my own bid on the tag: the paddle disc turns black, the name reads «أنت» */
+.cs .cs-tag-mine .ptag-disc {
+  background: var(--plate-ink);
+  color: #fff;
+}
+.cs-log {
+  flex: none;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 700 14px/1 var(--f-ui);
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cs--preview .cs-foot-t { padding-block: 4px 2px; }
+
+/* ---------------------------------------------------------------- holding the bid (alloy) */
+.cs-hold {
+  min-height: var(--cs-act);
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 0 var(--alloy-lo), 0 6px 14px -8px rgba(0, 0, 0, .8);
+}
+.cs-hold-r {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cs-hold-r .voice { font-size: var(--t-voice-m); line-height: 1.2; }
+.cs-hold-a { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+.cs-hold-a b { font-size: var(--t-print-l); line-height: 1; font-variant-numeric: tabular-nums; }
+.cs-hold-a small { font: 600 13px/1 var(--f-ui); }
+.cs-hold-s { font: 500 var(--t-cap) / 1.35 var(--f-ui); color: rgba(12, 13, 15, .72); }
+
+/* ---------------------------------------------------------------- calm block (no money, full, offline…) */
+.cs-calm {
+  min-height: var(--cs-act);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 4px;
+  border-block: 1px solid var(--line);
+}
+.cs-calm-i { flex: none; color: var(--ink-2); }
+.cs-calm-t { display: grid; gap: 4px; min-width: 0; }
+.cs-calm-t .voice { font-size: var(--t-voice-s); line-height: 1.25; color: var(--ink); }
+.cs-calm-t span { font: 500 14px/1.45 var(--f-ui); color: var(--ink-2); }
+.cs-calm.is-off .cs-calm-i { color: var(--ink); }
+
+/* ---------------------------------------------------------------- after the hammer */
+.cs-next {
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+}
+
+/* ---------------------------------------------------------------- sealed envelope */
+.cs-env { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--cs-gap); }
+.cs-env-rule {
+  margin: 0;
+  font: 500 var(--t-cap) / 1.35 var(--f-ui);
+  color: var(--ink-2);
+}
+.cs-env .cs-key small { font-size: 12px; }
+.cs-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .5);
+}
+.cs-field:focus-within { border-color: var(--ink-2); }
+.cs-field-k { font: 600 var(--t-cap) / 1.2 var(--f-ui); color: var(--mute); white-space: nowrap; }
+.cs-field input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.cs-field input::placeholder { color: var(--dim); }
+.cs-field-u { font: 600 13px/1 var(--f-ui); color: var(--mute); }
+
+.cs-quiet {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: none;
+  color: var(--ink);
+  font: 700 15px/1 var(--f-ui);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cs-quiet:active:not(:disabled) { transform: scale(.98); }
+.cs-quiet:disabled { color: var(--dim); }
+.cs-block { width: 100%; }
+
+/* after sealing: the envelope itself, white paper with a small red enamel seal */
+.cs-sealed { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.cs-sealed-env {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  color: var(--plate-ink);
+  background:
+    url('/brand/kit/paper-grain.png') 0 0 / 128px 128px,
+    linear-gradient(170deg, #fff 0%, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .05) 100%),
+    var(--plate);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .45), -2px 8px 14px -6px rgba(0, 0, 0, .6);
+  transform: rotate(-.6deg);
+  overflow: hidden;
+}
+/* the envelope's flap folds, printed as two faint lines meeting at the seal */
+.cs-sealed-env::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom right, transparent calc(50% - .5px), rgba(17, 17, 17, .12) 50%, transparent calc(50% + .5px)) 0 0 / 50% 60% no-repeat,
+    linear-gradient(to bottom left, transparent calc(50% - .5px), rgba(17, 17, 17, .12) 50%, transparent calc(50% + .5px)) 100% 0 / 50% 60% no-repeat;
+  pointer-events: none;
+}
+.cs-seal {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 38% 32%, var(--brand-hi), var(--brand) 55%, var(--brand-lo));
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .14), 0 2px 3px rgba(0, 0, 0, .35);
+}
+.cs-sealed-t { position: relative; display: grid; gap: 4px; }
+.cs-sealed-t span { font: 600 var(--t-cap) / 1.2 var(--f-ui); color: rgba(17, 17, 17, .66); }
+.cs-sealed-t b { font-size: var(--t-print-l); line-height: 1; font-variant-numeric: tabular-nums; }
+.cs-sealed-t b small { font: 600 13px/1 var(--f-ui); }
+.cs-sealed-wait {
+  display: flex;
+  justify-content: center;
+  min-height: 30px;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- dutch */
+.cs--dutch {
+  --heat: var(--ink);
+}
+.cs--dutch[data-heat='3'] { --heat: var(--brand-hi); }
+.cs-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; justify-items: center; }
+.cs-board-w {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.cs-board-n {
+  display: inline-flex;
+  align-items: center;
+  direction: ltr;
+  font-size: clamp(40px, 12.5vw, 54px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--heat);
+  font-variant-numeric: tabular-nums;
+}
+.cs-drum {
+  position: relative;
+  display: inline-block;
+  width: .62em;
+  height: 1.1em;
+  margin: 0 1px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: linear-gradient(180deg, var(--rubber-0), var(--rubber-3) 22%, var(--rubber-3) 78%, var(--rubber-0));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04);
+}
+.cs-drum::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(0, 0, 0, .55);
+}
+.cs-dd {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+/* S2-8: a digit change finishes in 120 ms, so the board never shows a step the button has left */
+.cs-dd.in { animation: cs-dd-in 120ms cubic-bezier(.16, 1, .3, 1) both; }
+.cs-dd.out { animation: cs-dd-out 120ms cubic-bezier(.5, 0, .9, .5) both; }
+@keyframes cs-dd-in { from { transform: translateY(-100%); } to { transform: none; } }
+@keyframes cs-dd-out { from { transform: none; opacity: 1; } to { transform: translateY(90%); opacity: 0; } }
+.cs-board-sep { display: inline-block; width: .24em; text-align: center; opacity: .5; }
+.cs-board-u { margin-bottom: 6px; font: 600 13px/1 var(--f-ui); color: var(--ink-2); }
+.cs-board-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 14px;
+  font: 500 var(--t-cap) / 1.35 var(--f-ui);
+  color: var(--mute);
+}
+.cs-board-meta .ltr, .cs-ends .ltr { color: var(--ink-2); font-weight: 600; }
+.cs-rail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.cs-track {
+  position: relative;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6);
+  overflow: hidden;
+}
+.cs-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  background: repeating-linear-gradient(135deg, rgba(244, 244, 246, .2) 0 3px, rgba(244, 244, 246, .06) 3px 6px);
+}
+.cs-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: right center;
+  background: var(--ink-2);
+  transition-property: transform;
+  transition-timing-function: linear;
+}
+[dir='ltr'] .cs-fill { transform-origin: left center; }
+.cs--dutch[data-heat='3'] .cs-fill { background: var(--brand); }
+.cs-mine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 2px;
+  margin-inline-start: -1px;
+  background: var(--ink);
+}
+.cs-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font: 500 12px/1.3 var(--f-ui);
+  color: var(--mute);
+  white-space: nowrap;
+}
+.cs-ends-me { color: var(--ink); font-weight: 700; }
+
+/* ================================================================ sheets */
+.cs-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(6, 6, 8, .66);
+  animation: cs-fade .2s both;
+}
+.cs-sheet {
+  position: fixed;
+  z-index: 71;
+  inset-inline: 0;
+  bottom: 0;
+  max-width: 560px;
+  max-height: 92dvh;
+  margin-inline: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  gap: 10px;
+  padding: 8px 16px max(12px, var(--safe-b));
+  background: var(--rubber-2) var(--tex-grain);
+  border-top: 1px solid var(--line-2);
+  border-radius: 18px 18px 0 0;
+  color: var(--ink);
+  animation: cs-up .28s cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes cs-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes cs-fade { from { opacity: 0; } to { opacity: 1; } }
+.cs-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+.cs-sheet-head h3 { margin: 0; font-size: var(--t-voice-m); line-height: 1.2; font-weight: 400; }
+.cs-x {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rubber-4);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* free bid: the amount, the limits, twelve keys, the confirm */
+.cs-pad-amt {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 58px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-2);
+}
+.cs-pad-n {
+  font-size: var(--t-print-xl);
+  line-height: 1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cs-pad-amt.is-empty .cs-pad-n { color: var(--dim); }
+.cs-pad-u { font: 600 14px/1 var(--f-ui); color: var(--mute); }
+.cs-pad-lim {
+  margin: 0;
+  text-align: center;
+  font: 500 var(--t-cap) / 1.35 var(--f-ui);
+  color: var(--mute);
+}
+.cs-pad-lim .ltr { color: var(--ink-2); font-weight: 600; }
+.cs-keys12 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.cs-k12 {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--rubber-5), var(--rubber-4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -3px 0 rgba(0, 0, 0, .35);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .08s var(--ease);
+}
+.cs-k12 .print { font-size: 28px; font-weight: 700; line-height: 1; }
+.cs-k12:active:not(:disabled) { transform: translateY(1px) scale(.96); }
+.cs-k12:disabled { color: var(--dim); background: var(--rubber-3); box-shadow: none; border-color: var(--line); }
+.cs-pad-warn {
+  margin: 0;
+  min-height: 20px;
+  text-align: center;
+  font: 700 14px/20px var(--f-ui);
+  color: var(--brand-hi);
+}
+.cs-pad .cs-main { --cs-main: 56px; }
+
+/* bid log: ruled rows */
+.cs-logrows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cs-logrows li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+.cs-logrows .paddle {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: var(--plate);
+  color: var(--plate-ink);
+  box-shadow: inset 0 0 0 2px var(--plate-ink);
+  font: 800 14px/1 var(--f-print);
+}
+.cs-logrows .paddle.me { background: var(--plate-ink); color: var(--plate); box-shadow: inset 0 0 0 2px var(--alloy-mid); }
+.cs-log-n {
+  font: 600 15px/1.3 var(--f-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-log-n em { font-style: normal; font-size: 12px; color: var(--mute); }
+.cs-logrows b { font-size: var(--t-print-m); font-variant-numeric: tabular-nums; }
+.cs-logrows .is-me .cs-log-n { color: var(--alloy-hi); }
+.cs-logrows .is-open { color: var(--mute); }
+.cs-logrows .is-open .cs-log-n { grid-column: 1 / 3; }
+.cs-logrows .is-open b { color: var(--ink-2); }
+
+/* ================================================================ reactions around the block */
+/* docked: the button is the last cell of the status row */
+.cs-rx .rx-fab.is-docked {
+  position: static;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-2);
+  background: var(--rubber-4);
+  color: var(--ink);
+  box-shadow: none;
+}
+.cs-rx .rx-fab.is-docked.open { background: var(--plate); border-color: var(--plate); color: var(--plate-ink); }
+/* over a sale sheet: the bottom corner; the sheet keeps 72px free at its end for it */
+.rx .rx-fab.is-float {
+  bottom: calc(12px + var(--safe-b));
+  inset-inline-end: var(--rx-side);
+  color: var(--ink);
+  background: var(--rubber-4);
+}
+[data-rxdock='sheet'] .overlay .reveal::after {
+  content: '';
+  display: block;
+  height: 72px;
+}
+/* the tray: three by two, just above its button */
+.rx .rx-tray {
+  bottom: var(--rx-tb, calc(var(--rx-b) + 12px));
+  inset-inline-end: var(--rx-te, var(--rx-side));
+  width: auto;
+  grid-template-columns: repeat(3, 60px);
+  gap: 6px;
+  padding: 8px;
+  background: var(--rubber-3);
+  border-color: var(--line-2);
+  transform-origin: 0 100%;
+}
+.rx .rx-tray .rx-chip.emo { min-height: 56px; }
+.rx .rx-lane { bottom: calc(var(--rx-b) + 12px); }
+
+/* ================================================================ reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cs-main,
+  .cs-key,
+  .cs-k12,
+  .cs-hkey,
+  .cs-ring-bar { transition: none; }
+  .cs-main.is-sending:disabled,
+  .cs-sheet,
+  .cs-back,
+  .cs-dd.in,
+  .cs-dd.out { animation: none; }
+  .cs-dd.out { opacity: 0; }
+}

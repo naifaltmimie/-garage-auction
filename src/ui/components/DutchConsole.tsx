@@ -1,6 +1,7 @@
-// المزاد الهولندي console: a mechanical price counter that rolls down step by step, a rail toward
-// the floor, and one big «أبيها». The price is never counted down here: every frame it is derived
-// from the host's timer (time left -> elapsed -> step), and the host decides who said it first.
+// المزاد الهولندي: the same bidding block, with a mechanical price board that rolls down step by step, a rail toward
+// the lowest price, and one «أبيها». The price is never counted down here: every frame it is derived from the host's
+// timer (time left -> elapsed -> step), and the host decides who said it first. The board and the button read the
+// same number in the same render, and a digit change finishes in 120ms, so they never disagree.
 import { useEffect, useRef, useState } from 'react';
 import { dutchElapsed, dutchPriceAt, dutchProgress, dutchSteps } from '../../engine/dutch';
 import { feesOf } from '../../engine/rules';
@@ -8,48 +9,47 @@ import type { DutchPlan, LotPub, PlayerPub } from '../../engine/types';
 import { money, vibrate } from '../../lib/util';
 import { sound } from '../../audio/sound';
 import { timeLeft, type RoomView } from '../useRoom';
-import { countRender, maxBidFor } from './Console';
-import '../../styles/dutch.css';
+import { countRender, FactLine, HostBar, lotFacts, maxBidFor, StatusRow } from './Console';
 
-/** One wheel of the counter: when its digit changes the old one drops out and the new one falls in. */
-function Wheel({ d }: { d: string }) {
+/** One drum of the board: when its digit changes the old one drops out and the new one falls in (120ms). */
+function Drum({ d }: { d: string }) {
   const [s, setS] = useState({ cur: d, prev: null as string | null, n: 0 });
   if (s.cur !== d) setS({ cur: d, prev: s.cur, n: s.n + 1 });
   return (
-    <span className="dc-wheel">
+    <span className="cs-drum">
       {s.prev != null && (
-        <span key={`o${s.n}`} className="dc-d out" aria-hidden="true">
+        <span key={`o${s.n}`} className="cs-dd out" aria-hidden="true">
           {s.prev}
         </span>
       )}
-      <span key={`i${s.n}`} className={`dc-d ${s.n ? 'in' : ''}`}>
+      <span key={`i${s.n}`} className={`cs-dd${s.n ? ' in' : ''}`}>
         {s.cur}
       </span>
     </span>
   );
 }
 
-function Counter({ value }: { value: number }) {
+function Board({ value }: { value: number }) {
   const chars = money(value).split('');
   return (
-    <span className="dc-counter ltr" aria-label={`${money(value)} ريال`}>
+    <span className="cs-board-n print" dir="ltr" aria-label={`${money(value)} ريال`}>
       {chars.map((c, i) => {
-        const pos = chars.length - i; // keyed from the right so the units never jump wheels
-        return /\d/.test(c) ? <Wheel key={`w${pos}`} d={c} /> : <span key={`s${pos}`} className="dc-sep">{c}</span>;
+        const pos = chars.length - i; // keyed from the right so the units never jump drums
+        return /\d/.test(c) ? <Drum key={`w${pos}`} d={c} /> : <span key={`s${pos}`} className="cs-board-sep">{c}</span>;
       })}
     </span>
   );
 }
 
-/** Preview strip line: what this dutch lot will do once the report is read. */
-export function DutchHint({ plan }: { plan: DutchPlan }) {
+/** The falling-arrow mark that stands where the clock stands on other lots. */
+function DutchMark() {
   return (
-    <div className="dc-hint">
-      <span className="dc-tag">مزاد هولندي</span>
-      <span>
-        يبدأ من <b className="t-money">{money(plan.start)}</b> وينزل لين <b className="t-money">{money(plan.floor)}</b>
-      </span>
-    </div>
+    <span className="cs-dmark" aria-hidden="true">
+      <svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor">
+        {/* Phosphor "arrow-down" (bold), MIT */}
+        <path d="M208.49,152.49l-72,72a12,12,0,0,1-17,0l-72-72a12,12,0,0,1,17-17L116,187V40a12,12,0,0,1,24,0V187l51.51-51.52a12,12,0,0,1,17,17Z" />
+      </svg>
+    </span>
   );
 }
 
@@ -71,8 +71,20 @@ export function useClockValue<T extends string | number>(offset: number, hz: num
   return v;
 }
 
-export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: PlayerPub | undefined; lot: LotPub; plan: DutchPlan }) {
-  const { snap, offset, act, host, spectator } = room;
+export function DutchConsole({
+  room,
+  me,
+  lot,
+  plan,
+  rxSlot,
+}: {
+  room: RoomView;
+  me: PlayerPub | undefined;
+  lot: LotPub;
+  plan: DutchPlan;
+  rxSlot?: (el: HTMLDivElement | null) => void;
+}) {
+  const { snap, offset, act, spectator } = room;
   const core = snap.core!;
   countRender('dutch');
   // step index, plus the hold seconds once the price sits on the floor; derived from the host's timer
@@ -92,7 +104,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const price = Math.max(plan.floor, plan.start - step * plan.step);
   const prog = dutchProgress(plan, price);
   const onFloor = price <= plan.floor;
-  // tension: chalk while it falls, caliper red for the last steps and the floor
+  // tension: chalk while it falls, caliper red only for the last steps and the floor
   const heat = onFloor || prog >= 0.9 ? 3 : prog >= 0.72 ? 2 : prog >= 0.45 ? 1 : 0;
 
   const cash = me?.cash ?? 0;
@@ -100,6 +112,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const garageFull = !!me && me.garage.length >= core.settings.garage;
   const canPay = price <= maxBid;
   const total = feesOf(price, lot.fee).total;
+  const offline = (typeof navigator !== 'undefined' && navigator.onLine === false) || !room.net.connected || (room.role !== 'host' && room.net.hostGone);
 
   // a soft mechanical click on every step down, sharper as the floor gets close
   const lastStep = useRef(step);
@@ -112,26 +125,27 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   }, [step, heat, core.paused]);
 
   // the tap shows at once; the host's answer (sold, or a refusal toast) clears it
-  const [sent, setSent] = useState<{ at: number; lot: string } | null>(null);
+  const [sent, setSent] = useState<{ at: number; lot: string; price: number } | null>(null);
   const sending = !!sent && sent.lot === lot.id && Date.now() - sent.at < 2500;
   useEffect(() => {
     if (!sent) return;
     const t = setTimeout(() => setSent(null), 2600);
     return () => clearTimeout(t);
   }, [sent]);
-  const [pressAt, setPressAt] = useState(0);
 
   const reason = spectator
     ? 'أنت متفرج بهالجولة'
     : garageFull
-      ? 'كراجك مليان'
-      : core.paused
-        ? 'المزاد واقف'
-        : !canPay
-          ? maxBid >= plan.floor
-            ? `تقدر عليها إذا نزلت تحت ${money(maxBid)}`
-            : 'رصيدك ما يغطيها حتى بأقل سعر'
-          : '';
+      ? 'كراجك فل'
+      : offline
+        ? 'مقطوع، نرجّع الخط…'
+        : core.paused
+          ? 'المزاد واقف'
+          : !canPay
+            ? maxBid >= plan.floor
+              ? `تقدر عليها إذا نزلت تحت ${money(maxBid)}`
+              : 'رصيدك ما يغطيها حتى بأقل سعر'
+            : '';
 
   // a second tap before the re-render (or within 2.5 s of the first) is the same tap
   const lastTake = useRef(0);
@@ -142,8 +156,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
     lastTake.current = t;
     vibrate([28, 30, 50]);
     sound.tock();
-    setPressAt(Date.now());
-    setSent({ at: Date.now(), lot: lot.id });
+    setSent({ at: Date.now(), lot: lot.id, price });
     act({ t: 'take', lot: lot.id });
   };
 
@@ -153,72 +166,83 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const myMark = !spectator && !garageFull && maxBid < plan.start && maxBid >= plan.floor ? pos(maxBid) : null;
   const holdSecs = holdStr ? Number(holdStr) : 0;
 
+  const call = core.paused ? 'المزاد واقف' : onFloor ? `أقل سعر، باقي ${holdSecs} ث` : 'أول من يقول أبيها ياخذها';
+
   return (
-    <section className="bidpanel dutch-panel" data-heat={heat} aria-label="المزاد الهولندي">
-      {host && (
-        <div className="host-bar" role="toolbar" aria-label="أدوات الدلال">
-          <span className="hb-label">أنت الدلال</span>
-          {core.paused ? (
-            <button className="hb on" onClick={host.resume}>كمّل المزاد</button>
-          ) : (
-            <button className="hb" onClick={host.pause}>وقّف مؤقت</button>
+    <section className="cs cs--dutch dutch-panel" data-heat={heat} data-cs="dutch" aria-label="المزاد الهولندي">
+      <HostBar room={room} />
+      <StatusRow clock={<DutchMark />} call={call} rxSlot={rxSlot} />
+      <FactLine items={lotFacts(lot, false)} />
+
+      <div className="cs-board">
+        <div className="cs-board-w">
+          <Board value={price} />
+          <span className="cs-board-u">ريال</span>
+        </div>
+        <p className="cs-board-meta">
+          <span className="nb">
+            ينزل <span className="ltr">{money(plan.step)}</span> كل <span className="ltr">{String(plan.every / 1000)}</span> ث
+          </span>
+          {!spectator && (
+            <span className="nb">
+              عليك مع السعي <span className="ltr">{money(total)}</span>
+            </span>
           )}
-          <button className="hb" onClick={host.skip}>شيل السيارة</button>
-        </div>
-      )}
-
-      <div className="dc-head">
-        <span className="dc-tag">
-          <svg viewBox="0 0 12 12" aria-hidden="true">
-            <path d="M6 1v8M2.5 6 6 9.5 9.5 6" />
-          </svg>
-          مزاد هولندي
-        </span>
-        <span className="dc-call" key={core.callout?.id ?? 0} aria-live="polite">
-          {core.paused ? (core.away ? 'الدلال طلع من الصفحة، المزاد واقف' : 'المزاد واقف') : onFloor ? `وصلت أقل سعر، ترجع للمعرض بعد ${holdSecs} ث` : core.callout?.text ?? 'السعر ينزل، أول واحد يقول أبيها ياخذها'}
-        </span>
+        </p>
       </div>
 
-      <div className="dc-board">
-        <div className="dc-window">
-          <Counter value={price} />
-          <span className="dc-cur">ريال</span>
+      <div className="cs-rail" aria-hidden="true">
+        <div className="cs-track">
+          {est && <span className="cs-band" style={{ insetInlineStart: `${pos(est[1]) * 100}%`, width: `${(pos(est[0]) - pos(est[1])) * 100}%` }} />}
+          <span className="cs-fill" style={{ transform: `scaleX(${prog})`, transitionDuration: `${plan.every}ms` }} />
+          {myMark != null && <span className="cs-mine" style={{ insetInlineStart: `${myMark * 100}%` }} />}
         </div>
-        <div className="dc-meta">
+        <div className="cs-ends">
           <span>
-            ينزل <b className="t-money">{money(plan.step)}</b> كل {String(plan.every / 1000)} ث
+            بدأ <span className="ltr">{money(plan.start)}</span>
           </span>
-          {!spectator && <span>عليك مع السعي <b className="t-money">{money(total)}</b></span>}
-        </div>
-      </div>
-
-      <div className="dc-rail" aria-hidden="true">
-        <div className="dc-track">
-          {est && <span className="dc-band" style={{ insetInlineStart: `${pos(est[1]) * 100}%`, width: `${(pos(est[0]) - pos(est[1])) * 100}%` }} />}
-          <span className="dc-fill" style={{ transform: `scaleX(${prog})`, transitionDuration: `${plan.every}ms` }} />
-          {myMark != null && <span className="dc-mine" style={{ insetInlineStart: `${myMark * 100}%` }} />}
-        </div>
-        <div className="dc-ends">
+          {myMark != null ? (
+            <span className="cs-ends-me">
+              حدّك <span className="ltr">{money(maxBid)}</span>
+            </span>
+          ) : est ? (
+            <span className="cs-ends-est">التقدير</span>
+          ) : null}
           <span>
-            بدأ <b className="t-money">{money(plan.start)}</b>
-          </span>
-          {est && <span className="dc-est">التقدير</span>}
-          {myMark != null && <span className="dc-mine-l">آخرك {money(maxBid)}</span>}
-          <span>
-            أقل سعر <b className="t-money">{money(plan.floor)}</b>
+            أقل سعر <span className="ltr">{money(plan.floor)}</span>
           </span>
         </div>
       </div>
 
       <button
-        className={`btn btn-primary dc-take ${sending ? 'sending' : ''}`}
+        type="button"
+        className={`cs-main bid-main dc-take${sending ? ' is-sending' : ''}`}
         disabled={!!reason || sending}
         onClick={take}
         aria-label={reason || `أبيها بـ ${money(price)} ريال`}
       >
-        {pressAt > 0 && <span key={pressAt} className="dc-ring" aria-hidden="true" />}
-        <b>{sending ? 'أبيها…' : 'أبيها'}</b>
-        <small>{reason || (sending ? 'ننتظر الدلال' : `بـ ${money(price)} ريال`)}</small>
+        {reason ? (
+          <span className="cs-main-why">{reason}</span>
+        ) : sending && sent ? (
+          <>
+            <span className="cs-main-l">
+              <span className="cs-spin" aria-hidden="true" />
+              ننتظر الدلال
+            </span>
+            <span className="cs-main-a">
+              <b className="print ltr">{money(sent.price)}</b>
+              <small>ريال</small>
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="cs-main-l voice">أبيها</span>
+            <span className="cs-main-a">
+              <b className="print ltr">{money(price)}</b>
+              <small>ريال</small>
+            </span>
+          </>
+        )}
       </button>
     </section>
   );
