@@ -346,8 +346,6 @@ const TIER_RANGE: Record<PlateTier, [number, number, number]> = {
 };
 /** the least a room must be able to pay for a tier to be dealt */
 export const tierFloor = (t: PlateTier) => TIER_RANGE[t][0];
-/** the logo plate's fee */
-export const LOGO_FEE = 800;
 
 type Letter = readonly [string, string];
 type Cand = [Letter[], string];
@@ -486,40 +484,29 @@ export interface PlateKindCtx {
 }
 
 /**
- * The plate's registration kind (its side strip): pickups and vans that worked carry the blue «نقل خاص», a few
- * high-mileage cheap sedans in the popular markets were taxis, a very few low-mileage luxury cars come from an
- * embassy, and a current-year car with almost no mileage may still wear a temporary plate.
+ * The plate's registration kind (its side strip): pickups and vans that worked carry the blue «نقل خاص», and a
+ * few high-mileage cheap sedans in the popular markets were taxis. Everything else is private.
  */
 export function plateKind(rng: Rng, c: PlateKindCtx): NonNullable<PlatePub['kind']> {
   const { m } = c;
   const lux = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport' || m.tier === 'classic';
   if (/نقل\s*خاص/.test(c.adSays)) return 'transport';
   const said = /خصوصي/.test(c.adSays);
-  if (c.age === 0 && c.km <= 3000 && rng.chance(0.2)) return 'temporary';
   if ((m.body === 'pickup' || m.body === 'van') && !lux && !said) return rng.chance(0.72) ? 'transport' : 'private';
-  if (m.tier === 'luxury' && (m.body === 'sedan' || m.body === 'suv') && c.km < 80_000 && c.age >= 1 && rng.chance(0.025)) return 'diplomatic';
   const cheap = m.tier === 'daily' || m.tier === 'junk';
   if (cheap && m.body === 'sedan' && (c.mix === 'street' || c.mix === 'balanced') && c.km > 220_000 && c.age >= 3 && rng.chance(0.09)) return 'taxi';
   return 'private';
 }
 
-/** the plate's size and its logo, and the logo on a tagged number's note */
+/** the plate's kind and its size: the long plate is asked for mostly on European cars */
 export function dressPlate(rng: Rng, p: PlatePub, m: CarModel, kind: NonNullable<PlatePub['kind']>): PlatePub {
   const out: PlatePub = { ...p, kind, format: 'us' };
   if (kind === 'private' && rng.chance(EURO_MAKES.has(m.makeEn) ? 0.12 : 0.03)) out.format = 'eu';
-  const tagged = p.special && p.special.tier !== 'nice';
-  if (kind === 'private' && rng.chance(tagged ? 0.3 : 0.06)) {
-    out.logo = rng.weighted([['emblem', 50], ['hegra', 25], ['diriyah', 25]] as const);
-    if (out.special) {
-      const note = out.special.note ? `${out.special.note}، لوحة بشعار` : 'لوحة بشعار';
-      out.special = { ...out.special, note, value: out.special.value + LOGO_FEE };
-    }
-  }
   return out;
 }
 
 export const REG_TYPE: Record<NonNullable<PlatePub['kind']>, string> = {
-  private: 'خصوصي', transport: 'نقل خاص', taxi: 'أجرة', diplomatic: 'دبلوماسي', temporary: 'مؤقتة',
+  private: 'خصوصي', transport: 'نقل خاص', taxi: 'أجرة',
 };
 
 /**
@@ -831,7 +818,7 @@ export function buildCar(
   v = Math.max(floor, v);
   v = niceRound(v);
   // the plate: its registration kind, then the number the night's plan asks for (tagged numbers sit on private
-  // plates, rarely a transport one; a legend never on a wreck), then its size and logo
+  // plates, rarely a transport one; a legend never on a wreck), then its size
   let kind = plateKind(rng, { m, km: kmv, age, isNew: !!ad?.isNew, adSays, mix: plateWant?.mix });
   let want = plateWant?.tier;
   if (want && want !== 'none') {
@@ -843,7 +830,6 @@ export function buildCar(
   } else if (!want && kind !== 'private' && kind !== 'transport') want = 'none';
   const plate = dressPlate(rng, makePlate(rng, m, plateCap, want), m, kind);
   if (plate.special) v += plate.special.value;
-  else if (plate.logo) v += LOGO_FEE;
 
   // tags drive the seller's ad text
   const any = (s: PanelStatus) => Object.values(body.panels).includes(s);

@@ -183,19 +183,15 @@ function wholeLine(rng: Rng, pool: Whole[], d: Draw, slot: 'owner' | 'use' | 'wh
 const LEADS = ['كانت عند {p}', 'صاحبها {p}', 'عند {p}', 'كانت مع {p}'];
 const GROUP_LEADS = ['كانت عند {p}', 'عند {p}'];
 
-/** lines that a plate's own kind decides: a taxi and an embassy car say so */
+/** lines that a plate's own kind decides: a taxi says so */
 const KIND_OWNER: Record<string, string[]> = {
   taxi: ['كانت ليموزين، لوحتها صفرا وتشتغل الليل والنهار', 'كانت أجرة عند سواق يشتغل عليها شفتين', 'كانت ليموزين عند مكتب أجرة'],
-  diplomatic: ['كانت سيارة سفارة، يسوقها سواق السفارة', 'كانت تحت تصرف سفارة، ما تطلع إلا بمشوار رسمي'],
 };
 const KIND_USE: Record<string, string[]> = {
   taxi: ['تمشي في شوارع المدينة من الفجر لين نص الليل', 'أغلب ممشاها مشاوير زباين، وقوف وطلوع طول اليوم'],
-  diplomatic: ['ممشاها بين السفارة والمطار والفنادق', 'أغلب عمرها واقفة في مواقف السفارة'],
 };
 const KIND_WHY: Record<string, string[]> = {
   taxi: ['السواق ترك الأجرة واشترى ثانية', 'المكتب يبدّل سياراته القديمة'],
-  diplomatic: ['السفارة تجدد سياراتها', 'انتهت مهمة السفير والسيارة تنباع'],
-  temporary: ['توه طالعها من الوكالة وغيّر رايه', 'جته سيارة ثانية هدية وهذي زادت', 'شراها للتجارة وقال المزاد أسرع'],
 };
 
 function ownerLine(rng: Rng, d: Draw): string {

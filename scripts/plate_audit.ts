@@ -5,7 +5,7 @@
 // 3. Night simulation (2,000 nights of 8 and of 10 cars): one to three tagged plates a night, a night of eight or
 //    more has one of `special` or better, rare about one night in six and legend about one in twenty where the
 //    room can pay, never a legend on a wreck; tagged numbers sit on private plates (rarely transport); the share of
-//    each plate kind, format and logo.
+//    each plate kind and format.
 import { Rng } from '../src/lib/rng';
 import { PLATE_LETTERS, PLATE_TIERS, PLATE_WORDS, buildDeck, gradePlate, makePlate, isStandardNumber } from '../src/engine/lotgen';
 import { DEFAULT_SETTINGS } from '../src/engine/rules';
@@ -91,9 +91,8 @@ function nights(count: number, budget: number, mix: string, N: number) {
   const tierPlates: Record<string, number> = {};
   const kinds: Record<string, number> = {};
   const formats: Record<string, number> = {};
-  const logos: Record<string, number> = {};
   let pv = 0, pvT = 0, cs = 0, csT = 0;
-  let plates = 0, tagged = 0, taggedLogo = 0, specialPlus8 = 0, nights8 = 0;
+  let plates = 0, tagged = 0, specialPlus8 = 0, nights8 = 0;
   const examples: string[] = [];
   const kindOk = (l: LotFull) => {
     const c = l.carFull;
@@ -102,12 +101,9 @@ function nights(count: number, budget: number, mix: string, N: number) {
     if (p.special && k !== 'private' && k !== 'transport') bad(`tagged number on a ${k} plate`);
     if (k === 'transport' && !['pickup', 'van'].includes(c.body)) bad(`transport plate on a ${c.body}`);
     if (k === 'taxi' && (c.body !== 'sedan' || c.km < 200_000)) bad(`taxi plate on ${c.body} ${c.km} km`);
-    if (k === 'diplomatic' && (c.tier !== 'luxury' || c.km >= 80_000)) bad(`diplomatic plate on ${c.tier} ${c.km} km`);
-    if (k === 'temporary' && (2026 - c.year > 0 || c.km > 3000)) bad(`temporary plate on ${c.year} ${c.km} km`);
-    if (p.logo && k !== 'private') bad(`logo on a ${k} plate`);
     if (p.special?.tier === 'legend' && Object.values(c.panels).filter((s) => s === 'damaged').length > 0 && c.runs !== 'drive') bad('legend on a wreck');
     if (p.special?.tier === 'legend' && c.mech.chassis === 'damaged') bad('legend on a wreck');
-    const want = { private: 'خصوصي', transport: 'نقل خاص', taxi: 'أجرة', diplomatic: 'دبلوماسي', temporary: 'مؤقتة' }[k];
+    const want = { private: 'خصوصي', transport: 'نقل خاص', taxi: 'أجرة' }[k];
     if (c.regType !== want) bad(`regType ${c.regType} on a ${k} plate`);
     if (p.special && /^\d{4}$/.test(p.num) === false && p.num.length > 4) bad(`odd number ${p.num}`);
     if (!p.special && !isStandardNumber(p.num)) bad(`untagged ${p.num}`);
@@ -121,7 +117,6 @@ function nights(count: number, budget: number, mix: string, N: number) {
       plates++;
       kinds[p.kind ?? 'private'] = (kinds[p.kind ?? 'private'] ?? 0) + 1;
       formats[p.format ?? 'us'] = (formats[p.format ?? 'us'] ?? 0) + 1;
-      if (p.logo) logos[p.logo] = (logos[p.logo] ?? 0) + 1;
       kindOk(l);
       const c = l.carFull;
       if (c.body === 'pickup' || c.body === 'van') {
@@ -135,10 +130,9 @@ function nights(count: number, budget: number, mix: string, N: number) {
       if (p.special) {
         t++;
         tagged++;
-        if (p.logo) taggedLogo++;
         tierPlates[p.special.tier] = (tierPlates[p.special.tier] ?? 0) + 1;
         seen.add(p.special.tier);
-        if (examples.length < 12 && n % 37 === 0) examples.push(`${p.ar} ${p.num} «${p.special.label}» ${p.special.note} · ${p.special.value.toLocaleString('en')}${p.logo ? ` · شعار ${p.logo}` : ''}`);
+        if (examples.length < 12 && n % 37 === 0) examples.push(`${p.ar} ${p.num} «${p.special.label}» ${p.special.note} · ${p.special.value.toLocaleString('en')}`);
       }
     }
     perNight[Math.min(4, t)]++;
@@ -158,7 +152,6 @@ function nights(count: number, budget: number, mix: string, N: number) {
   console.log(`plate kinds: ${Object.entries(kinds).map(([k, v]) => `${k} ${pct(v, plates)}`).join('  ')}`);
   console.log(`transport among pickups and vans: ${pct(pvT, pv)} of ${pv} · taxi among cheap sedans: ${pct(csT, cs)} of ${cs}`);
   console.log(`formats: ${Object.entries(formats).map(([k, v]) => `${k} ${pct(v, plates)}`).join('  ')}`);
-  console.log(`logos: ${pct(Object.values(logos).reduce((a, b) => a + b, 0), plates)} of plates (${Object.entries(logos).map(([k, v]) => `${k} ${v}`).join(', ')}); ${pct(taggedLogo, tagged)} of tagged`);
   for (const e of examples) console.log(`   ${e}`);
   return { N, tierNights, nights8, specialPlus8 };
 }
