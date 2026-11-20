@@ -1,7 +1,4 @@
-import '@fontsource/ibm-plex-sans-arabic/400.css';
-import '@fontsource/ibm-plex-sans-arabic/500.css';
-import '@fontsource/ibm-plex-sans-arabic/600.css';
-import '@fontsource/ibm-plex-sans-arabic/700.css';
+import '@fontsource-variable/readex-pro/wght.css';
 import '@fontsource/lalezar/arabic-400.css';
 import '@fontsource/lalezar/latin-400.css';
 import '@fontsource/barlow-condensed/latin-700.css';

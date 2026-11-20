@@ -12,7 +12,7 @@ import { LOGO } from './Logo';
 const W = 1080;
 const H = 1350;
 const PAD = 80;
-const FONT = "'IBM Plex Sans Arabic', system-ui, sans-serif";
+const FONT = "'Readex Pro Variable', system-ui, sans-serif";
 const C = {
   bg0: '#0b0c0d',
   bg1: '#1a1b1e',

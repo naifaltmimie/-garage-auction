@@ -13,7 +13,7 @@ The logo's language (heavy lettering, the tag with its punched hole, the diamond
 |---|---|---|---|
 | Voice | `--f-voice` (= `--f-display`) | Lalezar 400 | screen titles, stamp words, the دلال's calls, award names, the label of a screen's primary action. Short phrases, 22px and up |
 | Print | `--f-print` (= `--f-num`) | Barlow Condensed 700/800 | every number printed on an object or counted: prices, wallet, counters, clocks, stickers, receipts, plate Latin. Tabular, Latin digits, LTR isolated |
-| Text | `--f-ui` | IBM Plex Sans Arabic 400–700 | sentences, labels, hints, secondary buttons. A number inside a sentence stays Text |
+| Text | `--f-ui` | Readex Pro (variable, 400–700) | sentences, labels, hints, secondary buttons. A number inside a sentence stays Text |
 
 - Scale (theme.css): voice `--t-voice-xl 44 / l 34 / m 26 / s 22`; print `--t-print-xxl 68 / xl 54 / l 32 / m 22 / s 16`;
   text `--t-body 17 / --t-sub 15 / --t-cap 13`. Utilities: `.voice-*`, `.print-*`, `.text-*`, plus `.voice` and `.print`.

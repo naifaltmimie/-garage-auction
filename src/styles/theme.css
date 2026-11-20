@@ -13,8 +13,8 @@
 
   /* three type roles: the voice (the logo's face), print (numbers on objects), text (--f-ui).
      The older display and number names point at the roles, so every screen sheet follows. */
-  --f-voice: 'Lalezar', 'IBM Plex Sans Arabic', system-ui, sans-serif;
-  --f-print: 'Barlow Condensed', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-voice: 'Lalezar', 'Readex Pro Variable', system-ui, sans-serif;
+  --f-print: 'Barlow Condensed', 'Readex Pro Variable', system-ui, sans-serif;
   --f-display: var(--f-voice);
   --f-num: var(--f-print);
 
