@@ -1,2 +1,469 @@
 /* ================================================================ the kit: objects
-   The price tag, the stamp, the sticker, the receipt and the rolling number (src/ui/components/kit). */
+   The price tag, the stamp, the sticker, the receipt and the rolling number (src/ui/components/kit).
+   Paper is --plate with one tiled grain (public/brand/kit/paper-grain.png); stamp ink wears through one
+   static mask (public/brand/kit/ink-wear.webp). Every object is still while idle: motion runs once, on a
+   change or on mount, and is transform, opacity or clip only. */
+
+/* ---------------------------------------------------------------- rolling number */
+.rn {
+  display: inline-flex;
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: var(--f-print);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  line-height: 1;
+  white-space: nowrap;
+}
+.rn-cell {
+  position: relative;
+  display: inline-block;
+  padding-block: .08em;
+  margin-block: -.08em;
+  /* the window: clips the travel above and below, never the glyph's sides */
+  clip-path: inset(0 -.15em);
+}
+.rn-d { display: block; }
+.rn-sep { display: inline-block; }
+.rn-out {
+  position: absolute;
+  inset: .08em 0 auto 0;
+  text-align: center;
+}
+.rn-in.rn-up { animation: rn-in-up 280ms cubic-bezier(.16, 1, .3, 1) both; }
+.rn-out.rn-up { animation: rn-out-up 280ms cubic-bezier(.16, 1, .3, 1) both; }
+.rn-in.rn-down { animation: rn-in-down 280ms cubic-bezier(.16, 1, .3, 1) both; }
+.rn-out.rn-down { animation: rn-out-down 280ms cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes rn-in-up { from { transform: translateY(118%); } }
+@keyframes rn-out-up { to { transform: translateY(-118%); } }
+@keyframes rn-in-down { from { transform: translateY(-118%); } }
+@keyframes rn-out-down { to { transform: translateY(118%); } }
+
+/* ---------------------------------------------------------------- price tag
+   Geometry (physical, the nose is on the left in either direction): --nose is the chamfer's depth,
+   the hole sits at --hx on the centre line. The strings rise about 26px above the tag's box. */
+.ptag {
+  --h: 84px;
+  --nose: 34px;
+  --hx: 30px;
+  --hr: 6px;
+  --num: 50px;
+  --ink-60: rgba(17, 17, 17, .6);
+  position: relative;
+  width: 100%;
+  height: var(--h);
+  transform: rotate(-1.2deg);
+  transform-origin: var(--hx) 50%;
+}
+.ptag[data-tick='a'] { animation: ptag-tick-a 260ms both; }
+.ptag[data-tick='b'] { animation: ptag-tick-b 260ms both; }
+@keyframes ptag-tick-a {
+  0% { transform: rotate(-1.2deg); animation-timing-function: cubic-bezier(.3, .7, .4, 1); }
+  32% { transform: rotate(-2.8deg); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  66% { transform: rotate(-.85deg); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  100% { transform: rotate(-1.2deg); }
+}
+@keyframes ptag-tick-b {
+  0% { transform: rotate(-1.2deg); animation-timing-function: cubic-bezier(.3, .7, .4, 1); }
+  32% { transform: rotate(-2.8deg); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  66% { transform: rotate(-.85deg); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  100% { transform: rotate(-1.2deg); }
+}
+.ptag-lift {
+  position: relative;
+  height: 100%;
+  /* lying on the surface: a contact shadow and a soft one cast down and a little left */
+  filter: drop-shadow(0 1px .5px rgba(0, 0, 0, .55)) drop-shadow(-2px 7px 7px rgba(0, 0, 0, .42));
+}
+.ptag-paper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  direction: rtl;
+  color: var(--plate-ink);
+  background:
+    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
+    linear-gradient(172deg, rgba(255, 255, 255, .7) 0%, rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, .045) 100%),
+    var(--plate);
+  border-radius: 0 7px 7px 0;
+  clip-path: polygon(var(--nose) 0, 100% 0, 100% 100%, var(--nose) 100%, 0 calc(50% + 6px), 0 calc(50% - 6px));
+  -webkit-mask: radial-gradient(circle at var(--hx) 50%, #0000 var(--hr), #000 calc(var(--hr) + .6px));
+  mask: radial-gradient(circle at var(--hx) 50%, #0000 var(--hr), #000 calc(var(--hr) + .6px));
+}
+/* the printed inner rule: a polyline along the nose, a border along the rest */
+.ptag-nose {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 41px;
+  height: 100%;
+  fill: none;
+  stroke: rgba(17, 17, 17, .24);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.ptag-nose polyline { vector-effect: non-scaling-stroke; }
+.ptag-rule {
+  position: absolute;
+  left: 40.5px;
+  right: 5px;
+  top: 5px;
+  bottom: 5px;
+  border: 1px solid rgba(17, 17, 17, .24);
+  border-left: 0;
+  border-radius: 0 3px 3px 0;
+  pointer-events: none;
+}
+/* the hole's edge: paper crushed by the punch */
+.ptag-rim {
+  position: absolute;
+  left: calc(var(--hx) - 10px);
+  top: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0000 calc(var(--hr) + .2px), rgba(17, 17, 17, .62) calc(var(--hr) + .6px), rgba(17, 17, 17, .16) calc(var(--hr) + 2.2px), #0000 calc(var(--hr) + 3.6px));
+}
+.ptag-price {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 16px 0 14px;
+}
+.ptag-label {
+  font: 600 12px/1.3 var(--f-ui);
+  color: var(--ink-60);
+  white-space: nowrap;
+}
+.ptag-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+.ptag-num {
+  font-size: var(--num);
+  font-weight: 800;
+  line-height: .84;
+  letter-spacing: -.005em;
+  color: var(--plate-ink);
+}
+.ptag-unit {
+  font: 600 14px/1 var(--f-ui);
+  color: var(--plate-ink);
+}
+/* the perforation: a row of short cuts between the price and the bidder */
+.ptag-perf {
+  flex: none;
+  width: 1.5px;
+  margin-block: 6px;
+  background: repeating-linear-gradient(to bottom, rgba(17, 17, 17, .3) 0 3px, #0000 3px 7px);
+}
+.ptag-who {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 8px 0 calc(var(--hx) + var(--hr) + 8px);
+}
+.ptag-disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--plate-ink), 0 1px 1px rgba(0, 0, 0, .12);
+  font: 800 16px/1 var(--f-print);
+  font-variant-numeric: tabular-nums;
+  color: var(--plate-ink);
+}
+.ptag-name {
+  max-width: 100%;
+  font: 700 14px/1.3 var(--f-ui);
+  color: var(--plate-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ptag-none {
+  font: 600 14px/1.3 var(--f-ui);
+  color: var(--ink-60);
+  white-space: nowrap;
+}
+.ptag.is-mine .ptag-disc {
+  background: var(--plate-ink);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px var(--plate-ink);
+}
+/* the string: two strands of cotton cord leaving the hole up and to the left */
+.ptag-string {
+  position: absolute;
+  left: -2px;
+  top: calc(50% - 68px);
+  width: 48px;
+  height: 80px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.ptag-string-back path { stroke: #a9a59c; stroke-width: 1.7; }
+.ptag-string-front path { stroke: #e2ded5; stroke-width: 1.8; }
+.ptag-string-front .ptag-knot-ends { stroke: #cfcac0; stroke-width: 1.6; }
+.ptag-knot { fill: #e2ded5; stroke: #b8b3a9; stroke-width: .6; }
+
+.ptag-l { --num: 46px; }
+.ptag-xl { --num: 40px; }
+@media (max-width: 379px) {
+  .ptag { --h: 78px; --num: 46px; }
+  .ptag-l { --num: 42px; }
+  .ptag-xl { --num: 34px; }
+  .ptag-price { padding: 0 14px 0 12px; }
+  .ptag-who { gap: 2px; }
+  .ptag-name { font-size: 13px; }
+}
+
+/* ---------------------------------------------------------------- stamp */
+.stamp2 {
+  display: inline-block;
+  color: var(--brand);
+  transform: rotate(-7deg);
+  animation: stamp2-slam 240ms both;
+}
+@keyframes stamp2-slam {
+  0% { opacity: 0; transform: rotate(-7deg) scale(1.55); animation-timing-function: cubic-bezier(.55, 0, .9, .45); }
+  35% { opacity: 1; }
+  64% { transform: rotate(-7deg) scale(.95); animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  100% { opacity: 1; transform: rotate(-7deg) scale(1); }
+}
+.stamp2-ink {
+  padding: 3px;
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  -webkit-mask: url('/brand/kit/ink-wear.webp') center / 100% 100% no-repeat;
+  mask: url('/brand/kit/ink-wear.webp') center / 100% 100% no-repeat;
+}
+.stamp2-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 18px 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+.stamp2-word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: 54px;
+  line-height: 1.04;
+  white-space: nowrap;
+}
+.stamp2-sub {
+  margin-top: -2px;
+  font: 700 12px/1.3 var(--f-ui);
+  white-space: nowrap;
+}
+.stamp2-yours {
+  font: 700 15px/1 var(--f-ui);
+}
+.stamp2-mine .stamp2-face {
+  background: currentColor;
+}
+.stamp2-mine .stamp2-word,
+.stamp2-mine .stamp2-sub {
+  color: #fff;
+}
+.stamp2-unsold { color: var(--ink-2); }
+.stamp2-unsold .stamp2-ink { padding: 0; border-width: 2.5px; }
+.stamp2-unsold .stamp2-face { border: 0; padding: 2px 16px 6px; }
+.stamp2-unsold .stamp2-word { font-size: 40px; }
+
+/* ---------------------------------------------------------------- lot sticker */
+.lotsticker {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 6px 11px 8px;
+  border-radius: 8px;
+  color: var(--plate-ink);
+  background:
+    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
+    linear-gradient(160deg, #fff 0%, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .04) 100%),
+    var(--plate);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .4), -2px 6px 10px -3px rgba(0, 0, 0, .5);
+  transform: rotate(-3deg);
+}
+/* the top-left corner has come away from the glass: it curls, catches a little shade along the bend */
+.lotsticker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  border-top-left-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, .1) 46%, rgba(0, 0, 0, 0) 64%);
+  pointer-events: none;
+}
+.lotsticker-k { font: 700 11px/1.2 var(--f-ui); }
+.lotsticker-n {
+  font: 800 28px/.95 var(--f-print);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+}
+.lotsticker-of { margin-top: 1px; font: 600 11px/1.2 var(--f-ui); color: rgba(17, 17, 17, .7); }
+
+/* ---------------------------------------------------------------- receipt */
+.rcpt {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+/* the printer's slit: a dark slot the paper comes out of */
+.rcpt-slit {
+  position: relative;
+  z-index: 1;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #000 0%, var(--rubber-0) 60%, #16171a 100%);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, .9), 0 1px 0 rgba(255, 255, 255, .07), 0 -1px 0 rgba(0, 0, 0, .6);
+}
+.rcpt-feed {
+  margin-top: -7px;
+  padding-inline: 10px;
+  /* the paper only exists below the middle of the slit; its shadow may spill sideways and down */
+  clip-path: inset(0 -30px -40px -30px);
+  filter: drop-shadow(0 1px .5px rgba(0, 0, 0, .4)) drop-shadow(-2px 8px 9px rgba(0, 0, 0, .4));
+}
+.rcpt-paper {
+  --tooth: 10px;
+  padding: 20px 18px calc(22px + var(--tooth) / 2);
+  color: #161616;
+  background:
+    url('/brand/kit/paper-grain.png') 0 0 / 160px 160px,
+    linear-gradient(180deg, rgba(0, 0, 0, .07) 0, rgba(0, 0, 0, 0) 14px),
+    var(--plate);
+  -webkit-mask:
+    conic-gradient(from -45deg at 50% 100%, #0000, #000 1deg 89deg, #0000 90deg) 50% 100% / var(--tooth) calc(var(--tooth) / 2) repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - var(--tooth) / 2 + .5px) no-repeat;
+  mask:
+    conic-gradient(from -45deg at 50% 100%, #0000, #000 1deg 89deg, #0000 90deg) 50% 100% / var(--tooth) calc(var(--tooth) / 2) repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - var(--tooth) / 2 + .5px) no-repeat;
+  animation: rcpt-print 520ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes rcpt-print { from { transform: translateY(-100%); } }
+.rcpt-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed rgba(22, 22, 22, .42);
+}
+.rcpt-title { font: 700 15px/1.3 var(--f-ui); }
+.rcpt-no {
+  direction: ltr;
+  font: 700 16px/1 var(--f-print);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.rcpt-rows { margin: 0; padding: 8px 0; }
+.rcpt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+}
+.rcpt-row dt { min-width: 0; font: 500 14px/1.45 var(--f-ui); }
+.rcpt-row dd {
+  flex: none;
+  margin: 0;
+  direction: ltr;
+  font: 700 18px/1 var(--f-print);
+  font-variant-numeric: tabular-nums;
+}
+.rcpt-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1.5px dashed rgba(22, 22, 22, .42);
+  font: 700 16px/1.3 var(--f-ui);
+}
+.rcpt-total-n {
+  direction: ltr;
+  font: 800 26px/1 var(--f-print);
+  font-variant-numeric: tabular-nums;
+}
+.rcpt-note {
+  margin: 16px 0 0;
+  text-align: center;
+  font: 500 13px/1.5 var(--f-ui);
+  color: rgba(22, 22, 22, .72);
+}
+
+/* ---------------------------------------------------------------- the section on #/kit */
+.kobj {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 16px 72px;
+  color: var(--ink);
+  font-family: var(--f-ui);
+}
+.kobj-h {
+  margin: 0 0 4px;
+  font: 400 32px/1.25 var(--f-voice);
+  font-synthesis: none;
+}
+.kobj-sec { padding: 28px 0 36px; border-top: 1px solid var(--line); }
+.kobj-sec:first-of-type { border-top: 0; }
+.kobj-t { margin: 0 0 4px; font: 700 17px/1.35 var(--f-ui); }
+.kobj-d { margin: 0 0 8px; font-size: 14px; line-height: 1.6; color: var(--mute); }
+.kobj-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding-top: 36px;
+}
+.kobj-ctl { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.kobj-photos { display: grid; gap: 12px; margin-top: 16px; }
+/* a stand-in for a car photo: a dim yard, a horizon, asphalt */
+.kobj-photo {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    var(--tex-grain),
+    radial-gradient(60% 34% at 50% 64%, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%),
+    linear-gradient(180deg, #4b4f56 0%, #737880 50%, #5c6067 51%, #34363b 100%);
+}
+.kobj-row { display: flex; align-items: flex-start; gap: 28px; padding: 18px 4px 4px; }
+.kobj-roll {
+  padding-top: 12px;
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rn-in, .rn-out, .ptag[data-tick], .stamp2, .rcpt-paper { animation: none !important; }
+  .rn-out { display: none; }
+}
