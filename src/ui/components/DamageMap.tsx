@@ -3,8 +3,9 @@ import type { CarPub, PanelId, PanelStatus } from '../../engine/types';
 import { money } from '../../lib/util';
 
 // The body map: a top view, front at the top, the car's left (driver) side on the viewer's left.
-// Every panel carries the same one-letter code the list and the legend use, so the map never relies on
-// colour alone (WCAG 1.4.1). Fills come from the sheet's tokens (s-sheet.css, .dm-*).
+// Only what is not original is marked: that panel turns white paper with its code letter in black, the same
+// letter the legend and the list use (WCAG 1.4.1: the letter carries the meaning, not the fill). Original panels
+// are just the car's outline; a panel nobody inspected is a dashed outline with «؟». Styles: s-sheet.css, .dm-*.
 const GEOM: Record<PanelId, string> = {
   fb: 'M30 8 Q60 2 90 8 Q104 11 106 22 L106 26 L14 26 L14 22 Q16 11 30 8 Z',
   hood: 'M24 28 L96 28 L94 84 L26 84 Z',
@@ -35,9 +36,9 @@ const AT: Record<PanelId, [number, number]> = {
 };
 const AT2: Partial<Record<PanelId, [number, number]>> = { lfd: [15, 119], rfd: [105, 119], lrq: [15, 188], rrq: [105, 188] };
 
-/** One letter per paint state, shared by the map, the legend and the panel list. */
+/** One letter per paint state, shared by the map, the legend and the panel list. Original has none. */
 export const STATUS_CODE: Record<PanelStatus, string> = {
-  ok: 'أ',
+  ok: '',
   spot: 'خ',
   paint: 'ر',
   dent: 'س',
@@ -46,53 +47,69 @@ export const STATUS_CODE: Record<PanelStatus, string> = {
   unknown: '؟',
 };
 
-const ORDER: PanelStatus[] = ['ok', 'spot', 'paint', 'dent', 'replaced', 'damaged', 'unknown'];
+const ORDER: PanelStatus[] = ['spot', 'paint', 'dent', 'replaced', 'damaged', 'unknown'];
+
+const SIDE_L: PanelId[] = ['lff', 'lfd', 'lrd', 'lrq'];
+const SIDE_R: PanelId[] = ['rff', 'rfd', 'rrd', 'rrq'];
+
+/** A panel's bounding box, read from its path (every path is straight segments and quadratic bows). */
+function box(d: string): [number, number, number, number] {
+  const n = d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+  const xs = n.filter((_, i) => i % 2 === 0);
+  const ys = n.filter((_, i) => i % 2 === 1);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
 
 export function DamageMap({ car, onPick, picked }: { car: CarPub; onPick?: (p: PanelId) => void; picked?: PanelId | null }) {
   const list = panelsFor(car.doors);
+  const geom = (p: PanelId) => (car.doors === 2 && GEOM2[p]) || GEOM[p];
   return (
-    <svg className="dm" viewBox="0 0 120 250" role="img" aria-label="خريطة البودي، كل قطعة عليها حرف حالتها">
+    <svg className="dm" viewBox="-10 -12 140 264" role="img" aria-label="خريطة البودي، القطع اللي مو أصلية عليها حرف حالتها">
       {/* wheels and glass, for orientation only */}
-      <rect className="dm-wheel" x="2" y="40" width="6" height="30" rx="2" />
-      <rect className="dm-wheel" x="112" y="40" width="6" height="30" rx="2" />
-      <rect className="dm-wheel" x="2" y="186" width="6" height="30" rx="2" />
-      <rect className="dm-wheel" x="112" y="186" width="6" height="30" rx="2" />
+      <rect className="dm-wheel" x="1" y="40" width="6" height="30" rx="2" />
+      <rect className="dm-wheel" x="113" y="40" width="6" height="30" rx="2" />
+      <rect className="dm-wheel" x="1" y="186" width="6" height="30" rx="2" />
+      <rect className="dm-wheel" x="113" y="186" width="6" height="30" rx="2" />
       <path className="dm-glass" d="M28 87 L92 87 L88 105 L32 105 Z" />
       <path className="dm-glass" d="M32 171 L88 171 L92 187 L28 187 Z" />
       {list.map((p) => {
         const st = car.panels[p] ?? 'ok';
-        const d = (car.doors === 2 && GEOM2[p]) || GEOM[p];
         return (
-          <path
-            key={p}
-            d={d}
-            className={`dm-p dm-${st}${picked === p ? ' on' : ''}`}
-            onClick={onPick ? () => onPick(p) : undefined}
-          >
+          <path key={p} d={geom(p)} className={`dm-p ${st === 'ok' ? 'dm-orig' : st === 'unknown' ? 'dm-unk' : 'dm-mark'}${picked === p ? ' on' : ''}`}>
             <title>{`${PANEL_LABEL[p]}: ${STATUS_LABEL[st]}`}</title>
           </path>
         );
       })}
       {list.map((p) => {
         const st = car.panels[p] ?? 'ok';
+        if (st === 'ok') return null;
         const [x, y] = (car.doors === 2 && AT2[p]) || AT[p];
         return (
-          <text key={`t${p}`} x={x} y={y} className={`dm-t dm-t-${st}`} textAnchor="middle" dominantBaseline="central" aria-hidden="true">
+          <text key={`t${p}`} x={x} y={y} className={`dm-t ${st === 'unknown' ? 'dm-t-unk' : 'dm-t-mark'}${SIDE_L.includes(p) || SIDE_R.includes(p) ? ' dm-t-side' : ''}`} textAnchor="middle" dominantBaseline="central" aria-hidden="true">
             {STATUS_CODE[st]}
           </text>
         );
       })}
-      <text className="dm-front" x="60" y="4" textAnchor="middle" dominantBaseline="central">
+      {/* invisible tap areas: the thin side panels reach out to the edge so a thumb finds them */}
+      {onPick &&
+        list.map((p) => {
+          const [x0, y0, x1, y1] = box(geom(p));
+          const l = SIDE_L.includes(p) ? -10 : x0;
+          const r = SIDE_R.includes(p) ? 130 : x1;
+          return <rect key={`h${p}`} className="dm-hit" x={l} y={y0} width={r - l} height={y1 - y0} onClick={() => onPick(p)} />;
+        })}
+      <text className="dm-front" x="60" y="-5" textAnchor="middle" dominantBaseline="central">
         قدام
       </text>
     </svg>
   );
 }
 
-/** The letter in its paint, as on the map. */
+/** The letter as it sits on the map: black on white paper, or «؟» in a dashed outline. Nothing for original. */
 export function StatusKey({ s }: { s: PanelStatus }) {
+  if (s === 'ok') return null;
   return (
-    <span className={`dm-key dm-${s}`} aria-hidden="true">
+    <span className={`dm-key ${s === 'unknown' ? 'dm-key-unk' : 'dm-key-mark'}`} aria-hidden="true">
       {STATUS_CODE[s]}
     </span>
   );
@@ -101,7 +118,7 @@ export function StatusKey({ s }: { s: PanelStatus }) {
 /** The panels that are not original, as ruled rows: letter, panel, state, paint thickness. */
 export function PanelList({ car }: { car: CarPub }) {
   const items = panelsFor(car.doors).filter((p) => (car.panels[p] ?? 'ok') !== 'ok');
-  if (!items.length) return <p className="sh-plain">كل القطع صبغ وكالة.</p>;
+  if (!items.length) return null;
   return (
     <dl className="rows sh-panels">
       {items.map((p) => {
@@ -128,18 +145,21 @@ export function PanelList({ car }: { car: CarPub }) {
   );
 }
 
-/** What the letters mean, in words. Only the states this car has, plus «أصلي». */
+/** What the letters on this car mean, then one line for the rest; a car with nothing marked says so. */
 export function Legend({ car }: { car?: CarPub }) {
-  const has = new Set<PanelStatus>(car ? panelsFor(car.doors).map((p) => car.panels[p] ?? 'ok') : ORDER);
-  has.add('ok');
+  const states = car ? panelsFor(car.doors).map((p) => car.panels[p] ?? 'ok') : ORDER;
+  const has = new Set<PanelStatus>(states);
+  const shown = ORDER.filter((k) => has.has(k));
+  if (!shown.length) return <p className="dm-all">كل القطع أصلي</p>;
   return (
     <ul className="dm-legend" aria-label="معنى الحروف">
-      {ORDER.filter((k) => has.has(k)).map((k) => (
+      {shown.map((k) => (
         <li key={k}>
           <StatusKey s={k} />
           {STATUS_LABEL[k]}
         </li>
       ))}
+      {has.has('ok') && <li className="dm-rest">الباقي أصلي</li>}
     </ul>
   );
 }
