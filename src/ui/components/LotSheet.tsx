@@ -1,10 +1,12 @@
 import { Fragment, memo, useMemo, useRef, useState } from 'react';
-import { MODE_LABEL, SELLER_LABEL, chassisCard, damageLine } from '../../engine/lotgen';
+import { MODE_LABEL, PANEL_LABEL, SELLER_LABEL, STATUS_LABEL, chassisCard, damageLine } from '../../engine/lotgen';
 import { gradeWord } from '../../engine/realism';
 import type { CarPub, Cond, LotPub, PanelId } from '../../engine/types';
-import { km, money } from '../../lib/util';
-import { DamageMap, Legend, PanelList } from './DamageMap';
+import { money } from '../../lib/util';
+import { DamageMap, Legend, PanelList, StatusKey } from './DamageMap';
 import { Gallery } from './Gallery';
+import { Facts, type Fact } from './kit/Facts';
+import { Mark, Pairs, type Pair } from './kit/Pairs';
 import { CarPlate } from './Plate';
 
 export const DRIVE_AR = { FWD: 'دفع أمامي', RWD: 'دفع خلفي', AWD: 'دفع كلي', '4WD': 'دفع رباعي' } as const;
@@ -87,57 +89,83 @@ export function CarTitle({ car, compact }: { car: Pick<CarPub, 'makeAr' | 'makeE
   );
 }
 
-function gradeTone(g: number | null) {
+function gradeTone(g: number | null): 'good' | 'mid' | 'bad' {
   return g == null ? 'mid' : g >= 3.8 ? 'good' : g >= 2.5 ? 'mid' : 'bad';
 }
 
-/** The six things people look at first. */
-function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?: boolean }) {
+/** A printed number inside a line of text: Barlow, Latin digits, isolated left to right. */
+function P({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <span className={className ? `print ltr ${className}` : 'print ltr'}>{children}</span>;
+}
+
+/** A label with a percentage in it («سعي 2.5% + ضريبة»): the number and its sign stay together, left to right. */
+function isoPct(t: string): React.ReactNode {
+  return t.split(/(\d[\d.,]*%)/).map((x, i) => (i % 2 ? <bdi key={i} dir="ltr">{x}</bdi> : x));
+}
+
+/** The make as people say it: the Arabic name, or the street name when the make is written in Latin (GMC → جمس). */
+function makeSaid(car: Pick<CarPub, 'makeAr' | 'modelAr' | 'nick'>): string {
+  const latin = !/[؀-ۿ]/.test(car.makeAr);
+  return latin && car.nick && car.nick !== car.modelAr ? car.nick : car.makeAr;
+}
+
+/** The model and its trim, the way the sheet's title reads it («يوكن دينالي»). */
+function modelSaid(car: Pick<CarPub, 'modelAr' | 'trim' | 'trimAr'>): string {
+  const trim = car.trimAr || car.trim;
+  return trim && !car.modelAr.includes(trim) ? `${car.modelAr} ${trim}` : car.modelAr;
+}
+
+/** The six things people look at first, as ruled pairs. */
+function glance(car: CarPub, lot: LotPub, revealed: boolean): Pair[] {
   const g = revealed ? null : lot.grade;
   const dmg = damageLine(car);
-  const items: { k: string; v: React.ReactNode; tone?: string }[] = [
+  const approxKm = !!car.said && !car.said.includes('km');
+  const typicalSpec = !!car.said && !car.said.includes('spec');
+  return [
     {
       k: 'الممشى',
       v: (
         <>
-          {km(car.km)}
-          {car.said && !car.said.includes('km') ? (
-            <small className="mute"> تقريباً</small>
-          ) : (
-            car.kmTag && <small className={car.kmTag === 'low' ? 'gain' : 'loss'}> {car.kmTag === 'low' ? 'قليل' : 'عالي'}</small>
-          )}
+          <P className="sh-num">{money(Math.round(car.km / 100) * 100)}</P> كم
+          {approxKm ? <small> تقريباً</small> : car.kmTag ? <small> {car.kmTag === 'low' ? 'قليل' : 'عالي'}</small> : null}
         </>
       ),
+      tone: !approxKm && car.kmTag === 'low' ? 'good' : !approxKm && car.kmTag === 'high' ? 'bad' : undefined,
     },
     {
       k: 'المواصفات',
       v: (
         <>
           {car.spec}
-          {car.said && !car.said.includes('spec') && <small className="mute"> غالباً</small>}
+          {typicalSpec && <small> غالباً</small>}
         </>
       ),
       tone: car.specKind === 'us_salvage' ? 'bad' : undefined,
     },
     {
       k: 'درجة الفحص',
-      v: g == null ? (lot.mode === 'asis' ? 'على الحالة' : '—') : <>{g.toFixed(1)}<small> / 5 {gradeWord(g)}</small></>,
-      tone: g == null ? undefined : gradeTone(g),
+      v:
+        g == null ? (
+          lot.mode === 'asis' ? 'على الحالة' : 'ما انفحصت'
+        ) : (
+          <>
+            <P className="sh-num">{g.toFixed(1)}</P> {gradeWord(g)}
+          </>
+        ),
+      tone: g == null ? (lot.mode === 'asis' ? 'bad' : undefined) : gradeTone(g) === 'mid' ? undefined : (gradeTone(g) as 'good' | 'bad'),
     },
-    { k: 'الضرر', v: dmg, tone: dmg === 'بدون ضرر' ? 'good' : dmg.startsWith('صدمة') ? 'bad' : 'mid' },
-    { k: 'اللون', v: <><span className="swatch" style={{ background: car.colorHex }} />{car.color}</> },
+    { k: 'الضرر', v: dmg, tone: dmg === 'بدون ضرر' ? 'good' : dmg.startsWith('صدمة') ? 'bad' : undefined },
+    {
+      k: 'اللون',
+      v: (
+        <>
+          <span className="sh-swatch" style={{ background: car.colorHex }} aria-hidden="true" />
+          {car.color}
+        </>
+      ),
+    },
     { k: 'المدينة', v: car.city },
   ];
-  return (
-    <dl className="keyfacts">
-      {items.map((it) => (
-        <div key={it.k} className={it.tone ? `tone-${it.tone}` : ''}>
-          <dt>{it.k}</dt>
-          <dd>{it.v}</dd>
-        </div>
-      ))}
-    </dl>
-  );
 }
 
 type Tab = 'inspect' | 'records' | 'ad' | 'specs';
@@ -152,51 +180,105 @@ function useSame<T>(v: T): T {
 }
 
 const LotGallery = memo(function LotGallery({ lot, car }: { lot: LotPub; car: CarPub | null }) {
-  const badges = (
-    <>
-      {lot.kind === 'covered' && <span className="g-kind">تحت الغطا</span>}
-      {lot.kind === 'sealed' && <span className="g-kind">ظرف مختوم</span>}
-      {lot.kind === 'dutch' && <span className="g-kind gold">مزاد هولندي</span>}
-      {lot.relist > 0 && <span className="g-kind gold">عرض ثاني</span>}
-    </>
-  );
   return car ? (
-    <Gallery photos={car.photos} body={car.body} color={car.colorHex}>
-      {badges}
-    </Gallery>
+    <Gallery photos={car.photos} body={car.body} color={car.colorHex} />
   ) : (
-    <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered>
-      {badges}
-    </Gallery>
+    <Gallery photos={lot.cover?.photo ? [lot.cover.photo] : undefined} body={lot.cover?.body ?? 'sedan'} covered />
   );
 });
 
-const LotHead = memo(function LotHead({ lot, car, revealed }: { lot: LotPub; car: CarPub | null; revealed: boolean }) {
+/** Who sells, how, and the floor, as one line of facts under the title. */
+function saleFacts(lot: LotPub, reserveMet: boolean, covered: boolean): Fact[] {
+  const out: Fact[] = [];
+  if (lot.kind === 'sealed') out.push('ظرف مختوم');
+  if (lot.kind === 'dutch') out.push('مزاد هولندي');
+  if (lot.relist > 0) out.push('عرض ثاني');
+  out.push(SELLER_LABEL[lot.seller]);
+  if (!covered) out.push(lot.mode === 'asis' ? { t: MODE_LABEL.asis, tone: 'warn' } : { t: 'مفحوصة', tone: 'good' });
+  if (lot.kind === 'open') out.push(lot.reserve ? (reserveMet ? { t: 'انفك الحد', tone: 'good' } : 'عليها حد') : 'بدون حد');
+  return out;
+}
+
+const LotHead = memo(function LotHead({ lot, car, revealed, reserveMet }: { lot: LotPub; car: CarPub | null; revealed: boolean; reserveMet: boolean }) {
   if (!car) {
+    const c = lot.cover;
     return (
-      <div className="car-title">
-        <div className="car-make">سيارة تحت الغطا</div>
-        <h2 className="car-name">{lot.cover ? bodyAr(lot.cover.body) : 'سيارة'}</h2>
-        <div className="car-year">
-          <b className="ltr">{lot.cover ? `${lot.cover.yearFrom}–${lot.cover.yearTo}` : ''}</b>
-          <span>الغطا ما ينشال إلا بعد ما يرسي السوم</span>
-        </div>
-        <div className="hints">
-          {lot.cover?.hints.map((h) => (
-            <span key={h} className="chip">{h}</span>
-          ))}
-        </div>
-      </div>
+      <header className="sh-head">
+        <h2 className="sh-title">تحت الغطا</h2>
+        <p className="sh-meta">
+          {c ? bodyAr(c.body) : 'سيارة'}
+          {c && (
+            <>
+              {' · '}
+              <P className="sh-year">{c.yearFrom === c.yearTo ? c.yearFrom : `${c.yearFrom}–${c.yearTo}`}</P>
+            </>
+          )}
+        </p>
+        <Facts className="sh-facts" items={saleFacts(lot, reserveMet, true)} />
+        <p className="sh-honest">ما نعرف عنها إلا اللي تحت، والغطا ما ينشال إلا بعد ما يرسي السوم.</p>
+        {c && c.hints.length > 0 && (
+          <ul className="sh-hints">
+            {c.hints.map((h) => (
+              <li key={h}>{h}</li>
+            ))}
+          </ul>
+        )}
+      </header>
     );
   }
+  const sp = car.plate.special;
   return (
     <>
-      <div className="lot-head">
-        <CarTitle car={car} />
-        <CarPlate plate={car.plate} size="sm" />
-      </div>
-      <KeyFacts car={car} lot={lot} revealed={revealed} />
+      <header className="sh-head">
+        <h2 className="sh-title">{modelSaid(car)}</h2>
+        <div className="sh-line">
+          <p className="sh-meta">
+            <span className="sh-mk">
+              <span className="sh-make">{makeSaid(car)}</span>
+              {' · '}
+              <P className="sh-year">{car.year}</P>
+            </span>
+            <SpecLine car={car} />
+          </p>
+          <div className="sh-plate">
+            <CarPlate plate={car.plate} size="sm" />
+            {sp?.note && <small className="sh-plate-note">{sp.note}</small>}
+          </div>
+        </div>
+        <Facts className="sh-facts" items={saleFacts(lot, reserveMet, false)} />
+      </header>
+      <Pairs className="sh-glance" items={glance(car, lot, revealed)} />
     </>
+  );
+});
+
+/** The دلال's file, as people talk: three short sentences, then what the viewing turned up. */
+const Story = memo(function Story({ car }: { car: CarPub }) {
+  const s = car.story;
+  if (!s) return null;
+  const end = (t: string) => (/[.؟!]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
+  const owner = /^عند\s/.test(s.owner) ? `كانت ${s.owner}` : s.owner;
+  return (
+    <section className="sh-sec" aria-labelledby="sh-story">
+      <h3 className="sh-h" id="sh-story">سالفتها</h3>
+      <div className="sh-story">
+        <p>{end(owner)}</p>
+        <p>{end(s.use)}</p>
+        <p>
+          <span className="sh-q">ليش تنباع؟</span> {end(s.why)}
+        </p>
+      </div>
+      {s.quirks.length > 0 && (
+        <>
+          <h3 className="sh-h">شفنا بالمعاينة</h3>
+          <ul className="sh-list">
+            {s.quirks.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 });
 
@@ -206,54 +288,66 @@ export function LotSheet({ lot: lotIn, reserveMet, opening, revealed: revIn }: {
   const car = revealed ?? lot.car;
   const covered = lot.kind === 'covered' && !revealed;
   const shown = covered || !car ? null : car;
+  const est = lot.estimate;
 
   return (
-    <article className="lot" key={lot.id} aria-label={`السيارة ${lot.no}`}>
+    <article className="sh" key={lot.id} aria-label={`السيارة رقم ${lot.no}`}>
       <LotGallery lot={lot} car={shown} />
 
-      <div className="lot-card">
-        <div className="lot-tags">
-          <span className="chip">{SELLER_LABEL[lot.seller]}</span>
-          <span className={`chip ${lot.mode === 'asis' ? 'chip-red' : 'chip-green'}`}>{lot.mode === 'asis' ? MODE_LABEL.asis : 'مفحوصة'}</span>
-          {lot.kind === 'open' &&
-            (lot.reserve ? (
-              <span className={`chip ${reserveMet ? 'chip-green' : 'chip-amber'}`}>{reserveMet ? 'انفك الحد' : 'عليها حد'}</span>
-            ) : (
-              <span className="chip chip-gold">بدون حد</span>
-            ))}
-          {shown?.plate.special && (
-            <span className={`chip chip-gold plate-chip ${shown.plate.special.tier}`}>
-              {shown.plate.special.label}
-              {shown.plate.special.note && <small> · {shown.plate.special.note}</small>}
-            </span>
-          )}
-        </div>
+      <div className="sh-body">
+        <LotHead lot={lot} car={shown} revealed={!!revealed} reserveMet={reserveMet} />
 
-        <LotHead lot={lot} car={shown} revealed={!!revealed} />
-
-        {shown?.story && (
-          <p className="saga">
-            <small>سالفتها من ملف الدلال</small>
-            <span>{shown.story.owner}، {shown.story.use}.</span>
-            <span>ليش تنباع: {shown.story.why}.</span>
-          </p>
-        )}
-
-        <div className="pricebar">
-          <div>
-            <small>تقدير الدلال</small>
-            <b className="ltr">{lot.estimate ? `${money(lot.estimate[0])} – ${money(lot.estimate[1])}` : lot.kind === 'covered' ? 'محد يدري' : 'مخفي'}</b>
+        <dl className="rows sh-price">
+          <div className="rows-r">
+            <dt>تقدير الدلال</dt>
+            <dd>
+              {est ? (
+                <P className="sh-money">
+                  {money(est[0])} – {money(est[1])}
+                </P>
+              ) : (
+                <span className="sh-none">{lot.kind === 'covered' ? 'محد يدري' : 'مخفي'}</span>
+              )}
+            </dd>
           </div>
-          <div>
-            <small>{lot.kind === 'sealed' ? 'أقل ظرف' : 'يفتح على'}</small>
-            <b className="ltr">{money(opening || lot.opening)}</b>
+          <div className="rows-r">
+            <dt>{lot.kind === 'sealed' ? 'أقل ظرف' : 'يفتح على'}</dt>
+            <dd>
+              <P className="sh-money">{money(opening || lot.opening)}</P> <span className="sh-unit">ريال</span>
+            </dd>
           </div>
-          <div className="fee">{lot.fee.pct > 0 ? `${lot.fee.label}، ونقل الملكية ${lot.fee.transfer} ريال` : 'بدون سعي'}</div>
-        </div>
+        </dl>
+        <p className="sh-fee">{lot.fee.pct > 0 ? <>{isoPct(lot.fee.label)}، ونقل الملكية {money(lot.fee.transfer)} ريال</> : 'بدون سعي'}</p>
+
+        {shown && <Story car={shown} />}
       </div>
 
       {shown && <LotTabs lot={lot} car={shown} revealed={!!revealed} />}
     </article>
+  );
+}
+
+const TABS: [Tab, string][] = [
+  ['inspect', 'الفحص'],
+  ['records', 'السجلات'],
+  ['ad', 'كلام المعلن'],
+  ['specs', 'المواصفات'],
+];
+
+function condTone(c: Cond): 'good' | 'bad' | 'mid' | 'unknown' {
+  return c === 'ok' ? 'good' : c === 'major' ? 'bad' : c === 'unknown' ? 'unknown' : 'mid';
+}
+
+/** A ruled row whose value may carry a small status mark. */
+function MarkRow({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'good' | 'bad' | 'mid' | 'unknown' }) {
+  return (
+    <div className={`rows-r${tone === 'unknown' ? ' is-unknown' : ''}`}>
+      <dt>{k}</dt>
+      <dd>
+        <Mark tone={tone} />
+        {v}
+      </dd>
+    </div>
   );
 }
 
@@ -262,7 +356,7 @@ const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car
   const [tab, setTab] = useState<Tab>('inspect');
   const box = useRef<HTMLDivElement>(null);
 
-  // when the tab bar is stuck under the header, the new section starts at its top, not half-way down the old one
+  // when the tab bar is stuck under the top bar, the new section starts right under it, not half-way down the old one
   const pick = (k: Tab) => {
     if (k === tab) return;
     const el = box.current;
@@ -274,229 +368,232 @@ const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car
     }
     setTab(k);
   };
+  // arrow keys walk the tabs, as a tablist should
+  const keys = (e: React.KeyboardEvent) => {
+    const i = TABS.findIndex(([k]) => k === tab);
+    const step = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const n = TABS[(i + step + TABS.length) % TABS.length][0];
+    pick(n);
+    (e.currentTarget.querySelector(`[data-tab="${n}"]`) as HTMLElement | null)?.focus();
+  };
+
+  const g = revealed ? null : lot.grade;
+  const chassis = chassisCard(car);
+  const mech = mechOf(car);
+  const pickedSt = picked ? car.panels[picked] ?? 'ok' : null;
 
   return (
-    <div className="lot-tabs" ref={box}>
-      <div className="tabs" role="tablist">
-        {(
-          [
-            ['inspect', 'الفحص'],
-            ['records', 'السجلات'],
-            ['ad', 'كلام المعلن'],
-            ['specs', 'المواصفات'],
-          ] as [Tab, string][]
-        ).map(([k, label]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => pick(k)}>
-            {label}
-            {k === 'ad' && lot.notes.length > 0 && <i className="tab-dot" />}
+    <div className="sh-tabs" ref={box}>
+      <div className="sh-tabbar" role="tablist" aria-label="ملف السيارة" onKeyDown={keys}>
+        {TABS.map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            id={`sh-tab-${k}`}
+            data-tab={k}
+            aria-selected={tab === k}
+            aria-controls="sh-pane"
+            tabIndex={tab === k ? 0 : -1}
+            onClick={() => pick(k)}
+          >
+            <span>{label}</span>
+            {k === 'ad' && lot.notes.length > 0 && <i className="sh-tabdot" aria-hidden="true" />}
           </button>
         ))}
       </div>
-      {tab === 'inspect' && (
-        <div className="pane">
-          <div className="verdicts">
-            {(() => {
-              const g = revealed ? null : lot.grade;
-              return (
-                <div className={`vbox tone-${gradeTone(g)}`}>
-                  <small>درجة الفحص</small>
-                  {g == null ? <b>{lot.mode === 'asis' ? 'ما انفحصت' : '—'}</b> : <b className="big ltr">{g.toFixed(1)}</b>}
-                  {g != null && <small>{gradeWord(g)}</small>}
-                </div>
-              );
-            })()}
-            {(() => {
-              const c = chassisCard(car);
-              return (
-                <div className={`vbox tone-${c.tone === 'unknown' ? 'mid' : c.tone}`}>
-                  <small>كرت الشاصي</small>
-                  <b>{c.label}</b>
-                </div>
-              );
-            })()}
-            <div className={`vbox tone-${car.najm === 0 ? 'good' : car.najm === 1 ? 'mid' : 'bad'}`}>
-              <small>سجل نجم</small>
-              <b>{car.najm === 0 ? 'بدون حوادث' : car.najm === 1 ? 'حادث واحد' : `${car.najm} حوادث`}</b>
-            </div>
-          </div>
 
-          <h4>خريطة البودي وجهاز الطلاء</h4>
-          <div className="damage">
-            <DamageMap car={car} onPick={(p) => setPicked((x) => (x === p ? null : p))} picked={picked} />
-            <div className="stack" style={{ gap: 10, alignContent: 'start' }}>
-              <PanelList car={car} />
-              <Legend />
-            </div>
-          </div>
+      <div className="sh-pane" id="sh-pane" role="tabpanel" aria-labelledby={`sh-tab-${tab}`}>
+        {tab === 'inspect' && (
+          <>
+            <dl className="rows sh-rows">
+              <MarkRow
+                k="درجة الفحص"
+                tone={g == null ? (lot.mode === 'asis' ? 'bad' : 'unknown') : gradeTone(g)}
+                v={
+                  g == null ? (
+                    lot.mode === 'asis' ? 'ما انفحصت، تنباع على الحالة' : 'ما انفحصت'
+                  ) : (
+                    <>
+                      <P className="sh-num">{g.toFixed(1)}</P>
+                      <span className="sh-of"> من 5</span> {gradeWord(g)}
+                    </>
+                  )
+                }
+              />
+              <MarkRow k="كرت الشاصي" tone={chassis.tone} v={chassis.label} />
+              <MarkRow k="سجل نجم" tone={car.najm === 0 ? 'good' : car.najm === 1 ? 'mid' : 'bad'} v={car.najm === 0 ? 'بدون حوادث' : car.najm === 1 ? 'حادث واحد' : <><P>{car.najm}</P> حوادث</>} />
+            </dl>
 
-          <h4>الميكانيكا</h4>
-          <div className="mech">
-            {(
-              [
-                ['المكينة', car.mech.engine],
-                ['القير', car.mech.gearbox],
-                ['الشاصي', mechOf(car).chassis],
-                ['المكيف', mechOf(car).ac],
-                ['الإيرباقات', mechOf(car).airbags],
-                ['التعليق', car.mech.susp],
-              ] as [string, Cond][]
-            ).map(([n, c]) => (
-              <div key={n} className={`mitem ${c}`}>
-                <i aria-hidden="true" />
-                <span>{n}</span>
-                <small>{COND_LABEL[c]}</small>
+            <h4 className="sh-h">البودي وجهاز الطلاء</h4>
+            <div className="sh-map">
+              <DamageMap car={car} onPick={(p) => setPicked((x) => (x === p ? null : p))} picked={picked} />
+              <div className="sh-map-side">
+                <Legend car={car} />
+                <p className="sh-picked" role="status">
+                  {picked && pickedSt ? (
+                    <>
+                      <StatusKey s={pickedSt} />
+                      {PANEL_LABEL[picked]}: {STATUS_LABEL[pickedSt]}
+                    </>
+                  ) : (
+                    'اضغط على أي قطعة تشوف اسمها'
+                  )}
+                </p>
               </div>
-            ))}
-          </div>
-
-          {car.checks && car.checks.length > 0 && (
-            <>
-              <h4>قراءات الفاحص</h4>
-              <dl className="checks">
-                {car.checks.map((r) => (
-                  <div key={r.k} className={`ck ck-${r.tone}`}>
-                    <dt>{r.k}</dt>
-                    <dd>
-                      <i aria-hidden="true" />
-                      {r.v}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </>
-          )}
-
-          {car.story && car.story.quirks.length > 0 && (
-            <>
-              <h4>شفنا بالمعاينة</h4>
-              <ul className="quirks">
-                {car.story.quirks.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          {car.inspector.length > 0 && (
-            <>
-              <h4>ملاحظات الفاحص</h4>
-              <ul className="notes">
-                {car.inspector.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
-
-      {tab === 'records' && (
-        <div className="pane">
-          <ul className="records">
-            <li className={car.scan.status === 'clean' ? '' : 'warn'}>
-              <b>فحص الكمبيوتر</b>
-              <span>
-                {SCAN_LABEL[car.scan.status]}
-                {car.scan.codes.length > 0 && <span className="ltr codes">{car.scan.codes.map((c) => c[0]).join(' ')}</span>}
-              </span>
-            </li>
-            {car.history.map((h) => {
-              const [k, ...rest] = h.split(':');
-              return (
-                <li key={h}>
-                  <b>{rest.length ? k : 'سجل'}</b>
-                  <span>{rest.length ? rest.join(':').trim() : h}</span>
-                </li>
-              );
-            })}
-          </ul>
-          <dl className="table">
-            {(
-              [
-                ['الملاك', car.owners === 1 ? 'المالك الأول' : car.owners === 2 ? 'مالكين' : `${car.owners} ملاك`],
-                ['الصيانة', car.service === 'dealer' ? 'وكالة' : car.service === 'workshop' ? 'ورش خارجية' : 'ما فيه سجل'],
-                ['الاستمارة', car.istimara === 'valid' ? 'سارية' : 'منتهية'],
-                ['الفحص الدوري', car.mvpi === 'valid' ? `ساري لين ${car.mvpiUntil ?? ''}` : 'منتهي'],
-                ['التأمين', car.insurance === 'comp' ? 'شامل' : car.insurance === 'tpl' ? 'ضد الغير' : 'بدون'],
-                ['المخالفات', car.fines > 0 ? `${money(car.fines)} ريال` : 'ما عليها'],
-                ['التسجيل', car.regType],
-              ] as [string, string][]
-            ).map(([k, v]) => (
-              <div key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      )}
-
-      {tab === 'ad' && (
-        <div className="pane">
-          {car.adTitle && (
-            <div className="ad-head">
-              <small>عنوان الإعلان</small>
-              <h4 dir="auto">{car.adTitle}</h4>
             </div>
-          )}
-          {lot.notes.length ? (
-            <blockquote className="quote">
-              {lot.notes.map((n) => (
-                <p key={n}>{n}</p>
+            <PanelList car={car} />
+
+            <h4 className="sh-h">الميكانيكا</h4>
+            <dl className="rows sh-rows">
+              {(
+                [
+                  ['المكينة', car.mech.engine],
+                  ['القير', car.mech.gearbox],
+                  ['الشاصي', mech.chassis],
+                  ['المكيف', mech.ac],
+                  ['الإيرباقات', mech.airbags],
+                  ['التعليق', car.mech.susp],
+                ] as [string, Cond][]
+              ).map(([n, c]) => (
+                <MarkRow key={n} k={n} tone={condTone(c)} v={COND_LABEL[c]} />
               ))}
-            </blockquote>
-          ) : (
-            <p className="mute">المعلن ما كتب شي.</p>
-          )}
-          <p className="mute small">كلام المعلن على مسؤوليته، والفحص هو الحكم.</p>
-        </div>
-      )}
+            </dl>
 
-      {tab === 'specs' && (
-        <div className="pane">
-          {(() => {
-            // a real ad's car: the details its ad states are plain; the model's usual spec is marked
-            const said = car.said;
-            const typical = (key: string) => !!said && !said.includes(key);
-            const rows: [string, string, boolean][] = [
-              ['المحرك', car.engine || '—', typical('engine') && !!car.engine],
-              ['القوة', car.hp ? `${car.hp} حصان` : '—', typical('hp') && !!car.hp],
-              ['الدفع', DRIVE_AR[car.drive], typical('drive')],
-              ['القير', transAr(car.trans), typical('trans')],
-              ['الوقود', FUEL_AR[car.fuel], typical('fuel')],
-              ['الأبواب', said && !said.includes('doors') ? 'حسب الصور' : `${car.doors}`, false],
-              ['الداخلية', car.interior, false],
-              ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد', false],
-              ['الكفرات', `صنع ${car.tires}`, false],
-              ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة', false],
-              ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين '), false] as [string, string, boolean]] : []),
-            ];
-            return (
+            {car.checks && car.checks.length > 0 && (
               <>
-                <dl className="table">
-                  {rows.map(([k, v, t]) => (
-                    <div key={k} className={t ? 'typical' : ''}>
-                      <dt>{k}</dt>
-                      <dd>
-                        {v}
-                        {t && <sup aria-label="المعتاد للموديل">*</sup>}
-                      </dd>
-                    </div>
+                <h4 className="sh-h">قراءات الفاحص</h4>
+                <dl className="rows sh-rows">
+                  {car.checks.map((r) => (
+                    <MarkRow key={r.k} k={r.k} tone={r.tone} v={r.v} />
                   ))}
                 </dl>
-                {rows.some((r) => r[2]) && <p className="mute small spec-note">* المعتاد لهالموديل، الإعلان ما ذكره</p>}
               </>
-            );
-          })()}
-          {car.extras.length > 0 && (
-            <div className="hints" style={{ marginTop: 12 }}>
-              {car.extras.map((e) => (
-                <span key={e} className="chip">{e}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            )}
+
+            {car.inspector.length > 0 && (
+              <>
+                <h4 className="sh-h">ملاحظات الفاحص</h4>
+                <ul className="sh-list">
+                  {car.inspector.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
+
+        {tab === 'records' && (
+          <>
+            <dl className="rows sh-rows">
+              <MarkRow
+                k="فحص الكمبيوتر"
+                tone={car.scan.status === 'clean' ? 'good' : car.scan.status === 'active' ? 'bad' : car.scan.status === 'none' ? 'unknown' : 'mid'}
+                v={
+                  <>
+                    {SCAN_LABEL[car.scan.status]}
+                    {car.scan.codes.length > 0 && <span className="sh-codes print ltr">{car.scan.codes.map((c) => c[0]).join(' ')}</span>}
+                  </>
+                }
+              />
+            </dl>
+            {car.history.length > 0 && (
+              <>
+                <h4 className="sh-h">السجل</h4>
+                <ul className="sh-list sh-hist">
+                  {car.history.map((h) => {
+                    const [k, ...rest] = h.split(':');
+                    return (
+                      <li key={h}>
+                        {rest.length ? (
+                          <>
+                            <b>{k}</b>
+                            <span>{rest.join(':').trim()}</span>
+                          </>
+                        ) : (
+                          <span>{h}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+            <h4 className="sh-h">الأوراق</h4>
+            <dl className="rows sh-rows">
+              <MarkRow k="الملاك" v={car.owners === 1 ? 'المالك الأول' : car.owners === 2 ? 'مالكين' : <><P>{car.owners}</P> ملاك</>} />
+              <MarkRow k="الصيانة" tone={car.service === 'dealer' ? 'good' : car.service === 'none' ? 'bad' : undefined} v={car.service === 'dealer' ? 'وكالة' : car.service === 'workshop' ? 'ورش خارجية' : 'ما فيه سجل'} />
+              <MarkRow k="الاستمارة" tone={car.istimara === 'valid' ? undefined : 'bad'} v={car.istimara === 'valid' ? 'سارية' : 'منتهية'} />
+              <MarkRow k="الفحص الدوري" tone={car.mvpi === 'valid' ? undefined : 'bad'} v={car.mvpi === 'valid' ? `ساري لين ${car.mvpiUntil ?? ''}`.trim() : 'منتهي'} />
+              <MarkRow k="التأمين" v={car.insurance === 'comp' ? 'شامل' : car.insurance === 'tpl' ? 'ضد الغير' : 'بدون'} />
+              <MarkRow k="المخالفات" tone={car.fines > 0 ? 'bad' : undefined} v={car.fines > 0 ? <><P>{money(car.fines)}</P> ريال</> : 'ما عليها'} />
+              <MarkRow k="التسجيل" v={car.regType} />
+            </dl>
+          </>
+        )}
+
+        {tab === 'ad' && (
+          <>
+            {car.adTitle && <h4 className="sh-adtitle" dir="auto">{car.adTitle}</h4>}
+            {lot.notes.length ? (
+              <blockquote className="sh-quote">
+                {lot.notes.map((n) => (
+                  <p key={n} dir="auto">{n}</p>
+                ))}
+              </blockquote>
+            ) : (
+              <p className="sh-plain">المعلن ما كتب شي.</p>
+            )}
+            <p className="sh-fine">كلام المعلن على مسؤوليته، والفحص هو الحكم.</p>
+          </>
+        )}
+
+        {tab === 'specs' && <Specs car={car} />}
+      </div>
     </div>
   );
 });
+
+function Specs({ car }: { car: CarPub }) {
+  // a real ad's car: the details its ad states are plain; the model's usual spec is marked
+  const said = car.said;
+  const typical = (key: string) => !!said && !said.includes(key);
+  const rows: [string, React.ReactNode, boolean][] = [
+    ['المحرك', car.engine ? <bdi dir="ltr">{car.engine}</bdi> : '—', typical('engine') && !!car.engine],
+    ['القوة', car.hp ? <><P>{car.hp}</P> حصان</> : '—', typical('hp') && !!car.hp],
+    ['الدفع', DRIVE_AR[car.drive], typical('drive')],
+    ['القير', transAr(car.trans), typical('trans')],
+    ['الوقود', FUEL_AR[car.fuel], typical('fuel')],
+    ['الأبواب', said && !said.includes('doors') ? 'حسب الصور' : <P>{car.doors}</P>, false],
+    ['الداخلية', car.interior, false],
+    ['المفاتيح', car.keys === 2 ? 'مفتاحين' : 'مفتاح واحد', false],
+    ['الكفرات', <>صنع <P>{car.tires}</P></>, false],
+    ['التشغيل', car.runs === 'drive' ? 'تشتغل وتمشي' : car.runs === 'starts' ? 'تشتغل بس' : 'واقفة', false],
+    ...(car.warranty ? [['الضمان', car.warranty.replace('ضمان وكالة ساري حتى ', 'وكالة لين '), false] as [string, string, boolean]] : []),
+  ];
+  return (
+    <>
+      <dl className="rows sh-rows">
+        {rows.map(([k, v, t]) => (
+          <div key={k} className="rows-r">
+            <dt>{k}</dt>
+            <dd>
+              {v}
+              {t && <span className="sh-typ" aria-label="المعتاد للموديل">*</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {rows.some((r) => r[2]) && <p className="sh-fine">* المعتاد لهالموديل، الإعلان ما ذكره.</p>}
+      {car.extras.length > 0 && (
+        <>
+          <h4 className="sh-h">الإضافات</h4>
+          <Facts className="sh-extras" items={car.extras} />
+        </>
+      )}
+    </>
+  );
+}

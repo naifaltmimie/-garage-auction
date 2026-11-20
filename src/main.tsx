@@ -28,6 +28,7 @@ import './styles/law.css';
 import './styles/kit.css';
 import './styles/kit-objects.css';
 import './styles/s-lobby.css';
+import './styles/s-sheet.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { installSpotlight } from './ui/components/fx/spotlight';
