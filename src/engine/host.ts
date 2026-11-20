@@ -7,7 +7,7 @@ import { PLATE_LETTERS, buildDeck } from './lotgen';
 import { dutchDuration, dutchPriceAt, dutchProgress } from './dutch';
 import {
   CLOSE_GRACE_MS, DROP_FACTOR, MAX_DROPS, SPEEDS, dealScore, extensionFor, feesOf, increment, lotsFor,
-  minNextBid, roundToStep, verdictOf,
+  minNextBid, roundToStep, saleLeadInMs, verdictOf,
 } from './rules';
 import type {
   Award, BidState, Callout, CalloutKey, CarModel, Core, FinalResults, Hist, LogEntry, LotFull, LotPub,
@@ -472,7 +472,8 @@ export class HostEngine {
     st.sales = [...st.sales, sale];
     st.phase = 'sold';
     st.soldStage = 0;
-    this.setTimer('sold', now, lot.surprise ? this.speed.soldSurprise : this.speed.sold);
+    // the lead-in (envelopes opening, the cover coming off) is added on top, so the verdict always gets its full time
+    this.setTimer('sold', now, (lot.surprise ? this.speed.soldSurprise : this.speed.sold) + saleLeadInMs(lot.kind, !!extra.sealedBids?.length));
     if (extra.sealedBids) this.say('envelopes', now);
     else if (extra.approved) this.say('accept', now, { buyer: buyer.name, price: money(hammer) });
     else this.say('sold', now, { buyer: buyer.name, price: money(hammer) });
@@ -591,7 +592,8 @@ export class HostEngine {
       }
       case 'sold': {
         const sale = st.sales[st.sales.length - 1];
-        const elapsed = st.timer.total - left;
+        // the دلال's calls follow the reveal: after the lead-in, when the value has counted up (3.4s) and when the surprise lands (5.4s)
+        const elapsed = st.timer.total - left - (sale ? saleLeadInMs(sale.kind, !!sale.sealedBids?.length) : 0);
         if (sale && st.soldStage === 0 && elapsed > 3400) {
           st.soldStage = 1;
           if (sale.verdict === 'steal') {

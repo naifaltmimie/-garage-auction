@@ -7,6 +7,7 @@
 //    1  «سعرها الصدق بالسوق» is announced, its number still blank
 //    2  the value counts up, the difference and the verdict; the buyer's receipt prints
 //    3  settled: the surprise (if any) lands and the value becomes final
+import { saleLeadInMs } from '../engine/rules';
 import type { Core, Sale } from '../engine/types';
 import { useClockValue } from './components/DutchConsole';
 
@@ -15,11 +16,9 @@ export type SaleStage = -1 | 0 | 1 | 2 | 3;
 /** The stage at which a sale's numbers are final; any sale that is not the one being revealed is at this stage. */
 export const SALE_SETTLED: SaleStage = 3;
 
-/** How long the lead-in lasts before the stamp, by the kind of sale (ms). */
+/** How long the lead-in lasts before the stamp, by the kind of sale (ms). The engine owns the numbers. */
 export function saleLeadIn(sale: Pick<Sale, 'kind' | 'sealedBids'>): number {
-  if (sale.sealedBids?.length) return 2400;
-  if (sale.kind === 'covered') return 900;
-  return 0;
+  return saleLeadInMs(sale.kind, !!sale.sealedBids?.length);
 }
 
 /** The stage for `elapsed` ms since the sold phase began. */

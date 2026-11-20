@@ -33,6 +33,17 @@ export const SPEEDS: Record<Speed, {
   calm:   { intro: 6500, preview: 14000, window: 20000, extend: 10000, minExtend: 6000, cap: 90000, drop: 12000, sealed: 26000, sold: 12000, soldSurprise: 15000, unsold: 4800, approval: 4400 },
 };
 
+/**
+ * How long a sale's lead-in lasts before the stamp falls (ms): the envelopes opening one by one on a sealed car,
+ * or the cover coming off a covered one. The host adds it to the sold phase and to its own calls, and the
+ * reveal's stages start after it, so every kind of sale leaves the same time to read the verdict.
+ */
+export function saleLeadInMs(kind: string, sealed: boolean): number {
+  if (sealed) return 2400;
+  if (kind === 'covered') return 900;
+  return 0;
+}
+
 /** Soft close that tightens as a bidding war drags on (Copart drops 30s to 15s). */
 export function extensionFor(base: number, min: number, extCount: number): number {
   return Math.max(min, base - 1000 * Math.floor(extCount / 3));
