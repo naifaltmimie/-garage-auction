@@ -17,15 +17,12 @@ function recentRoom() {
   return last && Date.now() - last.at < 1000 * 60 * 60 * 10 ? last : null;
 }
 
-/** Version B of the floor: a faint tyre print running from the wheel. Off until the lead picks it. */
-const TRACK = false;
-
 export function Home() {
   const [news, setNews] = useState(hasNews);
   const [career, setCareer] = useState(false);
   const recent = recentRoom();
   return (
-    <div className={TRACK ? 'hm hm-tracked' : 'hm'}>
+    <div className="hm">
       <WhatsNew open={news} onClose={() => setNews(false)} />
       {career && <CareerPanel onClose={() => setCareer(false)} />}
 
@@ -37,26 +34,17 @@ export function Home() {
             <span>سُم على سيارات حقيقية مع الشباب،</span> <span>واطلع بأقوى كراج.</span>
           </p>
         </div>
-        {/* the floor: the wheel stands in the start corner; its box is laid out before the picture arrives */}
+        {/* the floor: the wheel stands in the end corner, its face turned into the screen, in a pool of lamp
+            light on the asphalt with its own contact shadow; every box is laid out before the picture arrives */}
         <div className="hm-floor" aria-hidden="true">
-          {TRACK && (
-          <img
-            className="hm-track"
-            src="/brand/wheel/track-512.webp"
-            width={512}
-            height={256}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            draggable={false}
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          )}
+          <div className="hm-stand">
+            <i className="hm-pool" />
+            <i className="hm-contact" />
           <img
             className="hm-wheel"
             src="/brand/wheel/hero-960.webp"
             srcSet="/brand/wheel/hero-960.webp 960w, /brand/wheel/hero-1200.webp 1200w"
-            sizes="(min-width: 600px) 300px, 54vw"
+            sizes="(min-width: 600px) 300px, 62vw"
             width={960}
             height={960}
             alt=""
@@ -66,6 +54,7 @@ export function Home() {
             draggable={false}
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
+          </div>
         </div>
       </div>
 
