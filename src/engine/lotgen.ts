@@ -103,19 +103,19 @@ export function panelsFor(doors: 2 | 4): PanelId[] {
 
 const FEATURES: Record<Tier, string[]> = {
   junk: ['مسجل كاسيت', 'مكيف عادي', 'دركسون هيدروليك', 'زجاج كهرباء'],
-  daily: ['شاشة لمس', 'كاميرا خلفية', 'كروز كنترول', 'بلوتوث', 'حساسات خلفية', 'دخول ذكي'],
-  family: ['شاشة 10 إنش', 'كاميرا 360', 'فتحة سقف', 'مقاعد جلد', 'كروز كنترول', 'شاحن لاسلكي', 'تبريد مقاعد', 'صف ثالث'],
+  daily: ['شاشة لمس', 'كاميرا خلفية', 'مثبت سرعة', 'بلوتوث', 'حساسات خلفية', 'دخول ذكي'],
+  family: ['شاشة 10 إنش', 'كاميرا 360', 'فتحة سقف', 'مقاعد جلد', 'مثبت سرعة', 'شاحن لاسلكي', 'تبريد مقاعد', 'صف ثالث'],
   work: ['دبل', 'ونش أمامي', 'قفل دفرنس', 'مكيف قوي', 'رادار', 'شبك حماية'],
   luxury: ['بانوراما', 'تبريد وتدفئة مقاعد', 'شاشات خلفية', 'كاميرا 360', 'مثبت سرعة تكيفي', 'نظام صوت فاخر', 'ثلاجة', 'تعليق هوائي', 'إضاءة محيطية'],
-  sport: ['عادم رياضي', 'فرامل بريمبو', 'مقاعد رياضية', 'وضع حلبة', 'لانش كنترول', 'جنوط 20 إنش'],
-  exotic: ['كربون فايبر', 'فرامل سيراميك', 'رفع أمامي', 'نظام صوت فاخر', 'جلد حسب الطلب', 'سقف كربون'],
+  sport: ['عادم رياضي', 'فرامل رياضية', 'مقاعد رياضية', 'وضع حلبة', 'وضع الانطلاق', 'جنوط 20 إنش'],
+  exotic: ['قطع كربون', 'فرامل سيراميك', 'رفع أمامي', 'نظام صوت فاخر', 'جلد حسب الطلب', 'سقف كربون'],
   classic: ['أصلية من الوكالة', 'مكيف وكالة', 'جنوط أصلية', 'دليل المالك الأصلي'],
 };
 
 const MODS = [
-  ['تظليل حراري 30%', 0.0], ['نانو سيراميك', 0.004], ['حماية PPF كاملة', 0.01], ['شاشة أندرويد', 0],
+  ['تظليل حراري 30%', 0.0], ['نانو سيراميك', 0.004], ['تغليف حماية كامل', 0.01], ['شاشة أندرويد', 0],
   ['جنوط مقاس أكبر', -0.004], ['رفع 2 إنش', -0.01], ['عادم معدّل', -0.012], ['برمجة كمبيوتر', -0.02],
-  ['كفرات أوف رود', 0], ['إضاءة LED معدّلة', -0.002],
+  ['كفرات طين', 0], ['إضاءة لِد معدّلة', -0.002],
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ export function gradePlate(letters: readonly string[], num: string): PlateGrade 
   let digitFact = '';
   if (len === 1) digitFact = num === '1' ? 'رقم واحد' : 'رقم فردي';
   else if (len === 2) digitFact = twins ? 'رقم ثنائي متشابه' : 'رقم ثنائي';
-  else if (len === 3) digitFact = sameD ? `ثلاث ${DIG_PL[+num[0]]}` : round ? 'رقم ثلاثي مقفّل' : run ? 'رقم ثلاثي متسلسل' : 'رقم ثلاثي';
+  else if (len === 3) digitFact = sameD ? `ثلاث ${DIG_PL[+num[0]]}` : round ? 'رقم مئوي' : run ? 'رقم ثلاثي متسلسل' : 'رقم ثلاثي';
   else if (sameD) digitFact = `أربع ${DIG_PL[+num[0]]}`;
   else if (round) digitFact = 'رقم ألفي';
   else if (run) digitFact = 'أرقام متسلسلة';
@@ -495,11 +495,11 @@ export function plateKind(rng: Rng, c: PlateKindCtx): NonNullable<PlatePub['kind
   const lux = m.tier === 'luxury' || m.tier === 'exotic' || m.tier === 'sport' || m.tier === 'classic';
   if (/نقل\s*خاص/.test(c.adSays)) return 'transport';
   const said = /خصوصي/.test(c.adSays);
-  if ((c.isNew || (c.age === 0 && c.km <= 3000)) && rng.chance(0.25)) return 'temporary';
-  if ((m.body === 'pickup' || m.body === 'van') && !lux && !said) return rng.chance(0.5) ? 'transport' : 'private';
-  if (m.tier === 'luxury' && (m.body === 'sedan' || m.body === 'suv') && c.km < 80_000 && c.age >= 1 && rng.chance(0.05)) return 'diplomatic';
+  if (c.age === 0 && c.km <= 3000 && rng.chance(0.2)) return 'temporary';
+  if ((m.body === 'pickup' || m.body === 'van') && !lux && !said) return rng.chance(0.72) ? 'transport' : 'private';
+  if (m.tier === 'luxury' && (m.body === 'sedan' || m.body === 'suv') && c.km < 80_000 && c.age >= 1 && rng.chance(0.025)) return 'diplomatic';
   const cheap = m.tier === 'daily' || m.tier === 'junk';
-  if (cheap && m.body === 'sedan' && (c.mix === 'street' || c.mix === 'balanced') && c.km > 220_000 && c.age >= 3 && rng.chance(0.2)) return 'taxi';
+  if (cheap && m.body === 'sedan' && (c.mix === 'street' || c.mix === 'balanced') && c.km > 220_000 && c.age >= 3 && rng.chance(0.09)) return 'taxi';
   return 'private';
 }
 
@@ -1098,7 +1098,7 @@ function sellerNotes(rng: Rng, m: CarModel, b: Built, cover: string | null): str
   const vals = Object.values(t.panels);
   const hasPaint = vals.some((v) => v === 'paint' || v === 'spot');
   const hasBody = vals.some((v) => v === 'replaced' || v === 'damaged');
-  const mods = c.extras.some((e) => /تظليل|نانو|PPF|أندرويد|جنوط|رفع|عادم|برمجة|أوف رود/.test(e));
+  const mods = c.extras.some((e) => /تظليل|نانو|تغليف|أندرويد|جنوط|رفع|عادم|برمجة|كفرات طين/.test(e));
   const facts: Record<string, boolean> = {
     paint: hasPaint, body: hasBody, accident: t.najm > 0, najm: t.najm > 0, ac: t.mech.ac === 'cold',
     mileage: c.kmTag === 'low' || (c.kmTag === undefined && rng.chance(0.4)), service: c.service === 'dealer',
