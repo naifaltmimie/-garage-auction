@@ -21,6 +21,8 @@ A full-page shot runs the ink audit at each screen height down the page.
   --compare-css=FILE  a layout check for a fix that must move nothing: at each shot every element is measured, then
                measured again with FILE's rules added (FILE undoes the fix), and any element whose box moved is
                reported ('layout' in the report). An element whose own padding FILE changes may change height only.
+               Every element's painted style (STYLE_PROPS: colours, opacity, font, line-height, box-shadow, transform,
+               display, visibility; also its ::before and ::after) is compared the same way, and a change is reported.
                When FILE changes anything on the page, a second screenshot, NNN-name~without.png, shows it undone.
 
 BASE_URL is the app with its broker, e.g. http://localhost:5226/?brokers=ws://localhost:8916&bridge=0
@@ -69,6 +71,18 @@ RECTS_JS = """() => [...document.querySelectorAll('body *')].map((e) => {
   return [Math.round(r.left * 4) / 4, Math.round(r.top * 4) / 4, Math.round(r.width * 4) / 4, Math.round(r.height * 4) / 4, s.paddingTop + ' ' + s.paddingBottom];
 })"""
 
+# the painted style of every element and of its ::before / ::after, then of <html> and <body> (the last two entries)
+STYLE_PROPS = ['color', 'background-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+               'opacity', 'font-family', 'font-size', 'font-weight', 'line-height', 'box-shadow', 'transform', 'display', 'visibility']
+STYLE_JS = """(props) => {
+  const one = (s) => props.map((p) => s.getPropertyValue(p));
+  const all = (e) => {
+    const b = getComputedStyle(e, '::before'), a = getComputedStyle(e, '::after');
+    return [one(getComputedStyle(e)), b.content === 'none' ? null : [b.content, ...one(b)], a.content === 'none' ? null : [a.content, ...one(a)]];
+  };
+  return [...[...document.querySelectorAll('body *')].map(all), all(document.documentElement), all(document.body)];
+}"""
+
 COMPARE_JS = """(css) => {
   const st = document.createElement('style'); st.id = 'qa-compare'; st.textContent = css; document.head.appendChild(st);
   document.body.offsetHeight; return true;
@@ -81,20 +95,56 @@ PATH_JS = """(i) => { const e = document.querySelectorAll('body *')[i]; const ou
   return out.join(' > '); }"""
 
 
+def style_diffs(a1, b, a2, b2):
+    """[(index, 'part prop: before -> after')] for every element whose painted style FILE changes ('' / ::before / ::after)."""
+    out = []
+    for i, (x, y, z, w) in enumerate(zip(a1, b, a2, b2)):
+        if x != z or y != w or x == y:
+            continue  # unchanged, or changing on its own (an animation)
+        for part, px, py in zip(['', '::before', '::after'], x, y):
+            if px == py:
+                continue
+            if px is None or py is None:
+                out.append((i, f'{part} appears' if px is None else f'{part} disappears'))
+                continue
+            names = (['content'] if part else []) + STYLE_PROPS
+            for n, u, v in zip(names, px, py):
+                if u != v:
+                    out.append((i, f'{part} {n}: {u} -> {v}'.strip()))
+    return out
+
+
 async def layout_moves(pg):
-    """Elements whose box moves when COMPARE_CSS is added: [(path, before, after)], and whether the CSS touched the page."""
+    """Elements whose box moves, or whose painted style (STYLE_PROPS) changes, when COMPARE_CSS is added:
+    [(path, before, after)], and whether the CSS touched the page."""
     a1 = await pg.evaluate(RECTS_JS)
+    s1 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
     await pg.evaluate(COMPARE_JS, COMPARE_CSS)
     b = await pg.evaluate(RECTS_JS)
+    t1 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
     await pg.evaluate("() => { const s = document.getElementById('qa-compare'); if (s) s.remove(); document.body.offsetHeight }")
     a2 = await pg.evaluate(RECTS_JS)
+    s2 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
     await pg.evaluate(COMPARE_JS, COMPARE_CSS)
     b2 = await pg.evaluate(RECTS_JS)
+    t2 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
     await pg.evaluate("() => { const s = document.getElementById('qa-compare'); if (s) s.remove(); document.body.offsetHeight }")
     touched = False
     moved = []
     if not (len(a1) == len(b) == len(a2) == len(b2)):
         return [], False  # the page changed while it was measured (a reveal landing): nothing to compare
+    styled = style_diffs(s1, t1, s2, t2) if len(s1) == len(t1) == len(s2) == len(t2) else []
+    if styled:
+        touched = True
+        n = len(s1) - 2
+        out = []
+        for i, what in styled[:6]:
+            path = ['html', 'body'][i - n] if i >= n else await pg.evaluate(PATH_JS, i)
+            out.append((f'{path} {what}', None, None))
+        if len(styled) > 6:
+            out.append((f'... and {len(styled) - 6} more style changes', None, None))
+    else:
+        out = []
     for i, (x, y, z, w) in enumerate(zip(a1, b, a2, b2)):
         if x != z or y != w:
             continue  # moving on its own (an animation): not ours to judge
@@ -104,7 +154,6 @@ async def layout_moves(pg):
         # (half a pixel of slack on the fixed element: on a rotated tag its bounding box widens with its height)
         if (own and (abs(x[0] - y[0]) > 0.5 or abs(x[2] - y[2]) > 0.5)) or (not own and x[:4] != y[:4]):
             moved.append((i, x[:4], y[:4]))
-    out = []
     for i, x, y in moved[:6]:
         out.append((await pg.evaluate(PATH_JS, i), x, y))
     if len(moved) > 6:
@@ -143,7 +192,7 @@ class Atlas:
             row['ink'] = r['ink']
             if COMPARE_CSS:
                 moves, row['touched'] = await layout_moves(pg)
-                row['layout'] = [f'{p_}: {x} -> {y}' for p_, x, y in moves]
+                row['layout'] = [p_ if x is None else f'{p_}: {x} -> {y}' for p_, x, y in moves]
         except Exception as ex:  # noqa: BLE001
             row['errors'].append(f'check failed: {ex}'[:200])
         errs = ERRS.pop(id(pg), [])
