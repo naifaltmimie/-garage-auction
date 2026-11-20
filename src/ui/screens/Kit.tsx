@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ICON_NAMES, Icon } from '../components/Bits';
 import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
+import { HowToLines } from '../components/kit/HowToLines';
 import { KitObjects } from '../components/kit/KitObjects';
 import { KitPlates } from '../components/kit/KitPlates';
 import { KitSheet, KitSheetSolo, sheetStateFromUrl } from '../components/kit/KitSheet';
@@ -262,6 +263,10 @@ function KitPage() {
 
       <Sec title="ملف السيارة" note="الشاشة اللي يقراها اللاعب قبل لا يسوم، بكل حالاتها. كل وحدة تنفتح لحالها بمقاس الجوال.">
         <KitSheet />
+      </Sec>
+
+      <Sec title="كيف نلعب بثلاثة أسطر" note="HowToLines: لشاشة الدخول والصالة. صفوف مسطّرة ورقم مطبوع صغير، بلا دوائر.">
+        <HowToLines />
       </Sec>
 
       <KitObjects />
