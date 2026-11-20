@@ -1,0 +1,388 @@
+/* ================================================================ the sale sheet (Reveal.tsx)
+   The hammer moment: the car's photo with the stamp, the buyer and the final tag, the verdict, the receipt, the
+   real listings. One authored moment (the stamp's slam, from the kit); the value's roll and the receipt's print
+   are the kit's own. Every class here starts with srv-. */
+
+.srv-overlay {
+  align-items: flex-end;
+}
+
+.srv {
+  width: 100%;
+  max-width: 560px;
+  max-height: 94dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 16px max(16px, calc(12px + var(--safe-b)));
+  border-radius: 20px 20px 0 0;
+  background: var(--bg);
+  box-shadow: var(--sh-3);
+  animation: srv-up 300ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.srv > * { flex-shrink: 0; }
+/* a sale sheet takes its full height from the start, so the photo never moves while the sheet fills in */
+.srv.is-full { height: 94dvh; }
+@keyframes srv-up { from { transform: translateY(24px); opacity: 0; } }
+
+/* the reactions switch sits in the sheet's bottom corner: the sheet ends with room for it */
+[data-rxdock='sheet'] .srv:not(.srv-wait)::after {
+  content: '';
+  display: block;
+  height: 58px;
+}
+
+.srv-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- the photo, the cover, the stamp */
+.srv-photo {
+  position: relative;
+  margin-inline: -16px;
+  height: clamp(132px, 24dvh, 210px);
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  background: var(--rubber-0);
+}
+.srv-photo > img,
+.srv-studio {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.srv-photo > img { object-fit: cover; }
+.srv-studio {
+  display: grid;
+  place-items: center;
+  background: var(--rubber-3);
+}
+.srv-studio svg { width: 70%; height: auto; }
+/* an unsold car goes back to the yard: its photo loses its colour under the grey stamp */
+.srv-photo.is-unsold > img,
+.srv-photo.is-unsold > .srv-studio { filter: grayscale(1) brightness(.62); }
+
+.srv-stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.srv-stamp .stamp2-word { font-size: clamp(42px, 12.5vw, 54px); }
+
+/* the photo's colour drains under the stamp: a grey layer in saturation blend, faded in with the slam */
+.srv-mute {
+  position: absolute;
+  inset: 0;
+  background: #808080;
+  mix-blend-mode: saturation;
+  opacity: .78;
+  animation: srv-mute 240ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes srv-mute { from { opacity: 0; } }
+.srv-photo.is-unsold .srv-mute { display: none; }
+
+/* the cover: a rubber sheet pulled up and off the car, once */
+.srv-cover {
+  position: absolute;
+  inset: -2px;
+  background:
+    repeating-linear-gradient(100deg, rgba(255, 255, 255, 0) 0 38px, rgba(255, 255, 255, .035) 38px 40px, rgba(0, 0, 0, .22) 40px 44px),
+    var(--rubber-2);
+  animation: srv-uncover 300ms cubic-bezier(.55, 0, .9, .45) 420ms both;
+}
+@keyframes srv-uncover { to { transform: translateY(-104%); } }
+
+.srv-car {
+  margin: -4px 0 0;
+  font: 500 var(--t-sub)/1.5 var(--f-ui);
+  color: var(--ink-2);
+}
+.srv-car b { font-weight: 700; color: var(--ink); }
+
+/* ---------------------------------------------------------------- who got it */
+.srv-buyer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.srv-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.srv-who .paddle {
+  font-family: var(--f-print);
+  font-weight: 800;
+  font-size: 18px;
+}
+.srv-who-t { min-width: 0; }
+.srv-who-line {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: var(--t-voice-m);
+  line-height: 1.2;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.srv-buyer.is-mine .srv-who-line { color: var(--alloy-hi); }
+.srv-who-how {
+  margin: 0;
+  font: 500 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+.srv-tag { flex: none; width: 196px; }
+.srv-tag.is-wide { width: 232px; }
+
+/* ---------------------------------------------------------------- the verdict */
+.srv-verdict {
+  padding-top: 14px;
+  border-top: 1px solid var(--line-2);
+}
+.srv-verdict-k {
+  margin: 0;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(.16, 1, .3, 1);
+  font: 600 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+.srv-verdict-k.is-on { opacity: 1; }
+.srv-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 58px;
+  padding-top: 4px;
+}
+.srv-value-n {
+  font-size: var(--t-print-xl);
+  font-weight: 800;
+  color: var(--ink);
+}
+.srv-value-u {
+  font: 600 var(--t-sub)/1 var(--f-ui);
+  color: var(--mute);
+}
+.srv-value-blank {
+  display: block;
+  width: 168px;
+  height: 46px;
+  border-bottom: 2px dashed var(--line-2);
+}
+.srv-word-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-height: 36px;
+  margin-top: 6px;
+}
+.srv-word-row > * { animation: srv-land 240ms cubic-bezier(.16, 1, .3, 1) 760ms both; }
+.srv-roast { animation: srv-fade 240ms cubic-bezier(.16, 1, .3, 1) 900ms both; }
+@keyframes srv-fade { from { opacity: 0; } }
+@keyframes srv-land { from { opacity: 0; transform: scale(1.12); } }
+.srv-word {
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: var(--t-voice-m);
+  line-height: 1.3;
+  color: var(--ink);
+}
+.srv-word-who {
+  font: 500 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+/* the signed difference: a small green mark for a gain, chalk on red for a loss */
+.srv-mark {
+  display: inline-block;
+  padding: 2px 6px 1px;
+  border-radius: 4px;
+  direction: ltr;
+  unicode-bidi: isolate;
+  font: 700 19px/1.1 var(--f-print);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+.srv-mark.up { color: var(--ok-700); background: var(--ok-50); }
+.srv-mark.down { color: #fff; background: var(--brand-lo); }
+
+.srv-surprise {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 8px 0 0;
+  font: 500 var(--t-sub)/1.5 var(--f-ui);
+  color: var(--ink-2);
+}
+.srv-surprise b { font-weight: 700; color: var(--ink); }
+.srv-roast {
+  margin: 6px 0 0;
+  font: 500 var(--t-sub)/1.5 var(--f-ui);
+  color: var(--mute);
+  text-wrap: pretty;
+}
+.srv-plateval { white-space: nowrap; }
+
+/* ---------------------------------------------------------------- what was paid */
+.srv-paid {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-2);
+  font: 500 var(--t-sub)/1.5 var(--f-ui);
+  color: var(--ink-2);
+}
+.srv-paid .ltr { font-weight: 700; color: var(--ink); }
+/* the receipt waits for the count-up, then feeds out of its slit */
+.srv-rcpt .rcpt-paper { animation-delay: 1s; }
+
+/* ---------------------------------------------------------------- envelopes, listings */
+.srv-h {
+  margin: 0 0 2px;
+  font: 700 var(--t-sub)/1.4 var(--f-ui);
+  color: var(--ink);
+}
+.srv-env-l {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.srv-env-l > li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding-block: 9px;
+  border-bottom: 1px solid var(--line-2);
+  animation: srv-env-in 280ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.srv-env-l > li:last-child { border-bottom: 0; }
+@keyframes srv-env-in { from { opacity: 0; transform: translateY(8px); } }
+.srv-env-who {
+  min-width: 0;
+  font: 600 var(--t-sub)/1.4 var(--f-ui);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.srv-env-who small {
+  margin-inline-start: 8px;
+  font: 500 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+.srv-env-l > li.is-top .srv-env-who { color: var(--ink); font-weight: 700; }
+.srv-env-l > li.is-me .srv-env-who { color: var(--alloy-hi); }
+.srv-env-n {
+  flex: none;
+  direction: ltr;
+  unicode-bidi: isolate;
+  font: 700 22px/1 var(--f-print);
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ink);
+}
+.srv-env-l > li:not(.is-top) .srv-env-n { color: var(--ink-2); }
+.srv-env-more {
+  margin: 4px 0 0;
+  font: 500 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+
+.srv-comps {
+  padding-top: 12px;
+  border-top: 1px solid var(--line-2);
+}
+.srv-rows dt { max-width: 68%; }
+.srv-rows .rows-r { padding-block: 10px; }
+.srv-ad {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 var(--t-sub)/1.4 var(--f-ui);
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--dim);
+  touch-action: manipulation;
+}
+
+/* ---------------------------------------------------------------- unsold */
+.srv-unsold { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.srv-why {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: var(--t-voice-m);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.srv-back-to {
+  margin: 0;
+  font: 500 var(--t-cap)/1.4 var(--f-ui);
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the owner deciding */
+.srv-wait {
+  align-items: center;
+  gap: 12px;
+  padding-top: 26px;
+  text-align: center;
+}
+.srv-wait-t {
+  margin: 0;
+  font-family: var(--f-voice);
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: var(--t-voice-l);
+  line-height: 1.2;
+  color: var(--ink);
+}
+.srv-wait-sub {
+  margin: 0;
+  font: 500 var(--t-sub)/1.5 var(--f-ui);
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the buttons */
+.srv-see { margin-top: 2px; touch-action: manipulation; }
+.srv-back {
+  position: fixed;
+  z-index: 61;
+  bottom: calc(300px + var(--safe-b));
+  inset-inline: 0;
+  width: max-content;
+  margin-inline: auto;
+  box-shadow: var(--sh-2);
+  touch-action: manipulation;
+}
+
+@media (max-width: 359px) {
+  .srv { gap: 12px; padding-inline: 14px; }
+  .srv-photo { margin-inline: -14px; }
+  .srv-value-n { font-size: 46px; }
+  .srv-verdict-k.is-on { opacity: 1; }
+.srv-value { min-height: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .srv, .srv-env-l > li, .srv-mute, .srv-word-row > *, .srv-roast { animation: none; }
+  .srv-cover { display: none; }
+}
+.srv-wait .srv-tag { align-self: center; }
+.srv-wait-sub { text-wrap: balance; }
