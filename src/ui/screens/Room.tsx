@@ -209,7 +209,7 @@ function RoomWait({ room, code, me }: { room: RoomView; code: string; me: Me }) 
         <CodeSlip code={code} line="ما فيه صالة مفتوحة على هالكود" />
       )}
       <p className="shl-lost-line" role="status">
-        نبقى ننتظر بالخلفية، وإذا انفتحت الصالة تدخلها على طول.
+        بننتظر معك، وإذا انفتحت الصالة تدخلها على طول.
       </p>
       <div className="lby-bar">
         <div className="lby-bar-in">
@@ -374,8 +374,8 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
           type="button"
           className={`shl-ib${fx ? '' : ' is-off'}`}
           aria-pressed={fx}
-          aria-label="الاهتزاز والتفاعلات"
-          title={fx ? 'الاهتزاز والتفاعلات شغّالة' : 'الاهتزاز والتفاعلات طافية'}
+          aria-label="الاهتزاز والتعليقات"
+          title={fx ? 'الاهتزاز والتعليقات شغّالة' : 'الاهتزاز والتعليقات طافية'}
           onClick={() => {
             setFx(!fx);
             if (!fx) buzz(HAPTIC.send);
@@ -465,7 +465,7 @@ function LateSheet({ onClose }: { onClose: () => void }) {
       <ScreenTitle as="h2" caption="المزاد بدأ قبل لا تدخل. تتفرج الحين، وتدخل اللعب بالمزاد الجاي إذا الدلال بدأ مزاد ثاني بنفس الشباب.">
         دخلت متفرج
       </ScreenTitle>
-      <p className="shl-sheet-note">تقدر ترسل تفاعلات وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة اللاعبين.</p>
+      <p className="shl-sheet-note">تقدر تعلّق وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة اللاعبين.</p>
     </ShellSheet>
   );
 }

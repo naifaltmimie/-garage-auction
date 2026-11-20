@@ -47,7 +47,8 @@ function useLane(phase: string, lotId: string | undefined) {
         const sheet = !!document.querySelector('.overlay');
         const block = document.querySelector('.cs');
         const b = block && !sheet ? Math.max(0, H - block.getBoundingClientRect().top) : 0;
-        const top = document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 58;
+        // the room's head: the top bar and, when it shows, the status strip under it
+        const top = document.querySelector('.shl-head')?.getBoundingClientRect().bottom ?? 58;
         const lane = Math.max(120, Math.min(460, H - b - top - 30));
         setGeo((g) => (Math.abs(g.b - b) < 2 && Math.abs(g.lane - lane) < 2 && g.sheet === sheet ? g : { b: Math.round(b), lane: Math.round(lane), sheet }));
       });
@@ -289,7 +290,7 @@ export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLEleme
       type="button"
       className={`rx-fab${open ? ' open' : ''}${docked ? ' is-docked' : ' is-float'}`}
       aria-expanded={open}
-      aria-label={open ? 'سكّر التفاعلات' : 'تفاعل مع السيارة'}
+      aria-label={open ? 'سكّر التعليقات' : 'علّق على السيارة'}
       onClick={() => setOpen((o) => !o)}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -326,7 +327,7 @@ export function ReactionLayer({ room, dock }: { room: RoomView; dock?: HTMLEleme
       {showFab && (
         <>
           {open && trayAt && (
-            <div className="rx-tray" ref={trayRef} role="group" aria-label="تفاعل مع السيارة">
+            <div className="rx-tray" ref={trayRef} role="group" aria-label="علّق على السيارة">
               <i key={cool} className={`rx-cool ${cool ? 'run' : ''}`} aria-hidden="true" />
               {REACTIONS.map((r) => (
                 <button
@@ -390,8 +391,8 @@ export function FxToggle() {
       type="button"
       className="iconbtn tb-btn rx-toggle"
       aria-pressed={on}
-      aria-label={on ? 'وقّف التفاعلات والاهتزاز' : 'شغّل التفاعلات والاهتزاز'}
-      title={on ? 'التفاعلات والاهتزاز شغّالة' : 'التفاعلات والاهتزاز طافية'}
+      aria-label={on ? 'وقّف التعليقات والاهتزاز' : 'شغّل التعليقات والاهتزاز'}
+      title={on ? 'التعليقات والاهتزاز شغّالة' : 'التعليقات والاهتزاز طافية'}
       onClick={() => {
         setFx(!on);
         if (!on) buzz(HAPTIC.send);

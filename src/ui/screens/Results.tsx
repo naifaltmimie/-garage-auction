@@ -44,7 +44,7 @@ function HowLine({ r, w }: { r: ResultRow; w: number }) {
   if (r.ratingScore == null)
     return (
       <small className="e-rank-how">
-        <span>{r.cars === 0 ? 'ما شرى شي، فما انقيّم' : 'ما وصله تقييم'}</span> · <span>شطارة ← {r.total}</span>
+        <span>{r.cars === 0 ? 'ما شرى شي، ما له تقييم' : 'ما وصله تقييم'}</span> · <span>شطارة ← {r.total}</span>
       </small>
     );
   const a = Math.round(w * r.ratingScore);
@@ -202,7 +202,7 @@ export function Results({ room }: { room: RoomView }) {
         )}
         {phase === 'show' && (
           <button type="button" className="btn btn-ghost btn-block" onClick={aw.skip}>
-            تخطَّ الحفل
+            تخطي الجوايز
           </button>
         )}
         {phase === 'done' && (

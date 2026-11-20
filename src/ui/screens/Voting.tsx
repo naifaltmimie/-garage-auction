@@ -131,11 +131,11 @@ export function Voting({ room }: { room: RoomView }) {
         <div className="e-vote-go">
           {i > 0 && (
             <button type="button" className="btn btn-quiet e-back" onClick={back}>
-              اللي قبل
+              اللي قبله
             </button>
           )}
           <button type="button" className="btn btn-primary e-go" disabled={!!t && !val} onClick={next}>
-            {last ? 'أرسل التقييم' : 'التالي'}
+            {last ? 'أرسل التقييم' : 'اللي بعده'}
           </button>
         </div>
       </ActionBar>

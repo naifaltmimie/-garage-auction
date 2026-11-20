@@ -112,11 +112,13 @@ export function QR({ text, size = 168 }: { text: string; size?: number }) {
 export function Toasts({ items }: { items: Toast[] }) {
   return (
     <div className="toasts" aria-live="polite">
-      {items.map((t) => (
-        <div key={t.id} className={`toast ${t.tone ?? ''}`}>
-          {t.text}
-        </div>
-      ))}
+      {items
+        .filter((t) => !t.quiet)
+        .map((t) => (
+          <div key={t.id} className={`toast ${t.tone ?? ''}`}>
+            {t.text}
+          </div>
+        ))}
     </div>
   );
 }

@@ -189,7 +189,7 @@ export function AwardStage({ aw, myId }: { aw: NightAwardsState; myId: string })
   return (
     <Portal>
       <div className="e-stage" aria-live="polite">
-        <button type="button" className="e-stage-tap" onClick={aw.next} aria-label={aw.step >= aw.total ? 'خلّصنا' : 'الجائزة الجاية'} />
+        <button type="button" className="e-stage-tap" onClick={aw.next} aria-label={aw.step >= aw.total ? 'خلّصنا' : 'الجايزة الجاية'} />
         <div className={`e-stage-aw${cur.grand ? ' is-grand' : ''}`} key={cur.key}>
           <h2 className="e-stage-title">{cur.title}</h2>
           <p className="e-stage-name">
@@ -204,7 +204,7 @@ export function AwardStage({ aw, myId }: { aw: NightAwardsState; myId: string })
           )}
           <p className="e-stage-line">{cur.line}</p>
           <p className="e-stage-count">
-            الجائزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
+            الجايزة <span className="print ltr">{aw.step}</span> من <span className="print ltr">{aw.total}</span>
           </p>
         </div>
       </div>

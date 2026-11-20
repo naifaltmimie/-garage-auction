@@ -42,7 +42,7 @@ export function KitObjects() {
         </div>
         <div className="kobj-ctl">
           <button type="button" className="btn btn-ghost" onClick={raise}>
-            زِد السوم
+            زوّد السوم
           </button>
         </div>
       </div>
@@ -102,7 +102,7 @@ export function KitObjects() {
         </div>
         <div className="kobj-ctl">
           <button type="button" className="btn btn-ghost" onClick={() => setRoll((v) => v + 137)}>
-            زِد
+            زوّد
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => setRoll((v) => Math.max(0, v - 137))}>
             نقّص

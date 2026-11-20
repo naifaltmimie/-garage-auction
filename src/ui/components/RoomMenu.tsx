@@ -117,7 +117,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
         </button>
         {host && auction && (
           <button type="button" className="shl-chalk" onClick={() => setStep('end')}>
-            أنهِ المزاد للكل
+            خلّص المزاد للكل
           </button>
         )}
         <button type="button" className="btn btn-quiet btn-block shl-close" onClick={cancel}>
@@ -145,7 +145,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
       </div>
     );
   } else if (step === 'end') {
-    body = <Confirm title="تنهي المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة." />;
+    body = <Confirm title="تخلّص المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة." />;
     foot = (
       <div className="shl-acts">
         <button
@@ -156,7 +156,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
             onClose();
           }}
         >
-          أنهِ المزاد
+          إيه، خلّصه
         </button>
         <button type="button" className="btn btn-quiet btn-block shl-close" onClick={() => (start === 'menu' ? setStep('menu') : setStep(start))}>
           لا، كمّل
@@ -204,9 +204,9 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
             }}
           />
         </ul>
-        <ul className="shl-rows shl-rows-out" aria-label="أفعال ما ترجع">
+        <ul className="shl-rows shl-rows-out" aria-label="نسألك قبل نسويها">
           {hostRows && canSkip && <MenuRow quiet icon="close" title="شيل السيارة" line="تنشال بدون بيع، ونروح للي بعدها" onClick={() => setStep('skip')} />}
-          {hostRows && <MenuRow quiet icon="flag" title="أنهِ المزاد للكل" line="ننتقل للكراجات والنتيجة" onClick={() => setStep('end')} />}
+          {hostRows && <MenuRow quiet icon="flag" title="خلّص المزاد للكل" line="ننتقل للكراجات والنتيجة" onClick={() => setStep('end')} />}
           <MenuRow
             quiet
             icon="exit"

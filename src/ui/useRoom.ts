@@ -25,6 +25,8 @@ export interface Toast {
   id: number;
   text: string;
   tone?: 'good' | 'bad';
+  /** kept in the list for the screen that owns the moment (the console says «سبقك أحد» itself), never drawn as a toast */
+  quiet?: boolean;
 }
 
 export interface HostControls {
@@ -130,9 +132,9 @@ export function useRoom(code: string, me: Me): RoomView {
     };
   }, [isHost, market]);
 
-  const toast = useCallback((text: string, tone?: 'good' | 'bad') => {
+  const toast = useCallback((text: string, tone?: 'good' | 'bad', quiet?: boolean) => {
     const id = ++tid.current;
-    setToasts((t) => [...t.slice(-2), { id, text, tone }]);
+    setToasts((t) => [...t.slice(-2), { id, text, tone, quiet }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2800);
   }, []);
 
@@ -206,7 +208,7 @@ export function useRoom(code: string, me: Me): RoomView {
           const seal = pendingSeal.current.get(p.mid);
           if (seal) pendingSeal.current.delete(p.mid);
           if (pendingVote.current.has(p.mid)) pendingVote.current.delete(p.mid);
-          toast(REASONS[p.reason] ?? 'ما انقبل طلبك', 'bad');
+          toast(REASONS[p.reason] ?? 'ما انقبل طلبك', 'bad', p.reason === 'low');
           sound.outbid();
         }
         if (p.t === 'ack' && p.kind === 'seal') {
@@ -254,7 +256,7 @@ export function useRoom(code: string, me: Me): RoomView {
       if (h) {
         const r = h.local(a);
         if (!r.ok && r.reason) {
-          toast(REASONS[r.reason] ?? 'ما انقبل طلبك', 'bad');
+          toast(REASONS[r.reason] ?? 'ما انقبل طلبك', 'bad', r.reason === 'low');
           return;
         }
         if (r.ok && a.t === 'seal') {
