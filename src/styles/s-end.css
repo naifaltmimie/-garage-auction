@@ -1260,3 +1260,12 @@ button.e-rank-row:active {
   margin: 0;
   font-size: 22px;
 }
+
+/* a long champion's name steps down a size so it keeps to two lines */
+.e-champ-name.is-mid {
+  font-size: var(--t-voice-l);
+}
+
+.e-champ-name.is-long {
+  font-size: var(--t-voice-m);
+}

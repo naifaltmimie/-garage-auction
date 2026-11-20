@@ -128,7 +128,7 @@ export function Results({ room }: { room: RoomView }) {
         {champIn && champ ? (
           <>
             <div className="e-champ-who">
-              <p className="e-champ-name">{champ.name}</p>
+              <p className={`e-champ-name${champ.name.length > 16 ? ' is-long' : champ.name.length > 10 ? ' is-mid' : ''}`}>{champ.name}</p>
               <p className="e-champ-k">
                 بطل الليلة
                 {champ.id === room.myId && <span className="e-you is-dark">أنت</span>}
