@@ -44,7 +44,12 @@
   width: 800px;
   height: 800px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--rubber-2) 50%, transparent), transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--rubber-4) 70%, transparent),
+    color-mix(in srgb, var(--rubber-4) 24%, transparent) 52%,
+    transparent
+  );
   pointer-events: none;
 }
 
@@ -173,9 +178,10 @@
 }
 
 /* everything on the floor is measured from --hw, the wheel's box: 62% of the width, or less when the floor is
-   short (the tyre is 88.3% of its box tall, from its top to where it touches the ground) */
+   short (the tyre is 88.3% of its box tall, from its top to where it touches the ground). The 40px keep the
+   ground 16px above the actions and 24px of air between the tyre and the line above it. */
 .hm-stand {
-  --hw: min(62vw, 300px, calc((100cqh - 16px) / .883));
+  --hw: min(62vw, 300px, calc((100cqh - 40px) / .883));
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -706,12 +712,13 @@
   }
 }
 
-/* the wheel stands only where it can be 150px or more without touching the actions (150 × .883 + 16) */
+/* the wheel stands only where it can be about 200px or more with clear air under the text (200 × .883 + 16);
+   on a floor shorter than that (320×640, or a tall actions block) the yard keeps its sign and nothing else */
 .hm-floor {
   container-type: size;
 }
 
-@container (max-height: 148px) {
+@container (max-height: 192px) {
   .hm-stand {
     display: none;
   }
@@ -735,21 +742,13 @@
   }
 }
 
-/* short phones (320×640): a smaller sign and tighter gaps, so the wheel keeps 150px on the floor */
+/* short phones (320×640): the wheel is out, so the sign keeps its size and hangs a little lower */
 @media (max-height: 680px) {
-  .hm {
-    --hm-logo: clamp(150px, min(62vw, 26dvh), 272px);
-  }
-
   .hm-sign {
-    padding-top: calc(5.5dvh + env(safe-area-inset-top, 0px));
+    padding-top: calc(7dvh + env(safe-area-inset-top, 0px));
   }
 
   .hm-sign::before {
-    top: calc(5.5dvh + env(safe-area-inset-top, 0px) - 24px);
-  }
-
-  .hm-floor {
-    margin-top: 0;
+    top: calc(7dvh + env(safe-area-inset-top, 0px) - 24px);
   }
 }
