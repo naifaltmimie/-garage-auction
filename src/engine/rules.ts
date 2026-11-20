@@ -47,7 +47,7 @@ export const BUDGETS = [
   { key: 'modest', label: 'على قد الحال', amount: 300_000, note: 'حراج شعبي واقتصادي' },
   { key: 'okay', label: 'مستور', amount: 750_000, note: 'عائلي وشغل ولمسة فخامة' },
   { key: 'comfy', label: 'مرتاح', amount: 1_500_000, note: 'جموس ولاندات وألمانيات' },
-  { key: 'whale', label: 'هامور', amount: 5_000_000, note: 'رولز وفيراري على الطاولة' },
+  { key: 'whale', label: 'هامور', amount: 5_000_000, note: 'رولز وفيراري في الصالة' },
 ] as const;
 
 export const DEFAULT_SETTINGS: Settings = {

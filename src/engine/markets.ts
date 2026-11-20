@@ -42,7 +42,7 @@ export const MARKETS: Market[] = [
     test: (m) => m.body === 'suv' && GIANTS.test(m.modelEn) && m.value >= 15_000,
   },
   {
-    id: 'sport', label: 'سبورت', note: 'موستنج وتشارجر وبورش وفيراري', budget: 5_000_000,
+    id: 'sport', label: 'رياضي', note: 'موستنج وتشارجر وبورش وفيراري', budget: 5_000_000,
     test: (m) => m.makeEn !== 'Rolls-Royce' && m.body !== 'suv' && m.body !== 'van' &&
       (m.tier === 'sport' || SPORTY.test(m.modelEn) || (m.tier === 'exotic' && (m.body === 'coupe' || m.body === 'convertible'))),
   },
