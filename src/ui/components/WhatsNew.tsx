@@ -67,9 +67,6 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
           <button className="btn btn-primary btn-block" onClick={close}>
             يلا نلعب
           </button>
-          <a className="news-classic" href="/classic/" onClick={() => store.set(SEEN_KEY, RELEASE)}>
-            تبي النسخة القديمة؟ موجودة هنا
-          </a>
         </footer>
       </section>
     </div>

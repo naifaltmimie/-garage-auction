@@ -132,9 +132,6 @@ export function Home() {
           <button className="btn btn-quiet" onClick={() => setNews(true)}>
             الجديد
           </button>
-          <a className="btn btn-quiet" href="/classic/">
-            النسخة القديمة
-          </a>
         </nav>
       </main>
     </div>
