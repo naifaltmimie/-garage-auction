@@ -82,6 +82,7 @@
   --alloy: #d5d8de;
   --alloy-mid: #a9adb6;
   --alloy-lo: #6f737c;
+  --alloy-deck: #3b3e45;
   --alloy-ink: #0c0d0f;
   /* the face: brushed metal. One tileable grain of fine horizontal strokes (public/brand/kit/alloy-brush.webp,
      drawn by scripts/brand/alloy/brush.py) over the metal's tone, which catches the light in a band near the top.
