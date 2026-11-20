@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ICON_NAMES, Icon } from '../components/Bits';
 import { Facts } from '../components/kit/Facts';
 import { Field, Seg, Stepper, Switch } from '../components/kit/Field';
+import { HowToLines } from '../components/kit/HowToLines';
 import { KitObjects } from '../components/kit/KitObjects';
 import { KitPlates } from '../components/kit/KitPlates';
 import { Rows } from '../components/kit/Rows';
@@ -239,6 +240,10 @@ export default function Kit() {
         <Field label="سيارات تحت الغطا" hint="تسوم وأنت ما تدري وش تحت الغطا">
           <Switch on={covered} onChange={setCovered} label="سيارات تحت الغطا" />
         </Field>
+      </Sec>
+
+      <Sec title="كيف نلعب بثلاثة أسطر" note="HowToLines: لشاشة الدخول والصالة. صفوف مسطّرة ورقم مطبوع صغير، بلا دوائر.">
+        <HowToLines />
       </Sec>
 
       <KitObjects />

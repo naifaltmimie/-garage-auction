@@ -1,16 +1,29 @@
+// «وش الجديد»: a bottom sheet with what changed, newest release first, each release dated in a small Print line,
+// and one «تمام». A phone sees each release once (stored under mzk:news). Styles: src/styles/s-home.css.
 import { useState } from 'react';
-import { useSheet } from './Bits';
-import { LogoMark } from './Logo';
+import { REACTIONS } from '../../engine/reactions';
 import { store } from '../../lib/util';
+import { Portal, useSheet } from './Bits';
+import { ScreenTitle } from './kit/ScreenTitle';
 
 /** Bumped with each release that has something worth announcing; a phone sees each one once. */
-const RELEASE = '2026-11-19';
+const RELEASE = '2026-11-20';
 const SEEN_KEY = 'mzk:news';
 
-const ITEMS: { title: string; body?: string }[] = [
-  { title: 'شكل جديد بالأسود والأبيض والأحمر' },
-  { title: 'كفر مجسّم ثلاثي الأبعاد' },
-  { title: 'كل سيارة لها سالفتها وقراءات فحصها' },
+type Item = { title: string; body: string; reactions?: boolean };
+
+/** Newest release first. */
+const RELEASES: { date: string; items: Item[] }[] = [
+  {
+    date: RELEASE,
+    items: [
+      { title: 'شاشة السوم من جديد', body: 'السوم الحالي ومن ماسكه على بطاقة السعر، والحساب كامل تحت الزر.' },
+      { title: 'لوحات سعودية حقيقية', body: 'بمقاسها الصح، العادية والطويلة: خصوصي ونقل خاص وأجرة.' },
+      { title: 'خطوط جديدة للعبة كلها', body: 'خط للنداء، وخط للأسعار والأرقام، وخط للكلام. القراءة صارت أريح.' },
+      { title: 'سوالف السيارات ما تتكرر', body: 'كل سيارة لها سالفتها، وما تنعاد عليك نفس السالفة.' },
+      { title: 'ست ردات فعل', body: 'ارمها على السيارة وقت السوم، ويشوفها كل اللي بالصالة.', reactions: true },
+    ],
+  },
 ];
 
 /** Whether this phone hasn't seen the current release notes yet. */
@@ -29,46 +42,55 @@ function NewsSheet({ onClose }: { onClose: () => void }) {
     if (closing) return;
     store.set(SEEN_KEY, RELEASE);
     setClosing(true);
-    window.setTimeout(onClose, 220);
+    window.setTimeout(onClose, 200);
   };
   const ref = useSheet<HTMLElement>(close);
   return (
-    <div className={`news-scrim ${closing ? 'out' : ''}`} onClick={close}>
-      <section
-        ref={ref}
-        tabIndex={-1}
-        className="news-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="news-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="news-grip" aria-hidden />
-        <header className="news-head">
-          <span className="news-seal news-tag" aria-hidden>
-            <LogoMark size={40} />
-          </span>
-          <div>
-            <h2 id="news-title">الجديد في الصالة</h2>
+    <Portal>
+      <div className={`hm-news-scrim${closing ? ' is-out' : ''}`} onClick={close}>
+        <section
+          ref={ref}
+          tabIndex={-1}
+          className="hm-news"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hm-news-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="hm-news-body">
+            <div id="hm-news-title">
+              <ScreenTitle as="h2">وش الجديد</ScreenTitle>
+            </div>
+            {RELEASES.map((r) => (
+              <section key={r.date} className="hm-news-rel" aria-label={r.date}>
+                <p className="hm-news-date ltr">{r.date}</p>
+                <ul className="hm-news-list">
+                  {r.items.map((it) => (
+                    <li key={it.title}>
+                      <b className="hm-news-t">{it.title}</b>
+                      <span className="hm-news-b">{it.body}</span>
+                      {it.reactions && (
+                        <span className="hm-news-rx" aria-label={REACTIONS.map((x) => x.say).join('، ')}>
+                          {REACTIONS.map((x) => (
+                            <span key={x.k} aria-hidden="true">
+                              {x.label}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
-        </header>
-        <ol className="news-list">
-          {ITEMS.map((it, i) => (
-            <li key={it.title} style={{ ['--i' as string]: i }}>
-              <span className="news-num ltr">{String(i + 1).padStart(2, '0')}</span>
-              <span>
-                <b>{it.title}</b>
-                {it.body && <small>{it.body}</small>}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <footer className="news-foot">
-          <button className="btn btn-primary btn-block" onClick={close}>
-            يلا نلعب
-          </button>
-        </footer>
-      </section>
-    </div>
+          <footer className="hm-news-foot">
+            <button className="btn btn-primary btn-block hm-news-ok" onClick={close}>
+              تمام
+            </button>
+          </footer>
+        </section>
+      </div>
+    </Portal>
   );
 }
