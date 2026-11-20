@@ -1,0 +1,1022 @@
+/* ================================================================ package: lobby
+   Create («افتح صالة»), the lobby (host and player), the settings sheet and SettingsFields.
+   Fresh class names: lby-* for the screens, sf-* for SettingsFields. Imported after the kit sheets. */
+
+/* ---------------------------------------------------------------- shared: chalk text buttons, headings, rows */
+
+.lby-chalk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: transform .12s cubic-bezier(.16, 1, .3, 1), background-color .12s cubic-bezier(.16, 1, .3, 1);
+}
+
+.lby-chalk:active {
+  transform: translateY(1px);
+  background: var(--alloy-50);
+}
+
+.lby-chalk .ic {
+  color: var(--ink-2);
+}
+
+.lby-h {
+  margin: 0;
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.lby-sec {
+  display: grid;
+  gap: 4px;
+}
+
+.lby-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+/* a ruled row that does one thing: icon, words, and the way forward */
+.lby-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 2px;
+  border: 0;
+  border-block: 1px solid var(--line-2);
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  touch-action: manipulation;
+  transition: background-color .12s cubic-bezier(.16, 1, .3, 1);
+}
+
+.lby-row:active {
+  background: var(--alloy-50);
+}
+
+.lby-row > .ic {
+  flex: none;
+  color: var(--ink-2);
+}
+
+.lby-row-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.lby-row-t b {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.lby-row-t small {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+.lby-row .lby-row-go {
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the sticky bottom bar: the one action */
+
+.lby-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--rubber-1);
+  box-shadow: 0 -14px 28px -18px rgba(0, 0, 0, .9);
+}
+
+.lby-bar-in {
+  display: grid;
+  gap: 6px;
+  max-width: 488px;
+  margin: 0 auto;
+}
+
+.lby-bar-line {
+  margin: 0;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn.lby-go {
+  min-height: 56px;
+  touch-action: manipulation;
+}
+
+/* the start button keeps its old class for the tests, but it is this screen's one action: caliper red, no sheen */
+.lby-bar .btn.btn-gold {
+  --face: linear-gradient(180deg, var(--brand-hi) 0%, var(--brand) 52%, var(--brand-lo) 100%);
+  --deck: var(--brand-lo);
+  --rim: rgba(255, 255, 255, .12);
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+}
+
+.lby-bar .btn.btn-gold::after {
+  content: none;
+  animation: none;
+}
+
+/* content scrolls under the bar and is never hidden by it */
+.lby-create,
+.lby-host {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+}
+
+.lby-host {
+  padding-bottom: calc(136px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------------------------------------------------------------- Create */
+
+.lby-create .lby-top {
+  margin-inline-start: -12px;
+  margin-bottom: 4px;
+}
+
+.lby-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+
+.lby-name {
+  display: grid;
+  gap: 8px;
+}
+
+.lby-label {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.lby-hint {
+  margin-top: -6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+/* text fields: the sunk rubber track of the kit's controls, 17px so phones never zoom */
+.lby-input,
+.sf-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .7);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  caret-color: var(--ink);
+}
+
+.lby-input::placeholder,
+.sf-input::placeholder {
+  color: var(--dim);
+  font-weight: 500;
+}
+
+.lby-input:focus-visible,
+.sf-input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.lby-input[aria-invalid='true'],
+.sf-input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+/* the error line keeps its height, so nothing under it jumps when it appears */
+.lby-err {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.lby-err:not(:empty)::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.lby-name .lby-err {
+  margin-top: -2px;
+  margin-bottom: -8px;
+}
+
+/* the optional details: one ruled row with the current values in plain words */
+.lby-more {
+  display: grid;
+}
+
+.lby-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 2px;
+  border: 0;
+  border-block: 1px solid var(--line-2);
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  touch-action: manipulation;
+}
+
+.lby-more-btn[aria-expanded='true'] {
+  border-bottom-color: transparent;
+}
+
+.lby-more-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+
+.lby-more-t b {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.lby-more-t .facts {
+  color: var(--mute);
+}
+
+.lby-more-ic {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .7);
+  color: var(--ink);
+}
+
+.lby-more-body {
+  display: grid;
+  border-bottom: 1px solid var(--line-2);
+  animation: lby-open .24s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.lby-roomname {
+  padding-block: 4px 18px;
+}
+
+@keyframes lby-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------- SettingsFields */
+
+.sf {
+  display: grid;
+}
+
+.sf > * + * {
+  border-top: 1px solid var(--line);
+}
+
+.sf-pair {
+  display: grid;
+}
+
+.sf-pair > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/* four budgets: a 2×2 track, each key the name over its amount */
+.sf-grid2 .seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.field .sf-grid2 .seg > button {
+  min-height: 58px;
+  padding: 6px 8px;
+}
+
+.sf-bud {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  line-height: 1.2;
+}
+
+.sf-bud > span:first-child {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field .seg > button .sf-bud-n {
+  font-size: 18px;
+}
+
+.sf-tight .seg {
+  gap: 2px;
+}
+
+.field .sf-tight .seg > button {
+  padding: 0;
+}
+
+.sf-custom {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.sf-custom-l {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sf-input-num {
+  min-height: 48px;
+  font-family: var(--f-print);
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: center;
+}
+
+.sf-input-num::placeholder {
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.sf-warn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field .stepper output .sf-auto {
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* the switches: full-width labelled rows, the whole row is the target */
+.sf-sws {
+  display: grid;
+}
+
+.kit-switch.sf-sw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  text-align: start;
+  touch-action: manipulation;
+}
+
+.kit-switch.sf-sw + .kit-switch.sf-sw {
+  border-top: 1px solid var(--line);
+}
+
+.sf-sw-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sf-sw-t b {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.sf-sw-t small {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+.sf-sw-c {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: 3px;
+}
+
+.sf-sw-s {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--mute);
+}
+
+.kit-switch.sf-sw[aria-checked='true'] .sf-sw-s {
+  color: var(--ink-2);
+}
+
+/* the market: ruled rows; the chosen one carries the paper thumb */
+.sf-market {
+  display: grid;
+}
+
+.sf-mk {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 12px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--ink-2);
+  text-align: start;
+  touch-action: manipulation;
+  transition: background-color .12s cubic-bezier(.16, 1, .3, 1);
+}
+
+.sf-market > .sf-mk:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.sf-mk:active {
+  background: var(--alloy-50);
+}
+
+.sf-mk-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sf-mk-t b {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.sf-mk-t small {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+.sf-mk[aria-checked='true'] .sf-mk-t b {
+  color: var(--ink);
+}
+
+.sf-mk-n {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+.sf-mk-n .ltr {
+  font-family: var(--f-print);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.sf-mk-thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--rubber-0);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .05);
+  color: var(--plate-ink);
+}
+
+.sf-mk[aria-checked='true'] .sf-mk-thumb {
+  background: var(--plate);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .8), 0 3px 8px -3px rgba(0, 0, 0, .8);
+}
+
+.sf-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: start;
+  touch-action: manipulation;
+}
+
+.sf-more:last-child {
+  border-bottom: 0;
+}
+
+.sf-more small {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sf-more[aria-expanded='true'] span {
+  flex: 1;
+}
+
+.sf-more .ic {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-2);
+}
+
+.sf-market-rest {
+  display: grid;
+  animation: lby-open .24s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+/* ---------------------------------------------------------------- Lobby */
+
+.lby {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  align-content: start;
+}
+
+/* the invitation: one paper slip, the code on one side of the cut and the QR on the other */
+.codebox.lby-invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+  gap: 10px;
+  padding: 0;
+  text-align: start;
+}
+
+.lby-paper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 6px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .7), 0 14px 26px -14px rgba(0, 0, 0, .95);
+  color-scheme: light;
+}
+
+.lby-paper-code {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+  justify-items: start;
+}
+
+.lby-paper-k {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--plate-ink);
+  opacity: .64;
+}
+
+.lby-paper .code {
+  direction: ltr;
+  font-family: var(--f-print);
+  font-size: clamp(28px, 9vw, 44px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--plate-ink);
+  user-select: all;
+}
+
+.lby-paper-cut {
+  flex: none;
+  align-self: stretch;
+  margin-block: -16px;
+  border-inline-start: 2px dashed var(--plate-ink);
+  opacity: .22;
+}
+
+.lby-invite .qr {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  max-width: none;
+}
+
+.lby-invite .qr svg {
+  display: block;
+  width: clamp(84px, 26vw, 104px);
+  height: auto;
+}
+
+.lby-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.lby-acts .lby-chalk {
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.lby-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+/* the players: ruled rows */
+.lby-players {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.lby-p {
+  border-bottom: 1px solid var(--line);
+}
+
+.lby-p-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding-block: 9px;
+}
+
+.lby-p .paddle {
+  width: 40px;
+  height: 40px;
+  font-family: var(--f-print);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.lby-p .paddle {
+  border: 2px solid var(--alloy-lo);
+  background: var(--plate);
+  color: var(--plate-ink);
+}
+
+/* my own paddle is alloy, like every other thing of mine */
+.lby-p .paddle.me {
+  border-color: var(--alloy-mid);
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+}
+
+.lby-p-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.lby-p-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.lby-p-facts {
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.lby-kick {
+  flex: none;
+  color: var(--ink-2);
+}
+
+.lby-p.is-asking {
+  background: var(--alloy-50);
+  box-shadow: 0 0 0 8px var(--alloy-50);
+  border-radius: 1px;
+}
+
+.lby-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-bottom: 12px;
+}
+
+.lby-ask > span {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.lby-ask-acts {
+  display: flex;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+.lby-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--brand);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 700;
+  touch-action: manipulation;
+  transition: transform .12s cubic-bezier(.16, 1, .3, 1);
+}
+
+.lby-danger:active {
+  transform: translateY(1px);
+}
+
+.lby-empty {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-block: 14px 4px;
+}
+
+.lby-empty b {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.lby-empty span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+/* the conditions: one line in plain words; room is kept for two, so a change never moves what's under it */
+.lby-cond-line {
+  min-height: calc(2 * 1.6em);
+  font-size: 15px;
+}
+
+.lby-cond-line .facts {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* the player's view: the players' last rule is the top rule of the rows under them */
+.lby-player .lby-row {
+  border-top: 0;
+  margin-top: -22px;
+}
+
+.lby-wait {
+  display: grid;
+  place-items: center;
+  padding-block: 8px 4px;
+}
+
+.codebox.lby-coderow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-2);
+  text-align: start;
+}
+
+.lby-coderow-k {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.lby-coderow .code {
+  flex: 1;
+  direction: ltr;
+  font-family: var(--f-print);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  color: var(--ink);
+  text-align: right;
+}
+
+.lby-how {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lby-how li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.lby-how li:last-child {
+  border-bottom: 0;
+}
+
+.lby-how .ic {
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- the settings sheet */
+
+.lby-sheet {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 81;
+  display: flex;
+  flex-direction: column;
+  max-width: 560px;
+  max-height: 90dvh;
+  margin: 0 auto;
+  border-radius: 20px 20px 0 0;
+  background: var(--rubber-2);
+  box-shadow: var(--sh-3);
+  outline: 0;
+  animation: lby-up .28s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.lby-sheet::before {
+  content: '';
+  flex: none;
+  width: 44px;
+  height: 5px;
+  margin: 10px auto 0;
+  border-radius: 99px;
+  background: var(--line-2);
+}
+
+.lby-sheet-head {
+  flex: none;
+  padding: 10px 16px 6px;
+}
+
+.lby-sheet-head .screen-title-h {
+  font-size: var(--t-voice-m);
+}
+
+.lby-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 16px 16px;
+}
+
+.lby-sheet-body > .lby-sec {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lby-sheet-foot {
+  flex: none;
+  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+
+@keyframes lby-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lby-more-body,
+  .sf-market-rest,
+  .lby-sheet {
+    animation: none;
+  }
+
+  .lby-chalk,
+  .lby-row,
+  .sf-mk,
+  .lby-danger {
+    transition: none;
+  }
+}
+
+/* every grid here is one column that may shrink: a long word or a nowrap count never widens the page */
+.lby-name,
+.lby-more,
+.lby-more-body,
+.lby-sec,
+.sf,
+.sf-pair,
+.sf-sws,
+.sf-market,
+.sf-market-rest {
+  grid-template-columns: minmax(0, 1fr);
+}
