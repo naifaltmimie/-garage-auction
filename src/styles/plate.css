@@ -1,264 +1,69 @@
 /* ================================================================ the Saudi number plate
-   Styles for <CarPlate/> and <MiniPlate/> (src/ui/components/Plate.tsx). Imported after every screen sheet.
-   The real plate (series since 2006): white retro-reflective face, black pressed characters, a thin black border,
-   slightly rounded corners. A 2 × 2 field ruled in black (Arabic over Latin, digits left, letters right) and a strip
-   holding the emblem, «السعودية», KSA and the kind's mark. American size 335 × 155 mm (2.16 : 1, strip at the right
-   edge) or long size 550 × 110 mm (5 : 1, strip in the middle). Everything is sized from --h, the plate's height.
-   Characters and border are pressed aluminium: a hairline light edge above, a soft dark edge below. */
+   Styles for <CarPlate/> and <MiniPlate/> (src/ui/components/Plate.tsx). The plate itself is one SVG drawn from
+   real plates; here it only gets its size (--h, the plate's height; the width follows the SVG's own ratio, --r),
+   a soft shadow under it, the alloy holder for rare and legend plates, and the tag outside the plate. */
 
 .splate {
   --h: 64px;
-  --w: calc(var(--h) * 2.161);
-  --sw: calc(var(--h) * .3);
-  --lw: 0px;
-  --bw: max(1px, calc(var(--h) * .026));
-  --rule: max(1px, calc(var(--h) * .018));
-  --row: calc((var(--h) - 2 * var(--bw) - var(--rule)) / 2);
-  --cw: calc((var(--w) - var(--sw) - var(--lw) - 2 * var(--bw) - 3 * var(--rule)) / 2);
-  --ds: min(calc(var(--cw) / 4.2), calc(var(--h) * .27));
-  --ls: min(calc(var(--cw) / 3.12), calc(var(--h) * .44));
-  --sheet: #fbfbf9;
-  --p-ink: #101113;
-  --strip: var(--sheet);
-  --strip-ink: var(--p-ink);
-  --emb:
-    0 calc(var(--h) * -.007) 0 rgba(255, 255, 255, .95),
-    0 calc(var(--h) * .011) calc(var(--h) * .012) rgba(0, 0, 0, .34);
-
   flex: none;
   display: inline-grid;
   justify-items: center;
   gap: 6px;
   direction: ltr;
-  color-scheme: light;
   vertical-align: middle;
 }
-
 .splate.us.sm { --h: 44px; }
 .splate.us.md { --h: 64px; }
 .splate.us.lg { --h: 96px; }
-.splate.eu { --w: calc(var(--h) * 5); --sw: calc(var(--h) * .66); --ds: min(calc(var(--cw) / 4.2), calc(var(--h) * .34)); --ls: min(calc(var(--cw) / 3.12), calc(var(--h) * .5)); }
 .splate.eu.sm { --h: 34px; }
 .splate.eu.md { --h: 44px; }
 .splate.eu.lg { --h: 64px; }
-.splate.has-logo { --lw: calc(var(--w) / 6); }
-.splate.mini { --h: 24px; --sw: calc(var(--h) * .34); --cw: calc(var(--w) - var(--sw) - 2 * var(--bw) - var(--rule)); --ls: calc(var(--cw) / 3.1); }
+.splate.mini { --h: 24px; display: inline-flex; }
 
-/* ---------------------------------------------------------------- the face: ink shows through the gaps as the rules */
-.sp-face {
-  position: relative;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 1fr 1fr var(--sw);
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: 'na la st' 'ne le st';
-  gap: var(--rule);
-  width: var(--w);
-  height: var(--h);
-  border: var(--bw) solid var(--p-ink);
-  border-radius: calc(var(--h) * .07);
-  background: var(--p-ink);
-  overflow: hidden;
-  color: var(--p-ink);
-  line-height: 1;
-  box-shadow:
-    0 -.5px 0 rgba(255, 255, 255, .22),
-    0 1px 0 rgba(0, 0, 0, .5),
-    0 calc(var(--h) * .05) calc(var(--h) * .09) calc(var(--h) * -.01) rgba(0, 0, 0, .55);
-}
-.splate.has-logo .sp-face { grid-template-columns: var(--lw) 1fr 1fr var(--sw); grid-template-areas: 'lg na la st' 'lg ne le st'; }
-.splate.eu .sp-face { grid-template-columns: 1fr var(--sw) 1fr; grid-template-areas: 'na st la' 'ne st le'; }
-.splate.eu.has-logo .sp-face { grid-template-columns: var(--lw) 1fr var(--sw) 1fr; grid-template-areas: 'lg na st la' 'lg ne st le'; }
-.splate.mini .sp-face { grid-template-columns: 1fr var(--sw); grid-template-areas: 'la st' 'le st'; }
-
-/* the sheeting: a faint diagonal weave, a slight vertical sheen and the pressed rim just inside the border */
-.sp-face::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background:
-    repeating-linear-gradient(60deg, rgba(0, 0, 0, .03) 0 .5px, transparent .5px 3px),
-    repeating-linear-gradient(-60deg, rgba(0, 0, 0, .026) 0 .5px, transparent .5px 3px),
-    linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, .025) 62%, rgba(0, 0, 0, .075) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .85),
-    inset 0 -1px 1px rgba(0, 0, 0, .14);
-}
-.splate.sm .sp-face::after,
-.splate.mini .sp-face::after {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .2) 0%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .06) 100%);
-}
-
-/* ---------------------------------------------------------------- the four character cells */
-.sp-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--sheet);
-  white-space: nowrap;
-  text-shadow: var(--emb);
-}
-.sp-na { grid-area: na; }
-.sp-ne { grid-area: ne; }
-.sp-la { grid-area: la; flex-direction: row-reverse; }
-.sp-le { grid-area: le; flex-direction: row-reverse; }
-.splate .sp-cell i {
+.sp-holder { display: block; line-height: 0; }
+.sp-svg {
   display: block;
-  flex: none;
-  font-style: normal;
-  text-align: center;
+  height: var(--h);
+  width: calc(var(--h) * var(--r, 2.1));
+  overflow: visible;
+  filter: drop-shadow(0 calc(var(--h) * .04) calc(var(--h) * .05) rgba(0, 0, 0, .5));
 }
+.splate.mini .sp-svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
 
-/* digits: equal slots so every Arabic-Indic digit stands over its Western twin */
-.sp-na i,
-.sp-ne i { width: var(--ds); }
-.sp-la i,
-.sp-le i { width: var(--ls); }
-
-/* Western digits and Latin letters: Print, tall and pressed */
-.sp-ne i,
-.sp-le i {
-  font-family: var(--f-print);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  font-size: min(calc(var(--row) * .84), calc(var(--ds) * 1.8));
-  transform: scaleY(1.17) translateY(.02em);
-}
-.sp-le i { font-size: min(calc(var(--row) * .84), calc(var(--ls) * 1.5)); }
-
-/* Arabic-Indic digits and Arabic letters: the heaviest Text weight */
-.sp-na i,
-.sp-la i {
-  font-family: var(--f-ui);
-  font-weight: 700;
-}
-.sp-na i {
-  font-size: min(calc(var(--row) * .9), calc(var(--ds) * 1.6));
-  transform: scaleY(1.08) translateY(-.04em);
-}
-.sp-la i {
-  font-size: min(calc(var(--row) * .86), calc(var(--ls) * .84));
-  line-height: 1;
-  transform: scaleY(1.24) translateY(-.13em);
-}
-.sp-la i.w1 { transform: scale(.9, 1.24) translateY(-.13em); }
-.sp-la i.w2 { transform: scale(.76, 1.24) translateY(-.13em); }
-.splate.mini .sp-la i { font-size: calc(var(--row) * 1.02); transform: scaleY(1.1) translateY(-.16em); }
-
-/* ---------------------------------------------------------------- the strip: emblem, «السعودية», KSA, the kind's mark */
-.sp-strip {
-  grid-area: st;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
-  min-width: 0;
-  padding: calc(var(--h) * .03) 0;
-  background: var(--strip);
-  color: var(--strip-ink);
-  text-shadow: var(--emb);
-}
-.sp-em { display: grid; place-items: center; line-height: 0; }
-.sp-emblem {
-  width: calc(var(--sw) * .8);
-  height: calc(var(--sw) * .8);
-  filter: drop-shadow(0 calc(var(--h) * .008) calc(var(--h) * .006) rgba(0, 0, 0, .3));
-}
-.sp-word {
-  font-family: var(--f-ui);
-  font-weight: 700;
-  font-size: calc(var(--h) * .074);
-  direction: rtl;
-}
-.sp-ksa {
-  font-family: var(--f-print);
-  font-weight: 800;
-  font-size: calc(var(--h) * .12);
-  letter-spacing: .05em;
-  padding-inline-start: .05em;
-}
-.sp-mark {
-  width: calc(var(--h) * .085);
-  height: calc(var(--h) * .085);
-}
-.splate.eu .sp-emblem { width: calc(var(--h) * .36); height: calc(var(--h) * .36); }
-.splate.eu .sp-word { font-size: calc(var(--h) * .1); }
-.splate.eu .sp-ksa { font-size: calc(var(--h) * .14); }
-.splate.eu .sp-mark { width: calc(var(--h) * .11); height: calc(var(--h) * .11); }
-.splate.eu .sp-strip { padding: calc(var(--h) * .04) 0; }
-.splate.mini .sp-strip { padding: 1px 0; justify-content: space-around; }
-.splate.mini .sp-emblem { width: calc(var(--sw) * .92); height: calc(var(--sw) * .92); }
-.splate.mini .sp-ksa { display: none; }
-.splate.mini .sp-mark { width: 3px; height: 3px; }
-
-/* the kind lives in the strip; the face stays white */
-.splate.k-taxi { --strip: #f2c40d; }
-.splate.k-transport { --strip: #1c58b0; --strip-ink: #fff; }
-.splate.k-temporary { --strip: linear-gradient(180deg, #e9ebee 0%, #c3c7cd 55%, #aeb3ba 100%); }
-.splate.k-diplomatic { --strip: #0d7a3f; --strip-ink: #fff; }
-.splate.k-transport .sp-strip,
-.splate.k-diplomatic .sp-strip { text-shadow: 0 calc(var(--h) * .011) calc(var(--h) * .01) rgba(0, 0, 0, .35); }
-.splate.k-diplomatic .sp-em {
-  padding: calc(var(--h) * .02);
-  background: var(--sheet);
-  color: #0d7a3f;
-  border-radius: calc(var(--h) * .012);
-}
-.splate.k-diplomatic .sp-emblem { width: calc(var(--sw) * .66); height: calc(var(--sw) * .66); filter: none; }
-.splate.eu.k-diplomatic .sp-emblem { width: calc(var(--h) * .3); height: calc(var(--h) * .3); }
-
-/* ---------------------------------------------------------------- the logo panel at the far left */
-.sp-logo {
-  grid-area: lg;
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  padding: calc(var(--h) * .07) calc(var(--h) * .03);
-  background: var(--sheet);
-  color: var(--p-ink);
-}
-.sp-logo-art {
-  width: 100%;
-  height: 100%;
-  max-height: calc(var(--h) * .8);
-  filter: drop-shadow(0 calc(var(--h) * .008) calc(var(--h) * .006) rgba(0, 0, 0, .3));
-}
-.splate.eu .sp-logo-art { max-height: calc(var(--h) * .82); }
-
-/* small sizes: no word, no weave */
-.splate.sm .sp-word { display: none; }
-.splate.us.sm .sp-strip { justify-content: space-around; }
-
-/* ---------------------------------------------------------------- special plates: the plate stays real; rare and legend get an alloy rim */
-.splate.t-rare .sp-face,
-.splate.t-legend .sp-face {
+/* rare and legend plates sit in an alloy holder: a frame around the plate, the plate itself unchanged */
+.splate.t-rare .sp-holder,
+.splate.t-legend .sp-holder {
+  padding: calc(var(--h) * .045);
+  border-radius: calc(var(--h) * .1);
+  background: linear-gradient(180deg, #e9ebee 0%, #a9adb5 48%, #d4d7dc 100%);
   box-shadow:
-    0 0 0 calc(var(--h) * .03) #0c0d0f,
-    0 0 0 calc(var(--h) * .05) var(--alloy-mid, #a9adb5),
-    0 calc(var(--h) * .06) calc(var(--h) * .1) calc(var(--h) * -.01) rgba(0, 0, 0, .55);
+    inset 0 1px 0 rgba(255, 255, 255, .8),
+    inset 0 -1px 0 rgba(0, 0, 0, .35),
+    0 calc(var(--h) * .04) calc(var(--h) * .08) rgba(0, 0, 0, .5);
 }
+.splate.t-rare .sp-svg,
+.splate.t-legend .sp-svg { filter: none; }
+
 .sp-tag {
   color: var(--ink);
   font-family: var(--f-ui);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.3;
   direction: rtl;
   white-space: nowrap;
 }
 .sp-tag > span { unicode-bidi: isolate; }
 .sp-tag .ltr {
   color: var(--ink-2);
+  font-family: var(--f-print);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 /* the big screen shows the car's plate larger */
 .tv .tv-plate .splate.us.lg { --h: 140px; }
-.tv .tv-plate .splate.eu.lg { --h: 88px; }
+.tv .tv-plate .splate.eu.lg { --h: 84px; }
 
 /* ---------------------------------------------------------------- the kit's plate gallery (#/kit) */
 .kpl {
