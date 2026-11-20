@@ -477,7 +477,7 @@ async def main_run(p):
             await a.shot(saud, 'preview-player-full', full=True)
             await sheet_tabs(a, saud, 'car-sheet')
             try:
-                await saud.locator('.g-slide').first.click(timeout=1500)
+                await saud.locator('.sh-slide').first.click(timeout=1500)
                 await wait(0.8)
                 await a.shot(saud, 'gallery-viewer')
                 await click(saud, '.lb-close')
