@@ -2,7 +2,7 @@
 // row (clock, the دلال's call, the reactions slot), the fact line, the price tag, the one red action, the raise
 // keys, and the cost line. Every other state (preview, sealed envelope, holding the bid, no money, offline…)
 // is the same block with a different body. The clock lives in its own leaf, so a tick never redraws the block.
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { sound } from '../../audio/sound';
 import { feesOf, increment, minNextBid } from '../../engine/rules';
 import type { Core, LotPub, PlayerPub } from '../../engine/types';
@@ -383,8 +383,10 @@ function FreeBid({
     </>
   );
 
-  const why = !live ? 'السوم مو مفتوح الحين' : !amount ? null : amount < min ? `أقل سوم ${money(min)}` : amount > maxBid ? `رصيدك يوصل لين ${money(maxBid)}` : null;
+  // true while the typed amount cannot be bid; the limits line under the amount shows which limit it breaks
+  const why = !live || (!!amount && (amount < min || amount > maxBid));
   const ok = live && amount >= min && amount <= maxBid;
+  const padLimId = useId();
 
   const go = () => {
     if (!ok) return;
@@ -412,8 +414,21 @@ function FreeBid({
           <span className="cs-pad-n">{amount ? fmt(amount) : money(min)}</span>
           <span className="cs-pad-u">ريال</span>
         </output>
-        <p className="cs-pad-lim">
-          أقل سوم <span className="ltr" dir="ltr">{money(min)}</span> · تقدر لين <span className="ltr" dir="ltr">{money(maxBid)}</span>
+        {/* the two limits; the one the typed amount breaks stands out, and that is the whole error message */}
+        <p className="cs-pad-lim" id={padLimId} role={why ? 'alert' : undefined}>
+          {!live ? (
+            <span className="is-broken">السوم مو مفتوح الحين</span>
+          ) : (
+            <>
+              <span className={amount && amount < min ? 'is-broken' : undefined}>
+                أقل سوم <span className="ltr" dir="ltr">{money(min)}</span>
+              </span>
+              {' · '}
+              <span className={amount > maxBid ? 'is-broken' : undefined}>
+                تقدر لين <span className="ltr" dir="ltr">{money(maxBid)}</span>
+              </span>
+            </>
+          )}
         </p>
         <div className="cs-keys12" dir="ltr">
           {keys.map((k) => (
@@ -432,10 +447,9 @@ function FreeBid({
         <p className={`cs-pad-warn${ask ? ' is-on' : ''}`} role="alert">
           {ask ? warn : ''}
         </p>
-        <button type="button" className={`cs-main bid-main${ask ? ' is-ask' : ''}`} disabled={!ok} onClick={go} data-autofocus>
-          {why ? (
-            <span className="cs-main-why">{why}</span>
-          ) : ask ? (
+        {/* the action keeps its place and its words; it only waits until the amount is one he can bid */}
+        <button type="button" className={`cs-main bid-main${ask ? ' is-ask' : ''}`} disabled={!ok} onClick={go} aria-describedby={why ? padLimId : undefined} data-autofocus>
+          {ask ? (
             <>
               <span className="cs-main-l voice">متأكد؟</span>
               <span className="cs-main-a">
@@ -598,8 +612,9 @@ export function Console({
   const topAmount = top?.amount ?? null;
   const shown = useRef<{ min: number; chips: number[]; at: number; amount: number | null }>({ min, chips: [], at: 0, amount: topAmount });
   const chips = useMemo(() => {
+    // two, five and ten steps over the price on the tag, bid or opening alike, so the raises always read round
     const base = topAmount ?? core.opening;
-    const mk = (n: number) => (topAmount != null ? base + step * n : core.opening + step * (n - 1));
+    const mk = (n: number) => base + step * n;
     return [2, 5, 10].map((n) => ({ n, amount: mk(n), delta: mk(n) - base }));
   }, [topAmount, core.opening, step]);
   const [frozenAt, setFrozenAt] = useState(0);
@@ -721,26 +736,19 @@ export function Console({
   const showRing = ['preview', 'bidding', 'sealed', 'intro'].includes(core.phase);
   const going = !!core.callout && core.callout.key.startsWith('going') && bidding;
 
-  // the call line: an alert wins over the time extension, which wins over «على واحد…», which wins over the phase
+  // the call line: being outbid wins over the time extension, which wins over «على واحد…», which wins over the
+  // phase. It is said in chalk like every call: the red is the button under it, which already carries the price.
   let call: ReactNode;
-  let alert = false;
+  // announced at once to a screen reader; on screen it differs from any other call only by what it says
+  const alert = showOutbid || (low && !!top);
   if (showOutbid) {
     call = (
       <>
         زاودوا عليك
-        {/* a late bid that beat him also grew the clock: he hears that instead of the price the button already shows */}
-        <span className="cs-call-x">
-          {ext && bidding ? (
-            '، وتمدد الوقت'
-          ) : (
-            <>
-              ، المطلوب <span className="print ltr">{money(min)}</span>
-            </>
-          )}
-        </span>
+        {/* a late bid that beat him also grew the clock */}
+        {ext && bidding && <span className="cs-call-x">، وتمدد الوقت</span>}
       </>
     );
-    alert = true;
   } else if (low && top) {
     call = (
       <>
@@ -750,7 +758,6 @@ export function Console({
         </span>
       </>
     );
-    alert = true;
   } else if (ext && bidding) call = 'تمدد الوقت';
   else if (core.paused) call = 'المزاد واقف';
   else if (going) call = core.callout!.text;
@@ -795,16 +802,12 @@ export function Console({
     body = <Calm icon="car" title="كراجك فل" sub="ما تقدر تشتري زيادة، تفرّج وعلّق مع الشباب" />;
   } else if (offline) {
     kind = 'calm';
-    body = <Calm icon="info" title="مقطوع، نرجّع الخط" sub="السوم يرجع لك أول ما يرجع الخط، والساعة ماشية" tone="off" />;
+    // the strip under the top bar says the line is down; here only what that means for his bid
+    body = <Calm icon="info" title="سومك ما يوصل الحين" sub="يرجع لك أول ما يرجع الخط، والساعة ماشية" tone="off" />;
   } else if (core.paused) {
+    // the strip under the top bar says who paused and why, and the call line says «المزاد واقف»: nothing to add
     kind = 'calm';
-    body = (
-      <Calm
-        icon="pause"
-        title="المزاد واقف"
-        sub={core.away ? 'الدلال طلع من الصفحة، يكمّل أول ما يرجع' : 'الدلال وقّفه، يكمّل بعد شوي'}
-      />
-    );
+    body = null;
   } else if (core.phase === 'sealed' ? core.opening > maxBid && mine == null : min > maxBid && !iAmTop) {
     kind = 'calm';
     maxLine = false;
@@ -823,19 +826,9 @@ export function Console({
     kind = 'sealed';
     body = <Envelope room={room} lot={lot} maxBid={maxBid} step={step} mine={mine} />;
   } else if (iAmTop && top) {
+    // holding the bid: the tag above already carries his paddle and the price, so this only says what happens next
     kind = 'hold';
-    body = (
-      <div className="cs-hold" role="status" aria-live="polite">
-        <div className="cs-hold-r">
-          <b className="voice">السوم عندك</b>
-          <span className="cs-hold-a">
-            <b className="print ltr">{money(top.amount)}</b>
-            <small>ريال</small>
-          </span>
-        </div>
-        <span className="cs-hold-s">إذا ما زاد أحد لين تخلص الساعة، صارت لك</span>
-      </div>
-    );
+    body = <Calm icon="gavel" title="السوم عندك" sub="إذا ما زاد أحد لين تخلص الساعة، صارت لك" />;
   } else {
     const off = !bidding || sending;
     const label = showOutbid ? 'زاود عليه' : top ? 'زاود' : 'افتح السوم';
@@ -905,7 +898,7 @@ export function Console({
 
   return (
     <section
-      className={`cs cs--${kind}${short ? ' is-short' : ''}${showOutbid || (low && top) ? ' is-outbid' : ''}`}
+      className={`cs cs--${kind}${short ? ' is-short' : ''}`}
       aria-label="لوحة المزايدة"
       data-cs={kind}
     >

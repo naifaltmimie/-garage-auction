@@ -44,16 +44,23 @@ function HowLine({ r, w }: { r: ResultRow; w: number }) {
   if (r.ratingScore == null)
     return (
       <small className="e-rank-how">
-        <span>{r.cars === 0 ? 'ما شرى شي، ما له تقييم' : 'ما وصله تقييم'}</span> · <span>شطارة ← {r.total}</span>
+        <span>{r.cars === 0 ? 'ما شرى شي، ما له تقييم' : 'ما وصله تقييم'}</span> ·{' '}
+        <span>
+          من الشطارة <span className="ltr">{r.total}</span>
+        </span>
       </small>
     );
   const a = Math.round(w * r.ratingScore);
+  // the two parts of the total, said as parts: «من التقييم 28 (5.5 من 10) · من الشطارة 7»
   return (
     <small className="e-rank-how">
       <span>
-        تقييم <span className="ltr">{r.ratingAvg}/10</span> ← {a}
+        من التقييم <span className="ltr">{a}</span> (<span className="ltr">{r.ratingAvg}</span> من 10)
       </span>{' '}
-      · <span>شطارة ← {r.total - a}</span>
+      ·{' '}
+      <span>
+        من الشطارة <span className="ltr">{r.total - a}</span>
+      </span>
     </small>
   );
 }

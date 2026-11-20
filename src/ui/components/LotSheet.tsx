@@ -46,8 +46,12 @@ export function specParts(car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'trans' 
   return [car.engine, car.hp ? `${car.hp} حصان` : null, DRIVE_AR[car.drive], transAr(car.trans), car.fuel === 'petrol' ? null : FUEL_AR[car.fuel]].filter(Boolean) as string[];
 }
 
+/** The spec line as one string, safe to print anywhere: each bit sits in a right-to-left isolate (U+2067 … U+2069),
+ *  as `SpecLine` does with `<bdi>`, so «4.0L V6» never swaps places with the horsepower after it. */
 export function specLine(car: Pick<CarPub, 'engine' | 'hp' | 'drive' | 'trans' | 'fuel'>): string {
-  return specParts(car).join('، ');
+  return specParts(car)
+    .map((x) => `⁧${x}⁩`)
+    .join('، ');
 }
 
 /** Spec bits mix Latin ("6.2L V8") and Arabic: each one is isolated so the line reads right to left. */
@@ -79,7 +83,10 @@ export function CarTitle({ car, compact }: { car: Pick<CarPub, 'makeAr' | 'makeE
         {car.nick && <span className="nick">«{car.nick}»</span>}
       </div>
       <h2 className="car-name">
-        {car.modelAr} {car.trim && <span className="trim">{car.trim}</span>}
+        {/* the model and its trim as one name in its own direction: «812 Superfast» keeps its order in the Arabic line */}
+        <bdi>
+          {car.modelAr} {car.trim && <span className="trim">{car.trim}</span>}
+        </bdi>
       </h2>
       <div className="car-year">
         <b className="ltr">{car.year}</b>
@@ -230,7 +237,10 @@ const LotHead = memo(function LotHead({ lot, car, revealed, reserveMet }: { lot:
   return (
     <>
       <header className="sh-head">
-        <h2 className="sh-title">{modelSaid(car)}</h2>
+        {/* the name in its own direction: «812 GTS» keeps its order inside the Arabic page */}
+        <h2 className="sh-title">
+          <bdi>{modelSaid(car)}</bdi>
+        </h2>
         <div className="sh-line">
           <p className="sh-meta">
             <span className="sh-mk">

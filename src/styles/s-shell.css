@@ -139,12 +139,24 @@
   white-space: nowrap;
 }
 
+/* how full his garage is: a small car and the count, set apart from the word «رصيدك» */
 .shl-wallet-g {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 3px;
+  margin-inline-start: 4px;
   font-family: var(--f-print);
   font-size: 14px;
   font-weight: 700;
+  line-height: 1;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+.shl-wallet-g svg {
+  flex: none;
+  color: var(--mute);
 }
 
 .shl-wallet-n {
@@ -756,13 +768,6 @@
   padding-block: 18px 6px;
 }
 
-.shl-lost-line {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.55;
-  color: var(--mute);
-}
 
 .lby-input.shl-code-input {
   min-height: 64px;

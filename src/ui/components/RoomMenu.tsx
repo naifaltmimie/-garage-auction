@@ -197,7 +197,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
             ))}
           <MenuRow
             icon="users"
-            title={host ? 'اللاعبين والكراجات' : 'الكراجات والترتيب'}
+            title={host ? 'المزايدين والكراجات' : 'الكراجات والترتيب'}
             line={host ? 'تشوف كراج كل واحد، وتطلّع اللي تبي' : 'وش شرى كل واحد ووين وصل'}
             onClick={() => {
               onClose();

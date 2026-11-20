@@ -140,7 +140,7 @@ export function Lobby({ room }: { room: RoomView }) {
       <main className="shell narrow lby lby-player">
         <ScreenTitle caption={host ? `${host.name} هو الدلال الليلة` : undefined}>{title}</ScreenTitle>
         <div className="lby-wait">
-          <TireLoader size={64} label="بانتظار الدلال يبدأ" />
+          <TireLoader size={64} label="ننتظر الدلال يبدأ" />
         </div>
         {conditions}
         {players}

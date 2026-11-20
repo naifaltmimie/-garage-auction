@@ -3,10 +3,9 @@
 // difference, the verdict word), and, for the buyer only, what he paid (the receipt). The real listings the value
 // came from close it. The stage clock lives in ../saleStage; nothing prints a number before its stage.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { VERDICT_LABEL } from '../../engine/rules';
 import type { Comp, Core, PlayerPub, Sale } from '../../engine/types';
 import { bidsN, km, money, signed } from '../../lib/util';
-import { saleShown, useSaleStage, type SaleStage } from '../saleStage';
+import { saleShown, useSaleStage, verdictSaid, type SaleStage } from '../saleStage';
 import { countRender } from './Console';
 import { photoSrc } from './Gallery';
 import { PriceTag } from './kit/PriceTag';
@@ -93,14 +92,15 @@ function Verdict({ sale, stage, mine, buyerName }: { sale: Sale; stage: SaleStag
   const shown = saleShown(sale, stage);
   const plateVal = sale.car.plate.special?.value ?? 0;
   const up = (shown.profit ?? 0) >= 0;
-  const word = shown.settled ? VERDICT_LABEL[sale.verdict] : up ? 'ربح' : 'خسارة';
+  const said = verdictSaid(sale.verdict, shown, mine, buyerName);
   const s = stage >= 3 ? sale.surprise : null;
   return (
     <section className="srv-verdict" aria-label="لقطة ولا لا">
       <p className={`srv-verdict-k${stage >= 1 ? ' is-on' : ''}`}>سعرها الصدق بالسوق</p>
       <div className="srv-value">
         {shown.value === null ? (
-          <span className="srv-value-blank" aria-hidden />
+          // the number is on its way: the tyre turns where it will land (an empty rule read as a failed page)
+          stage >= 1 ? <TireLoader className="srv-value-wait" size={40} /> : <span className="srv-value-blank" aria-hidden />
         ) : (
           <>
             <CountRoll target={shown.value} />
@@ -121,9 +121,9 @@ function Verdict({ sale, stage, mine, buyerName }: { sale: Sale; stage: SaleStag
       <div className="srv-word-row" aria-live="polite">
         {shown.profit !== null && (
           <>
-            <span className="srv-word">{word}</span>
+            <span className="srv-word">{said.word}</span>
             <span className={`srv-mark ${up ? 'up' : 'down'}`}>{signed(shown.profit)}</span>
-            <span className="srv-word-who">{mine ? (up ? 'لك' : 'عليك') : up ? `لـ ${buyerName}` : `على ${buyerName}`}</span>
+            {said.who && <span className="srv-word-who">{said.who}</span>}
           </>
         )}
       </div>
@@ -269,7 +269,11 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
         <p className="srv-car">
           {stage < 0 ? 'نشيل الغطا…' : (
             <>
-              طلعت <b>{sale.car.makeAr} {sale.car.modelAr}</b> <span className="ltr">{sale.car.year}</span>، {km(sale.car.km)}
+              طلعت{' '}
+              <b>
+                {sale.car.makeAr} <bdi>{sale.car.modelAr}</bdi>
+              </b>{' '}
+              <span className="ltr">{sale.car.year}</span>، {km(sale.car.km)}
             </>
           )}
         </p>
@@ -315,7 +319,7 @@ export function UnsoldReveal({ core, sale }: { core: Core; sale: Sale }) {
 export function ApprovalReveal({ core }: { core: Core }) {
   const who = core.players.find((p) => p.id === core.bid?.by)?.name;
   return (
-    <div className="overlay srv-overlay" role="dialog" aria-label="بانتظار موافقة صاحب السيارة">
+    <div className="overlay srv-overlay" role="dialog" aria-label="ننتظر موافقة صاحب السيارة">
       <div className="srv srv-wait">
         <TireLoader className="srv-wait-tire" size={46} />
         <p className="srv-wait-t" role="status">

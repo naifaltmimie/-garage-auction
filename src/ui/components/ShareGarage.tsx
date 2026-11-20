@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { money } from '../../lib/util';
+import { iso, money } from '../../lib/util';
 import type { RoomView } from '../useRoom';
 import { Portal, useSheet } from './Bits';
 import { LOGO } from './Logo';
@@ -316,7 +316,7 @@ export function posterFor(room: RoomView, badges: string[]): PosterData | null {
     paddle: me.paddle,
     rank: row.rank,
     players: res.rows.length,
-    cars: mine.map((s) => ({ name: `${s.car.makeAr} ${s.car.modelAr}`, trim: s.car.trimAr || s.car.trim, year: s.car.year, paid: s.paid, value: s.value, photo: s.car.photos?.[0] })),
+    cars: mine.map((s) => ({ name: `${s.car.makeAr} ${iso(s.car.modelAr)}`, trim: s.car.trimAr || s.car.trim, year: s.car.year, paid: s.paid, value: s.value, photo: s.car.photos?.[0] })),
     paid: row.paid,
     value: row.value,
     profit: row.profit,
