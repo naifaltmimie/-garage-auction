@@ -1,58 +1,71 @@
-// «شاشة العرض»: the big-screen viewer for a majlis. One laptop / TV shows the auction for the whole room
-// while everyone bids from their phones. It's read-only (see net/viewer.ts): it renders the host's
-// snapshots and never joins, so it never counts as a player.
-import { useEffect, useMemo, useState } from 'react';
-import type { Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
-import { carsN, isCode, km, money, normalizeCode, signed } from '../../lib/util';
+// «شاشة العرض»: the big screen of the hall. One TV or laptop shows the auction to the room while everyone bids
+// from their phones. It is read-only (see net/viewer.ts): it renders the host's snapshots and never joins, so it
+// never counts as a player. It is a display, not a control: no buttons, no hover; the cursor hides when still.
+// Every size is in viewport units (tv.css, `--u` is one hundredth of a 16:9 height); the kit's paper objects,
+// drawn in px, are scaled with `zoom` by `--k` (the screen's height over 1080).
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { dutchElapsed, dutchPriceAt, dutchProgress } from '../../engine/dutch';
+import { damageLine } from '../../engine/lotgen';
+import { marketOf } from '../../engine/markets';
+import { reactBus, REACT_BY_KEY } from '../../engine/reactions';
+import { gradeWord } from '../../engine/realism';
+import { lotsFor, VERDICT_LABEL } from '../../engine/rules';
+import type { CarPub, Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
+import { bidsN, carsN, isCode, money, normalizeCode, signed } from '../../lib/util';
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
+import { saleShown, useSaleStage, type SaleStage } from '../saleStage';
+import { timeLeft, useNow } from '../useRoom';
+import { computeAwards } from '../components/Awards';
+import { Delta } from '../components/Garage';
 import { Icon, QR } from '../components/Bits';
-import { TireLoader } from '../components/TireLoader';
-import { Wheel } from '../components/Wheel';
-import { Wordmark } from '../components/Logo';
+import { useClockValue } from '../components/DutchConsole';
+import { HowToLines } from '../components/kit/HowToLines';
+import { Pairs, type Pair } from '../components/kit/Pairs';
+import { PriceTag } from '../components/kit/PriceTag';
+import { RollNumber } from '../components/kit/RollNumber';
+import { Rows } from '../components/kit/Rows';
+import { Stamp } from '../components/kit/Stamp';
+import { Sticker } from '../components/kit/Sticker';
 import { Photo } from '../components/Gallery';
-import { specLine } from '../components/LotSheet';
+import { bodyAr, specLine } from '../components/LotSheet';
+import { Wordmark } from '../components/Logo';
 import { CarPlate, Paddle } from '../components/Plate';
 import { Silhouette } from '../components/Silhouette';
-import { lotsFor } from '../../engine/rules';
-import { timeLeft, useNow } from '../useRoom';
-
-/** Counts in Latin digits, like the money and the phones (the board used to mix ١٦ with 4 سيارات). */
-const num = (n: number | string) => String(n);
+import { TireLoader } from '../components/TireLoader';
+import { Wheel } from '../components/Wheel';
 
 const W = 1920;
 const H = 1080;
 
-const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'alloy' | 'red' }> = {
-  lobby: { t: 'الصالة مفتوحة', tone: 'calm' },
-  intro: { t: 'المزاد بيبدأ', tone: 'calm' },
-  preview: { t: 'معاينة', tone: 'calm' },
-  bidding: { t: 'المزاد مفتوح', tone: 'live' },
-  sealed: { t: 'الظرف المختوم', tone: 'seal' },
-  approval: { t: 'صاحبها يفكّر', tone: 'seal' },
-  dutch: { t: 'المزاد الهولندي', tone: 'live' },
-  sold: { t: 'بيعت', tone: 'calm' },
-  unsold: { t: 'ما بيعت', tone: 'calm' },
-  showcase: { t: 'الكراجات', tone: 'calm' },
-  voting: { t: 'التقييم', tone: 'calm' },
-  results: { t: 'النتيجة', tone: 'alloy' },
+/** The state of the auction, one phrase in the top band. */
+const PHASE: Record<Phase, string> = {
+  lobby: 'الصالة مفتوحة',
+  intro: 'المزاد بيبدأ',
+  preview: 'المعاينة',
+  bidding: 'المزاد مفتوح',
+  sealed: 'الظرف المختوم',
+  approval: 'صاحبها يفكّر',
+  dutch: 'المزاد الهولندي',
+  // the outcome is the stamp's to say: the band says «بيعت» only once it falls (SoldPhrase)
+  sold: 'الحسم',
+  unsold: 'ما بيعت',
+  showcase: 'الكراجات',
+  voting: 'التقييم السري',
+  results: 'النتيجة',
 };
 
-const VERDICT: Record<Sale['verdict'], string> = {
-  steal: 'لقطة',
-  good: 'صفقة حلوة',
-  fair: 'بسعرها',
-  over: 'غالية عليه',
-  robbed: 'انضرب فيها',
-};
-const OUTCOME: Record<Sale['outcome'], string> = {
-  sold: 'بيعت',
-  no_bid: 'محد سام عليها',
-  reserve: 'ما وصلت الحد',
-  declined: 'صاحبها رفض',
-  nobody: 'محد قدر يشتريها',
-};
+/** The phones' sentences on how the gain is counted (audit S3-9): before the rating, and while it runs. */
+const PROFIT_NOTE = 'الربح هنا من القيم اللي انكشفت بعد كل بيعة. التقييم السري يجي بالأخير.';
+const VOTING_NOTE = 'الربح هنا من القيم اللي انكشفت بعد كل بيعة. التقييم السري يخلص بعد شوي.';
+
+/** How the points are counted, as the phone's results say it, from the rating's weight. */
+function pointsNote(w: number): string {
+  return w === 0.5
+    ? 'النقاط نص من تقييم الشباب ونص من الشطارة بالشراء'
+    : `النقاط ${Math.round(w * 100)}% من تقييم الشباب و${Math.round((1 - w) * 100)}% من الشطارة بالشراء`;
+}
 
 /** The room link a phone opens (same as the lobby's). */
 export function joinLink(code: string) {
@@ -85,36 +98,17 @@ function toggleFull() {
   }
 }
 
-export function TvGlyph() {
-  return (
-    <Icon name="tv" size={20} />
-  );
-}
-
-/** Small link under the room screens: open this room on a laptop / TV for everyone in the majlis. */
-export function TvLink({ code }: { code: string }) {
-  return (
-    <p className="tv-roomlink">
-      <a href={`#/tv/${code}`} target="_blank" rel="noopener">
-        <TvGlyph /> اعرض المزاد على شاشة كبيرة
-      </a>
-    </p>
-  );
-}
+type Fixture = { snap: Snapshot; offset: number; status: ViewerStatus };
+type TvWindow = Window & { __tvFix?: Fixture; __tvLast?: Fixture };
 
 function useViewer(code: string) {
-  const [snap, setSnap] = useState<Snapshot>({
-    core: null,
-    lot: null,
-    hist: null,
-  });
-  const [offset, setOffset] = useState(0);
-  const [status, setStatus] = useState<ViewerStatus>({
-    connected: false,
-    hostGone: false,
-    lastHeard: 0,
-  });
+  // development only: a recorded snapshot can be replayed (QA screenshots), and the last one is kept to record
+  const fix = import.meta.env.DEV ? (window as TvWindow).__tvFix : undefined;
+  const [snap, setSnap] = useState<Snapshot>(fix?.snap ?? { core: null, lot: null, hist: null });
+  const [offset, setOffset] = useState(fix?.offset ?? 0);
+  const [status, setStatus] = useState<ViewerStatus>(fix?.status ?? { connected: false, hostGone: false, lastHeard: 0 });
   useEffect(() => {
+    if (fix) return;
     let raf = 0;
     const room = new ViewerRoom(
       code,
@@ -132,12 +126,16 @@ function useViewer(code: string) {
       cancelAnimationFrame(raf);
       room.stop();
     };
-  }, [code]);
+  }, [code, fix]);
+  useEffect(() => {
+    if (import.meta.env.DEV) (window as TvWindow).__tvLast = { snap, offset, status };
+  }, [snap, offset, status]);
   return { snap, offset, status };
 }
 
-/** The 1920×1080 board is scaled as one piece to fit any screen (16:9 and anything near it). */
-function useFit() {
+/** The screen's height over 1080 (or its width over 1920 on a narrower screen): the zoom of the paper objects. */
+const KCtx = createContext(1);
+function useK() {
   const [k, setK] = useState(() => Math.min(innerWidth / W, innerHeight / H));
   useEffect(() => {
     const on = () => setK(Math.min(innerWidth / W, innerHeight / H));
@@ -147,9 +145,31 @@ function useFit() {
   return k;
 }
 
+/** The pointer shows while it moves and hides after three seconds still. */
+function useIdle(ms = 3000) {
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    let t = window.setTimeout(() => setIdle(true), ms);
+    const on = () => {
+      setIdle(false);
+      clearTimeout(t);
+      t = window.setTimeout(() => setIdle(true), ms);
+    };
+    addEventListener('pointermove', on);
+    return () => {
+      clearTimeout(t);
+      removeEventListener('pointermove', on);
+    };
+  }, [ms]);
+  return idle;
+}
+
+const LOT_PHASES: ReadonlySet<Phase> = new Set<Phase>(['preview', 'bidding', 'sealed', 'approval', 'dutch', 'sold', 'unsold']);
+
 export function Tv({ code }: { code: string }) {
   const { snap, offset, status } = useViewer(code);
-  const k = useFit();
+  const k = useK();
+  const idle = useIdle();
   const core = snap.core;
 
   useEffect(() => {
@@ -167,232 +187,213 @@ export function Tv({ code }: { code: string }) {
     };
   }, [code]);
 
-  let body: React.ReactNode;
-  if (!core) body = <Waiting code={code} status={status} />;
+  let body: ReactNode;
+  if (!core) body = <Waiting status={status} />;
   else if (core.phase === 'lobby') body = <LobbyBoard core={core} code={code} />;
-  else if (core.phase === 'intro') body = <IntroBoard core={core} />;
-  else if (core.phase === 'showcase' || core.phase === 'voting') body = <StandingsBoard core={core} hist={snap.hist} />;
+  else if (core.phase === 'intro') body = <IntroBoard core={core} offset={offset} />;
+  else if (core.phase === 'showcase') body = <ShowcaseBoard core={core} hist={snap.hist} />;
+  else if (core.phase === 'voting') body = <StandingsBoard core={core} hist={snap.hist} />;
   else if (core.phase === 'results') body = <ResultsBoard core={core} hist={snap.hist} />;
   else body = <LotBoard core={core} lot={snap.lot} hist={snap.hist} offset={offset} />;
 
-  const off = !!core && (!status.connected || status.hostGone);
+  // one strip under the top band: the connection first, then the pause
+  const strip = core
+    ? !status.connected
+      ? 'نحاول نرجع الاتصال'
+      : status.hostGone
+        ? 'الدلال طلع من الصالة'
+        : core.paused
+          ? core.away
+            ? 'المزاد واقف مؤقت، جوال الدلال طلع من الصفحة'
+            : 'المزاد واقف مؤقت'
+          : null
+    : null;
+
   return (
-    <div className="tv" dir="rtl" onDoubleClick={toggleFull}>
-      <div className="tv-stage" style={{ transform: `translate(-50%, -50%) scale(${k})` }}>
-        <TopBar core={core} code={code} />
-        <div className="tv-body">{body}</div>
-        {core?.paused && <div className="tv-hold">{core.away ? 'المزاد واقف، جوال الدلال طلع من الصفحة' : 'المزاد واقف'}</div>}
-        {off && (
-          <div className="tv-off">
-            <i />
-            {status.hostGone ? 'الدلال طلع من الصالة' : 'نحاول نرجع الاتصال…'}
-          </div>
+    <KCtx.Provider value={k}>
+      <div
+        className={`tv${idle ? ' tv-idle' : ''}${strip ? ' tv-has-strip' : ''}`}
+        dir="rtl"
+        onDoubleClick={toggleFull}
+        style={{ ['--k' as string]: k } as CSSProperties}
+      >
+        <TopBand core={core} code={code} sale={core && snap.lot ? (snap.hist?.sales.find((x) => x.lotId === snap.lot!.id) ?? null) : null} offset={offset} />
+        {strip && (
+          <p className="tv-strip" role="status">
+            {strip}
+          </p>
         )}
+        <div className="tv-body" data-phase={core?.phase ?? 'wait'}>
+          {body}
+        </div>
       </div>
-    </div>
+    </KCtx.Provider>
   );
 }
 
-// ============================================================================ chrome
+// ============================================================================ the top band
 
-function TopBar({ core, code }: { core: Core | null; code: string }) {
-  const ph = core ? PHASE[core.phase] : null;
-  const inLots = !!core && core.lotNo > 0 && !['lobby', 'intro', 'showcase', 'voting', 'results'].includes(core.phase);
+/** On a sale the band says «الحسم» until the stamp falls, then «بيعت» (never before the phones show it). */
+function SoldPhrase({ core, sale, offset }: { core: Core; sale: Sale; offset: number }) {
+  const stage = useSaleStage(core, sale, offset);
+  return <>{stage >= 0 && sale.outcome === 'sold' ? 'بيعت' : sale.outcome === 'sold' ? 'الحسم' : 'ما بيعت'}</>;
+}
+
+function TopBand({ core, code, sale, offset }: { core: Core | null; code: string; sale: Sale | null; offset: number }) {
   return (
-    <header className="tv-top">
-      <div className="tv-brand">
-        {core && <Wordmark size={38} layout="row" className="tv-wordmark" />}
-        <span className="tv-brand-t">
-          <small>شاشة العرض</small>
-          <b>{core?.settings.roomName || 'صالة المزاد'}</b>
+    <header className="tv-band">
+      <Wordmark size={34} layout="row" className="tv-band-logo" />
+      <span className="tv-band-room">{core?.settings.roomName || 'مزاد الكراج'}</span>
+      {core && (
+        <span key={core.phase} className="tv-band-state">
+          {core.phase === 'sold' && sale ? <SoldPhrase core={core} sale={sale} offset={offset} /> : PHASE[core.phase]}
         </span>
-      </div>
-      {ph && (
-        <div key={core!.phase} className={`tv-phase tone-${ph.tone}`}>
-          {(core!.phase === 'bidding' || core!.phase === 'sealed') && <i className="tv-live-dot" />}
-          {ph.t}
-        </div>
       )}
-      <div className="tv-top-end">
-        {inLots && (
-          <div className="tv-lotno">
-            <small>السيارة</small>
-            <b>
-              {num(core!.lotNo)} <span>من {num(core!.lotsTotal)}</span>
-            </b>
-          </div>
-        )}
-        {core && core.phase !== 'lobby' && (
-          <div className="tv-joinchip">
-            <small>كود الصالة</small>
-            <b className="ltr">{code}</b>
-          </div>
-        )}
-      </div>
+      <span className="tv-band-join">
+        <span className="tv-band-join-k">ادخل من جوالك</span>
+        <span className="tv-band-code ltr">{code}</span>
+      </span>
     </header>
   );
 }
 
-/** The real wheel's 3/4 render, large in a bottom corner of the attract screens under a soft top light. */
-function HeroWheel() {
-  const [gone, setGone] = useState(false);
-  if (gone) return null;
-  return (
-    <div className="tv-hero" aria-hidden="true">
-      <img src="/brand/wheel/hero-960.webp" alt="" width={960} height={960} decoding="async" onError={() => setGone(true)} />
-    </div>
-  );
-}
-
-function Waiting({ code, status }: { code: string; status: ViewerStatus }) {
+function Waiting({ status }: { status: ViewerStatus }) {
+  const k = useContext(KCtx);
   return (
     <div className="tv-wait">
-      <Wordmark size={150} className="tv-wait-mark" />
-      <div className="tv-code-label">كود الصالة</div>
-      <div className="tv-wait-code ltr">{code}</div>
-      <p className="tv-waitline">
-        <Wheel size={72} spin="slow" />
-        {status.connected ? 'ننتظر الدلال يفتح الصالة' : 'نتصل بالصالة'}
-      </p>
-      <small>شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</small>
-      <HeroWheel />
+      <Wheel size={Math.round(260 * k)} spin="slow" />
+      <p className="tv-wait-t">{status.connected ? 'ننتظر الدلال يفتح الصالة' : 'نتصل بالصالة'}</p>
+      <p className="tv-wait-sub">شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</p>
     </div>
   );
 }
 
 // ============================================================================ lobby
 
-function LobbyBoard({ core, code }: { core: Core; code: string }) {
-  const link = joinLink(code);
-  const shown = link.replace(/^https?:\/\//, '');
-  const players = core.players.filter((p) => !p.spectator);
+/** The night's terms, as the phone's conditions say them, in ruled rows. */
+function terms(core: Core, bidders: number): { k: string; v: ReactNode; print?: boolean }[] {
   const s = core.settings;
+  const speed = s.speed === 'fast' ? 'سريع' : s.speed === 'calm' ? 'هادي' : 'عادي';
+  return [
+    { k: 'السوق', v: marketOf(s.mix).label },
+    { k: 'ميزانية كل لاعب', v: money(s.budget), print: true },
+    { k: 'السيارات', v: String(core.lotsTotal || lotsFor(s, Math.max(2, bidders))), print: true },
+    { k: 'الكراج يشيل', v: carsN(s.garage) },
+    { k: 'السرعة', v: speed },
+  ];
+}
+
+function LobbyBoard({ core, code }: { core: Core; code: string }) {
+  const k = useContext(KCtx);
+  const link = joinLink(code);
+  const players = core.players.filter((p) => !p.spectator);
+  const wide = players.length > 5;
   return (
     <div className="tv-lobby">
-      <section className="tv-lobby-main">
-        <Wordmark size={110} className="tv-lobby-mark" />
-        <div className="tv-kicker">ادخل من جوالك</div>
-        <h1 className="tv-lobby-title">{s.roomName || 'مزاد الكراج'}</h1>
-        <div className="tv-code-label">كود الصالة</div>
-        <div className="tv-code ltr" aria-label={`كود الصالة ${code.split('').join(' ')}`}>
-          {code.split('').map((ch, i) => (
-            <span key={i} style={{ ['--i' as string]: i }}>
-              {ch}
-            </span>
-          ))}
+      <section className="tv-lobby-invite" aria-label="الدعوة">
+        <div className="tv-slip">
+          <div className="tv-slip-code">
+            <span className="tv-slip-k">كود الصالة</span>
+            <span className="tv-slip-n ltr">{code}</span>
+            <span className="tv-slip-k">صوّر الباركود أو اكتب الكود</span>
+          </div>
+          <i className="tv-slip-cut" aria-hidden="true" />
+          <QR text={link} size={480} />
         </div>
-        <div className="tv-link ltr">{shown}</div>
-        <div className="tv-facts">
-          <span>
-            <small>الميزانية</small>
-            <b className="ltr">{money(s.budget)}</b>
-          </span>
-          <span>
-            <small>عدد السيارات</small>
-            <b>{num(lotsFor(s, Math.max(2, players.length)))}</b>
-          </span>
-          <span>
-            <small>الكراج يشيل</small>
-            <b>{carsN(s.garage)}</b>
-          </span>
-        </div>
+        <p className="tv-lobby-call">صوّر الباركود وادخل الصالة</p>
+        <HowToLines className="tv-howto" />
       </section>
       <section className="tv-lobby-side">
-        <div className="tv-qr">
-          <QR text={link} size={380} />
-          <small>صوّر الكود بكاميرا جوالك</small>
-        </div>
-        <div className="tv-joined">
-          <div className="tv-joined-h">
-            <span>
-              <Icon name="users" size={34} /> المزايدين
-            </span>
-            <b>
-              {num(players.length)} <small>من {num(s.maxPlayers)}</small>
-            </b>
-          </div>
-          <ul>
+        <h2 className="tv-h">
+          المزايدين
+          <span className="tv-h-n">
+            <span className="ltr">{players.length}</span> من <span className="ltr">{core.settings.maxPlayers}</span>
+          </span>
+        </h2>
+        {players.length ? (
+          <ol className={`tv-roster${wide ? ' is-wide' : ''}`}>
             {players.map((p) => (
-              <li key={p.id} className={p.online ? '' : 'away'}>
+              <li key={p.id} className={`tv-roster-r${p.online ? '' : ' is-away'}`}>
                 <Paddle n={p.paddle} />
-                <span>{p.name}</span>
-                {p.host && <em>الدلال</em>}
+                <span className="tv-roster-name">{p.name}</span>
+                {p.host && <span className="tv-roster-role">الدلال</span>}
               </li>
             ))}
-          </ul>
-          {players.length < 2 && <p className="tv-joined-wait">ننتظر الشباب يدخلون</p>}
-          <p className="tv-waitline">
-            <Wheel size={72} spin="slow" />
-            بانتظار الدلال يبدأ
-          </p>
-          <p className="tv-full-hint">اضغط مرتين على الشاشة أو اضغط F عشان تملاها</p>
-        </div>
+          </ol>
+        ) : (
+          <div className="tv-roster-empty">
+            <Wheel size={Math.round(150 * k)} spin="slow" />
+            <p>ننتظر الشباب يدخلون</p>
+          </div>
+        )}
+        <Rows className="tv-terms" items={terms(core, players.length)} />
       </section>
-      <HeroWheel />
     </div>
   );
 }
 
-function IntroBoard({ core }: { core: Core }) {
+// ============================================================================ intro
+
+function IntroBoard({ core, offset }: { core: Core; offset: number }) {
   const players = core.players.filter((p) => !p.spectator);
+  const now = useNow(offset, 8);
+  const { ms } = timeLeft(core, now);
+  const sec = core.timer ? Math.max(1, Math.ceil(ms / 1000)) : null;
   return (
     <div className="tv-intro">
-      <div className="tv-kicker">الليلة في الصالة</div>
-      <h1>{core.settings.roomName || 'مزاد الكراج'}</h1>
-      <p className="tv-sep">
-        <span>{carsN(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))}</span>
-        <span>{num(players.length)} مزايدين</span>
-        <span>
-          كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
+      <h1 className="tv-intro-room">{core.settings.roomName || 'مزاد الكراج'}</h1>
+      {sec !== null && (
+        <span key={sec} className="tv-intro-n ltr" role="timer">
+          {sec}
         </span>
+      )}
+      <p className="tv-intro-facts">
+        {carsN(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} · <span className="ltr">{players.length}</span> مزايدين · كل واحد معه{' '}
+        <span className="ltr">{money(core.settings.budget)}</span>
       </p>
-      <ul className="tv-intro-names">
-        {players.map((p, i) => (
-          <li key={p.id} style={{ ['--i' as string]: i }}>
-            <Paddle n={p.paddle} />
-            {p.name}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
 
 // ============================================================================ the lot on the block
 
+function nameOf(core: Core, id: string | null | undefined) {
+  if (!id) return '';
+  return core.players.find((p) => p.id === id)?.name ?? '';
+}
+
 function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null; hist: Hist | null; offset: number }) {
   const sales = hist?.sales ?? [];
   const sale = lot ? (sales.find((s) => s.lotId === lot.id) ?? null) : null;
-  const done = core.phase === 'sold' || core.phase === 'unsold';
-  const lastSale = [...sales].reverse().find((s) => s.outcome === 'sold' && s.lotId !== lot?.id) ?? null;
   if (!lot) {
     return (
-      <div className="tv-lot-wait">
-        <TireLoader size={92} className="tv-wait-tire" label="السيارة الجاية في الطريق" />
+      <div className="tv-next">
+        <TireLoader size={120} label="السيارة الجاية في الطريق" />
       </div>
     );
   }
+  if (core.phase === 'sold' && sale && sale.outcome === 'sold') return <Hammer core={core} sale={sale} offset={offset} />;
+  if ((core.phase === 'sold' || core.phase === 'unsold') && sale) return <Unsold core={core} sale={sale} />;
   return (
     <div className="tv-lot" key={lot.id}>
-      <div className="tv-lot-main">
-        <Stage lot={lot} sale={done ? sale : null} phase={core.phase} lotNo={core.lotNo} lotsTotal={core.lotsTotal} />
-        <CarHead lot={lot} sale={done ? sale : null} />
-      </div>
-      <aside className="tv-lot-side">{done && sale ? <Verdict core={core} sale={sale} /> : <PricePanel core={core} lot={lot} offset={offset} />}</aside>
-      <footer className="tv-lot-foot">
-        <Ticker core={core} sales={sales} />
-        {lastSale && <LastSale core={core} sale={lastSale} />}
-      </footer>
+      <section className="tv-car" aria-label="السيارة">
+        <CarPhoto lot={lot} phase={core.phase} />
+        <CarHead lot={lot} />
+      </section>
+      <section className="tv-board-col" aria-label="السوم">
+        <Board core={core} lot={lot} offset={offset} />
+      </section>
+      <PlayerStrip core={core} />
     </div>
   );
 }
 
-/** The car's photo, slowly cycling through the ad's first shots; a studio silhouette when there's none. */
-function Stage({ lot, sale, phase, lotNo, lotsTotal }: { lot: LotPub; sale: Sale | null; phase: Phase; lotNo: number; lotsTotal: number }) {
-  const car = lot.car ?? sale?.car ?? null;
+/** The car's photo, the gallery advancing on its own; the cover on a covered car; the lot's sticker; the reactions. */
+function CarPhoto({ lot, phase }: { lot: LotPub; phase: Phase }) {
+  const car = lot.car;
   const covered = !car;
-  // keyed by the URLs, not the object: a fresh snapshot of the same car must not restart the slideshow
-  const photoKey = (car?.photos?.length ? car.photos.slice(0, 6) : lot.cover?.photo ? [lot.cover.photo] : []).join('|');
+  // keyed by the URLs, not the object: a fresh snapshot of the same car must not restart the gallery
+  const photoKey = (car?.photos?.length ? car.photos.slice(0, 6) : []).join('|');
   const photos = useMemo(() => (photoKey ? photoKey.split('|') : []), [photoKey]);
   const [dead, setDead] = useState<Set<string>>(new Set());
   const list = photos.filter((u) => !dead.has(u));
@@ -401,247 +402,306 @@ function Stage({ lot, sale, phase, lotNo, lotsTotal }: { lot: LotPub; sale: Sale
     setI(0);
     setDead(new Set());
   }, [photoKey]);
-  const cycling = list.length > 1 && (phase === 'preview' || phase === 'bidding' || phase === 'sealed' || phase === 'approval');
+  const cycling = list.length > 1 && LOT_PHASES.has(phase);
   useEffect(() => {
     if (!cycling) return;
-    const iv = setInterval(() => setI((x) => x + 1), 6500);
+    const iv = setInterval(() => setI((x) => x + 1), 7000);
     return () => clearInterval(iv);
   }, [cycling, list.length]);
   const cur = list.length ? i % list.length : -1;
-  const body = car?.body ?? lot.cover?.body ?? 'sedan';
   return (
-    <div className={`tv-photo ${covered ? 'covered' : ''}`}>
-      {list.length ? (
-        list.map((u, k) =>
+    <div className={`tv-photo${covered ? ' is-covered' : ''}`}>
+      {covered ? (
+        <div className="tv-cover">
+          <div className="tv-cover-shape">
+            <Silhouette body={lot.cover?.body ?? 'sedan'} mono />
+          </div>
+          <p className="tv-cover-t">تحت الغطا، تنكشف بعد البيع</p>
+        </div>
+      ) : list.length ? (
+        list.map((u, n) =>
           // only the shown photo and the next one are mounted: the next one loads while this one is up
-          k === cur || k === (cur + 1) % list.length ? (
-            <div key={u} className={`tv-ph-wrap ${k === cur ? 'on' : ''}`}>
-              <Photo u={u} className="tv-ph-fill" onDead={() => {}} />
-              <Photo u={u} className="tv-ph" eager={k === cur} onDead={() => setDead((s) => new Set(s).add(u))} />
-            </div>
+          n === cur || n === (cur + 1) % list.length ? (
+            <Photo key={u} u={u} className={`tv-ph${n === cur ? ' is-on' : ''}`} eager={n === cur} onDead={() => setDead((s) => new Set(s).add(u))} />
           ) : null,
         )
       ) : (
         <div className="tv-studio">
-          <Silhouette body={body} color={car?.colorHex} mono={covered} />
+          <Silhouette body={car.body} color={car.colorHex} />
         </div>
       )}
-      {lotNo > 0 && (
-        <div className="tv-sticker">
-          <small>رقم</small>
-          <b>{num(lotNo)}</b>
-          <small>من {num(lotsTotal)}</small>
-        </div>
-      )}
-      {covered && !sale && <div className="tv-covered-tag">تحت الغطا، تنكشف بعد البيع</div>}
-      {car && list.length > 1 && (
-        <div className="tv-dots" aria-hidden="true">
-          {list.map((u, k) => (
-            <i key={u} className={k === cur ? 'on' : ''} />
-          ))}
-        </div>
-      )}
-      {car && (
-        <div className="tv-plate">
-          <CarPlate plate={car.plate} size="lg" showValue={!!car.plate.special} />
-        </div>
-      )}
+      <Sticker no={lot.no} className="tv-sticker" />
+      <Reactions />
     </div>
   );
 }
 
-function CarHead({ lot, sale }: { lot: LotPub; sale: Sale | null }) {
-  const car = lot.car ?? sale?.car ?? null;
+function gradeTone(g: number): 'good' | 'bad' | undefined {
+  return g >= 4 ? 'good' : g < 2.5 ? 'bad' : undefined;
+}
+
+/** The six facts a buyer reads first, as the phone's car sheet shows them. */
+function keyFacts(car: CarPub, lot: LotPub): Pair[] {
+  const g = lot.grade;
+  const dmg = damageLine(car);
+  const approxKm = !!car.said && !car.said.includes('km');
+  return [
+    {
+      k: 'الممشى',
+      v: (
+        <>
+          <span className="tv-num ltr">{money(Math.round(car.km / 100) * 100)}</span> كم{approxKm ? ' تقريباً' : ''}
+        </>
+      ),
+      tone: !approxKm && car.kmTag === 'low' ? 'good' : !approxKm && car.kmTag === 'high' ? 'bad' : undefined,
+    },
+    { k: 'المواصفات', v: car.spec, tone: car.specKind === 'us_salvage' ? 'bad' : undefined },
+    {
+      k: 'درجة الفحص',
+      v:
+        g == null ? (
+          lot.mode === 'asis' ? 'على الحالة' : 'ما انفحصت'
+        ) : (
+          <>
+            <span className="tv-num ltr">{g.toFixed(1)}</span> {gradeWord(g)}
+          </>
+        ),
+      tone: g == null ? (lot.mode === 'asis' ? 'bad' : undefined) : gradeTone(g),
+    },
+    { k: 'الضرر', v: dmg, tone: dmg === 'بدون ضرر' ? 'good' : dmg.startsWith('صدمة') ? 'bad' : undefined },
+    {
+      k: 'اللون',
+      v: (
+        <>
+          <span className="tv-swatch" style={{ background: car.colorHex }} aria-hidden="true" />
+          {car.color}
+        </>
+      ),
+    },
+    { k: 'المدينة', v: car.city },
+  ];
+}
+
+/** Under the photo: the model in Voice, the make, year and spec in one Text line, the plate, the six key facts. */
+function CarHead({ lot }: { lot: LotPub }) {
+  const k = useContext(KCtx);
+  const car = lot.car;
   if (!car) {
+    // a covered car says only what the phones say: its body and its years, never its name
     const c = lot.cover;
     return (
       <div className="tv-carhead">
-        <h2>{lot.title || 'سيارة تحت الغطا'}</h2>
-        <div className="tv-specs">
-          {c && (
-            <span>
-              موديل {num(c.yearFrom)}–{num(c.yearTo)}
-            </span>
-          )}
-          {c?.hints.slice(0, 3).map((h) => (
-            <span key={h}>{h}</span>
-          ))}
+        <div className="tv-carhead-top">
+          <h2 className="tv-model">تحت الغطا</h2>
         </div>
+        <p className="tv-spec">
+          {c ? bodyAr(c.body) : 'سيارة'}
+          {c && (
+            <>
+              {' · '}
+              <span className="ltr">{c.yearFrom === c.yearTo ? c.yearFrom : `${c.yearFrom}–${c.yearTo}`}</span>
+              {c.hints.slice(0, 3).map((h) => ` · ${h}`)}
+            </>
+          )}
+        </p>
       </div>
     );
   }
   return (
     <div className="tv-carhead">
-      <h2>
-        {car.makeAr} {car.modelAr}
-        {car.trimAr || car.trim ? <small> {car.trimAr || car.trim}</small> : null}
-      </h2>
-      <div className="tv-specs">
-        <span className="tv-year">{num(car.year)}</span>
-        <span>{km(car.km)}</span>
-        <span>{specLine(car)}</span>
+      <div className="tv-carhead-top">
+        <h2 className="tv-model">
+          {car.modelAr}
+          {car.trimAr || car.trim ? <span className="tv-trim"> {car.trimAr || car.trim}</span> : null}
+        </h2>
+        <span className="tv-plate-row">
+          {/* a special plate's name and worth, at the board's size (the plate's own caption is a phone's size) */}
+          {car.plate.special && (
+            <span className="tv-plate-val">
+              <span className="tv-plate-val-k">{car.plate.special.label}</span>
+              <span className="tv-plate-val-n ltr">{money(car.plate.special.value)}</span>
+            </span>
+          )}
+          <span className="tv-plate-at" style={{ zoom: 0.8 * k } as CSSProperties}>
+            <CarPlate plate={car.plate} size="lg" />
+          </span>
+        </span>
       </div>
+      <p className="tv-spec">
+        {car.makeAr} · <span className="ltr">{car.year}</span> · {specLine(car)}
+      </p>
+      <Pairs className="tv-pairs" items={keyFacts(car, lot)} />
     </div>
   );
 }
 
-function nameOf(core: Core, id: string | null | undefined) {
-  if (!id) return '';
-  return core.players.find((p) => p.id === id)?.name ?? '';
+/** The دلال's call: what the host's phone says now, or what the moment is. */
+function callOf(core: Core, lot: LotPub): string {
+  if (core.callout?.text) return core.callout.text;
+  if (core.phase === 'preview') return 'المعاينة، شوفوها زين قبل السوم';
+  if (core.phase === 'sealed') return 'كل واحد يكتب سعره بالسر، وأعلى ظرف ياخذها';
+  if (core.phase === 'dutch') return 'السعر ينزل، أول واحد يقول أبيها ياخذها';
+  if (core.phase === 'approval') return 'صاحبها يفكّر';
+  if (lot.kind === 'covered') return 'تحت الغطا، مين يغامر؟';
+  return core.bid?.count ? 'مين يزيد؟' : 'مين يفتح السوم؟';
 }
 
-function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: number }) {
-  // only the clock ticks at 10 Hz, in host time; the rest of the board re-renders on snapshots
-  const now = useNow(offset, 10);
-  const t = timeLeft(core, now);
-  const secs = Math.ceil(t.ms / 1000);
+/** The board: the call, the tag, the clock, the estimate read low to high, the last three bids. */
+function Board({ core, lot, offset }: { core: Core; lot: LotPub; offset: number }) {
+  const k = useContext(KCtx);
   const bid = core.bid && core.bid.count > 0 ? core.bid : null;
   const leader = bid ? core.players.find((p) => p.id === bid.by) : undefined;
   const sealed = core.phase === 'sealed';
-  const preview = core.phase === 'preview';
-  const hot = (core.phase === 'bidding' || sealed) && t.ms > 0 && t.ms <= 5000;
-  const feed = [...core.log].reverse().slice(0, 5);
+  const dutch = core.phase === 'dutch' && lot.dutch;
+  const approval = core.phase === 'approval';
+  const feed = sealed || dutch ? [] : [...core.log].reverse().slice(0, 3);
+
+  let tag: ReactNode;
+  if (sealed) tag = <Envelopes n={core.sealedCount} />;
+  else if (dutch) tag = <DutchTag core={core} plan={lot.dutch!} offset={offset} estimate={core.settings.estimate ? lot.estimate : null} />;
+  else
+    tag = (
+      <div className="tv-tag" style={{ zoom: 2.6 * k } as CSSProperties}>
+        <PriceTag
+          state={bid ? 'live' : 'open'}
+          label={approval ? 'وقف السوم على' : undefined}
+          amount={bid ? bid.amount : core.opening || lot.opening}
+          who={leader ? { no: leader.paddle, name: leader.name } : null}
+        />
+      </div>
+    );
+
   return (
-    <div className={`tv-price is-${core.phase}`}>
-      {sealed ? (
-        <div className="tv-price-main">
-          <div className="tv-label">الظروف المختومة</div>
-          <div className="tv-amount sealed">{num(core.sealedCount)}</div>
-          <div className="tv-leader">كل واحد يكتب سعره بالسر، وأعلى ظرف ياخذها</div>
+    <div className={`tv-board is-${core.phase}`}>
+      <p key={core.callout?.id ?? core.phase} className="tv-call" aria-live="polite">
+        {callOf(core, lot)}
+      </p>
+      {tag}
+      {!dutch && <div className="tv-board-low">
+        <Clock core={core} offset={offset} />
+        <div className="tv-board-facts">
+          {lot.estimate && core.settings.estimate && !sealed && (
+            <div className="tv-est">
+              <span className="tv-est-k">التقدير</span>
+              {/* low to high, left to right, as on the phones (audit S3-3) */}
+              <span className="tv-est-v ltr">
+                {money(lot.estimate[0])} – {money(lot.estimate[1])}
+              </span>
+            </div>
+          )}
+          {!!feed.length && (
+            <ol className="tv-feed">
+              {feed.map((l, i) => (
+                <li key={l.id} className={i === 0 ? 'is-top' : undefined}>
+                  <span className="tv-feed-who">{nameOf(core, l.by)}</span>
+                  <span className="tv-feed-n ltr">{money(l.amount)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {sealed && <p className="tv-board-note">الظروف ما تنفتح إلا بعد ما يخلص الوقت</p>}
+          {approval && <p className="tv-board-note">ما وصل الحد. يا يقول على البركة، يا يفتح الله</p>}
         </div>
-      ) : (
-        <div className="tv-price-main">
-          <div className="tv-label">{bid ? 'السوم الحالي' : 'يفتح على'}</div>
-          <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`} data-len={money(bid ? bid.amount : core.opening || lot.opening).length}>
-            <span className="ltr">{money(bid ? bid.amount : core.opening || lot.opening)}</span>
-            <small>ريال</small>
-          </div>
-          <div key={`l-${bid?.by ?? 'none'}`} className="tv-leader">
-            {leader ? (
-              <>
-                <Paddle n={leader.paddle} />
-                <b>{leader.name}</b>
-                <span className="tv-leader-tag">ماسك السوم</span>
-              </>
-            ) : preview ? (
-              'تجهّزوا، المعاينة قبل السوم'
-            ) : (
-              'مين يفتح السوم؟'
-            )}
-          </div>
-        </div>
-      )}
+      </div>}
+    </div>
+  );
+}
 
-      {core.timer && (
-        <div className={`tv-clock ${hot ? 'hot' : ''}`}>
-          <div className="tv-clock-n">
-            <Icon name="timer" size={46} />
-            <b>{num(Math.max(0, secs))}</b>
-            <small>{preview ? 'ثانية للمعاينة' : core.phase === 'approval' ? 'ثانية لصاحبها' : 'ثانية'}</small>
-          </div>
-          <div className="tv-bar">
-            <i style={{ transform: `scaleX(${t.pct})` }} />
-          </div>
-        </div>
-      )}
+/** The clock as a ring with its seconds in Print; red only in the last five seconds of a live lot. */
+function Clock({ core, offset }: { core: Core; offset: number }) {
+  const now = useNow(offset, 10);
+  if (!core.timer) return null;
+  const t = timeLeft(core, now);
+  const secs = Math.max(0, Math.ceil(t.ms / 1000));
+  const live = core.phase === 'bidding' || core.phase === 'sealed';
+  const hot = live && t.ms > 0 && t.ms <= 5000;
+  const r = 44;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className={`tv-clock${hot ? ' is-hot' : ''}`} role="timer" aria-label={`${secs} ثانية`}>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle className="tv-clock-track" cx="50" cy="50" r={r} />
+        <circle className="tv-clock-arc" cx="50" cy="50" r={r} strokeDasharray={c} strokeDashoffset={c * (1 - t.pct)} />
+      </svg>
+      <span className="tv-clock-n">
+        <span key={hot ? secs : 'n'} className="tv-clock-d ltr">
+          {secs}
+        </span>
+        <span className="tv-clock-u">{core.phase === 'preview' ? 'للمعاينة' : core.phase === 'approval' ? 'لصاحبها' : 'ثانية'}</span>
+      </span>
+    </div>
+  );
+}
 
-      {lot.estimate && core.settings.estimate && !sealed && (
+/** Sealed: the envelopes arriving, a count, never an amount. */
+function Envelopes({ n }: { n: number }) {
+  const shown = Math.min(n, 10);
+  return (
+    <div className="tv-env" aria-live="polite">
+      <div className="tv-env-stack" aria-hidden="true">
+        {Array.from({ length: shown }, (_, i) => (
+          <i key={i} className="tv-env-e" style={{ ['--i' as string]: i } as CSSProperties} />
+        ))}
+        {!shown && <i className="tv-env-e is-ghost" />}
+      </div>
+      <p className="tv-env-t">
+        <span className="tv-env-n ltr">{n}</span>
+        <span className="tv-env-k">{n === 0 ? 'ولا ظرف وصل للحين' : n === 1 ? 'ظرف مختوم وصل' : n === 2 ? 'ظرفين مختومة وصلت' : 'ظروف مختومة وصلت'}</span>
+      </p>
+    </div>
+  );
+}
+
+/** Dutch: the falling price on the tag, the rail from the start price down to the floor under it. */
+function DutchTag({ core, plan, offset, estimate }: { core: Core; plan: NonNullable<LotPub['dutch']>; offset: number; estimate: [number, number] | null }) {
+  const k = useContext(KCtx);
+  const price = useClockValue(offset, 12, (now) => dutchPriceAt(plan, dutchElapsed(core.timer, timeLeft(core, now).ms)), [core.timer, core.paused, plan]);
+  const prog = dutchProgress(plan, price);
+  return (
+    <div className="tv-dutch">
+      <div className="tv-tag" style={{ zoom: 3.3 * k } as CSSProperties}>
+        <PriceTag state="live" label="السعر الحين" amount={price} compact />
+      </div>
+      <div className="tv-rail" aria-hidden="true">
+        <span className="tv-rail-track">
+          <i className="tv-rail-fill" style={{ transform: `scaleX(${prog})` }} />
+          <i className="tv-rail-pin" style={{ insetInlineStart: `${prog * 100}%` }} />
+        </span>
+        <span className="tv-rail-ends">
+          <span>
+            بدأ من <span className="ltr">{money(plan.start)}</span>
+          </span>
+          <span>
+            أقل سعر <span className="ltr">{money(plan.floor)}</span>
+          </span>
+        </span>
+      </div>
+      {estimate && (
         <div className="tv-est">
-          <small>التقدير</small>
-          <span className="ltr">
-            {money(lot.estimate[0])} – {money(lot.estimate[1])}
+          <span className="tv-est-k">التقدير</span>
+          <span className="tv-est-v ltr">
+            {money(estimate[0])} – {money(estimate[1])}
           </span>
         </div>
       )}
-
-      {!sealed && (
-        <ol className="tv-feed" aria-live="polite">
-          {feed.map((l, i) => (
-            <li key={l.id} className={i === 0 ? 'top' : ''}>
-              <span className="tv-feed-who">{nameOf(core, l.by)}</span>
-              {l.jump > 0 && i === 0 && feed.length > 1 && <em className="ltr">+{money(l.jump)}</em>}
-              <b className="ltr">{money(l.amount)}</b>
-            </li>
-          ))}
-          {!feed.length && <li className="empty">السوم يبان هنا أول بأول</li>}
-        </ol>
-      )}
     </div>
   );
 }
 
-function Verdict({ core, sale }: { core: Core; sale: Sale }) {
-  const sold = sale.outcome === 'sold';
-  const buyer = core.players.find((p) => p.id === sale.buyer);
+/** Every bidder as one cell of a ruled strip: paddle, name, what he has left, his garage. The leader is in alloy. */
+function PlayerStrip({ core }: { core: Core }) {
+  const players = core.players.filter((p) => !p.spectator);
+  const lead = core.bid && core.bid.count > 0 && (core.phase === 'bidding' || core.phase === 'approval') ? core.bid.by : null;
+  const two = players.length > 6;
   return (
-    <div className={`tv-verdict ${sold ? 'sold' : 'unsold'}`}>
-      {sold ? <div className="tv-stamp">بيعت</div> : <div className="tv-unsold-h">ما بيعت</div>}
-      {sold ? (
-        <>
-          <div className="tv-label">على</div>
-          <div className="tv-buyer">
-            {buyer && <Paddle n={buyer.paddle} />}
-            <b>{buyer?.name ?? ''}</b>
-          </div>
-          <div className="tv-label">بسعر</div>
-          <div className="tv-amount" data-len={money(sale.hammer).length}>
-            <span className="ltr">{money(sale.hammer)}</span>
-            <small>ريال</small>
-          </div>
-          <div className={`tv-v v-${sale.verdict}`}>
-            <b>{VERDICT[sale.verdict]}</b>
-            <span>
-              قيمتها <span className="ltr">{money(sale.value)}</span>، {sale.profit >= 0 ? 'ربح' : 'خسارة'} <span className="ltr">{signed(sale.profit)}</span>
-            </span>
-          </div>
-          {sale.roast && <p className="tv-roast">{sale.roast}</p>}
-        </>
-      ) : (
-        <>
-          <p className="tv-unsold-why">{OUTCOME[sale.outcome]}</p>
-          {sale.highBid ? (
-            <div className="tv-v v-fair">
-              <span>
-                أعلى سوم <span className="ltr">{money(sale.highBid)}</span>
-                {sale.highBy ? ` من ${nameOf(core, sale.highBy)}` : ''}
-              </span>
-            </div>
-          ) : null}
-          {sale.roast && <p className="tv-roast">{sale.roast}</p>}
-        </>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================ standings
-
-function standings(core: Core, sales: Sale[]) {
-  return core.players
-    .filter((p) => !p.spectator)
-    .map((p) => {
-      const mine = sales.filter((s) => s.outcome === 'sold' && s.buyer === p.id);
-      return {
-        p,
-        cars: mine.length,
-        profit: mine.reduce((a, s) => a + s.profit, 0),
-      };
-    })
-    .sort((a, b) => b.profit - a.profit || b.p.cash - a.p.cash);
-}
-
-/** Bottom strip during a lot: everyone's wallet and garage, ranked by profit so far. */
-function Ticker({ core, sales }: { core: Core; sales: Sale[] }) {
-  const rows = standings(core, sales).slice(0, 6);
-  return (
-    <ol className="tv-ticker">
-      {rows.map(({ p, cars }, i) => (
-        <li key={p.id} className={core.phase === 'bidding' && core.bid?.by === p.id ? 'lead' : ''}>
-          <span className="tv-rank">{num(i + 1)}</span>
-          <span className="tv-tk-name">{p.name}</span>
-          <span className="tv-tk-cash ltr">{money(p.cash)}</span>
-          <span className="tv-tk-cars">
-            {num(cars)}/{num(core.settings.garage)}
+    <ol className={`tv-pstrip${two ? ' is-two' : ''}`} style={{ ['--n' as string]: two ? Math.ceil(players.length / 2) : Math.max(players.length, 4) } as CSSProperties}>
+      {players.map((p) => (
+        <li key={p.id} className={`tv-pcell${p.id === lead ? ' is-lead' : ''}${p.online ? '' : ' is-away'}`}>
+          <Paddle n={p.paddle} />
+          <span className="tv-pcell-name">{p.name}</span>
+          <span className="tv-pcell-cash ltr">{money(p.cash)}</span>
+          <span className="tv-pcell-cars ltr">
+            {p.garage.length}/{core.settings.garage}
           </span>
         </li>
       ))}
@@ -649,173 +709,568 @@ function Ticker({ core, sales }: { core: Core; sales: Sale[] }) {
   );
 }
 
-function LastSale({ core, sale }: { core: Core; sale: Sale }) {
+// ============================================================================ reactions
+
+/** How many glyphs a reaction shows (a pair, like the heart with its arrow, is drawn smaller to fit its slot). */
+function graphemes(t: string): number {
+  try {
+    return [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(t)].length;
+  } catch {
+    return 1;
+  }
+}
+
+interface Floater {
+  id: string;
+  label: string;
+  name: string;
+  /** the slot's inline-start offset and width in the lane (px) */
+  at: number;
+  w: number;
+  dur: number;
+  /** how far it rises (px) and how long it waits before rising (ms) */
+  rise: number;
+  wait: number;
+}
+
+/** The six reactions floating up over the car (never over the price), large, with who sent them.
+ *  Positions are dealt, never drawn at random: the photo is cut into slots wide enough for an emoji and a name, the
+ *  far slots from the lot sticker come first, and each new reaction takes the next free slot in turn (with a small
+ *  jitter inside it). A slot under the sticker rises only to just below it. When every slot is in flight, the slot
+ *  that took off first is reused, and the new one waits until the old one has climbed clear of it. */
+function Reactions() {
+  const [items, setItems] = useState<Floater[]>([]);
+  const timers = useRef(new Set<number>());
+  const lane = useRef<HTMLDivElement>(null);
+  // per slot: when its last reaction took off (ms, wall clock) and how long that one flies
+  const slots = useRef<{ start: number; dur: number; wait: number; rise: number }[]>([]);
+  const turn = useRef(0);
+  useEffect(() => {
+    const off = reactBus.on((ev) => {
+      const r = REACT_BY_KEY.get(ev.k);
+      const el = lane.current;
+      if (!r || !el) return;
+      const W = el.clientWidth;
+      const H = el.clientHeight;
+      const u = Math.min(innerHeight / 100, innerWidth / 177.78);
+      const n = Math.max(2, Math.min(6, Math.floor(W / (u * 16))));
+      const sw = W / n;
+      if (slots.current.length !== n) slots.current = Array.from({ length: n }, () => ({ start: 0, dur: 0, wait: 0, rise: 0 }));
+      // the sticker's reach from the lane's inline-start edge, and its bottom
+      const lr = el.getBoundingClientRect();
+      const st = el.parentElement?.querySelector('.tv-sticker')?.getBoundingClientRect();
+      const stReach = st ? lr.right - st.left + u : 0;
+      const stBottom = st ? st.bottom - lr.top + u : 0;
+      // dealing order: from the far end (away from the sticker) back toward it
+      const order = Array.from({ length: n }, (_, i) => n - 1 - i);
+      const now = Date.now();
+      let pick = -1;
+      for (let k = 0; k < n; k++) {
+        const i = order[(turn.current + k) % n];
+        const sl = slots.current[i];
+        if (now > sl.start + sl.wait + sl.dur) {
+          pick = i;
+          turn.current = (turn.current + k + 1) % n;
+          break;
+        }
+      }
+      let wait = 0;
+      if (pick < 0) {
+        // all in flight: reuse the one that took off first, once it has climbed a whole emoji and name (16u) above
+        // where the new one starts; on a short photo that is when the old one has gone
+        pick = slots.current.reduce((m, sl, i, a) => (sl.start + sl.wait < a[m].start + a[m].wait ? i : m), 0);
+        const sl = slots.current[pick];
+        const p = Math.min(1, 0.12 + (0.88 * u * 16) / Math.max(1, sl.rise));
+        wait = Math.max(0, sl.start + sl.wait + sl.dur * p - now);
+      }
+      const dur = 3400 + Math.random() * 500;
+      const at = pick * sw;
+      const under = at < stReach;
+      const top = under ? stBottom : u * 2;
+      const rise = Math.max(0, H - u * 3 - u * 15 - top);
+      slots.current[pick] = { start: now, dur, wait, rise };
+      const f: Floater = { id: ev.i, label: r.label, name: ev.n, at: at + (Math.random() - 0.5) * u * 1.6, w: sw, dur, rise, wait };
+      setItems((l) => [...l.slice(-11), f]);
+      const t = window.setTimeout(() => {
+        timers.current.delete(t);
+        setItems((l) => l.filter((x) => x.id !== f.id));
+      }, wait + dur + 80);
+      timers.current.add(t);
+    });
+    const ts = timers.current;
+    return () => {
+      off();
+      ts.forEach(clearTimeout);
+    };
+  }, []);
   return (
-    <div className="tv-last">
-      <small>آخر بيعة</small>
-      <b>
-        {sale.car.makeAr} {sale.car.modelAr} {num(sale.car.year)}
-      </b>
-      <span>
-        على {nameOf(core, sale.buyer)} بـ <span className="ltr">{money(sale.hammer)}</span>
-      </span>
+    <div className="tv-rx" aria-hidden="true" ref={lane}>
+      {items.map((f) => (
+        <span
+          key={f.id}
+          className="tv-rx-f"
+          style={
+            {
+              insetInlineStart: `${Math.max(0, f.at)}px`,
+              width: `${f.w}px`,
+              animationDuration: `${f.dur}ms`,
+              animationDelay: `${f.wait}ms`,
+              ['--rise' as string]: `${f.rise}px`,
+            } as CSSProperties
+          }
+        >
+          <span className={`tv-rx-e${graphemes(f.label) > 1 ? ' is-pair' : ''}`}>{f.label}</span>
+          <span className="tv-rx-n">{f.name}</span>
+        </span>
+      ))}
     </div>
   );
 }
 
-function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
-  const sales = hist?.sales ?? [];
-  const rows = standings(core, sales);
-  const lastSale = [...sales].reverse().find((s) => s.outcome === 'sold') ?? null;
-  const voting = core.phase === 'voting';
-  const voters = core.players.filter((p) => !p.spectator);
+// ============================================================================ the hammer
+
+/** The value counting up once, in a few eased steps, then rolling straight to any later change (the surprise). */
+function CountRoll({ target }: { target: number }) {
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [v, setV] = useState(() => (still ? target : Math.round(target * 0.2)));
+  const counted = useRef(false);
+  useEffect(() => {
+    if (counted.current || still) {
+      setV(target);
+      counted.current = true;
+      return;
+    }
+    counted.current = true;
+    const steps = [0.38, 0.66, 0.84, 0.94, 1];
+    const ids = steps.map((f, i) => window.setTimeout(() => setV(f === 1 ? target : Math.round(target * f)), 80 + i * 200));
+    return () => ids.forEach(clearTimeout);
+  }, [target, still]);
+  return <RollNumber value={v} className="tv-value-n" />;
+}
+
+/** The photo with the cover lifting off a covered car, then the stamp slamming once. */
+function HammerPhoto({ sale, stamp, uncover }: { sale: Sale; stamp: 'sold' | 'unsold' | null; uncover: boolean }) {
+  const k = useContext(KCtx);
+  const photo = sale.car.photos?.[0];
+  const [dead, setDead] = useState(false);
   return (
-    <div className="tv-board">
-      <div className="tv-board-h">
-        <div>
-          <div className={`tv-kicker ${voting ? '' : 'calm'}`}>{voting ? 'كل واحد يقيّم كراجات الباقين من جواله' : 'خلص المزاد، هذي الكراجات'}</div>
-          <h1>{voting ? 'تقييم الكراجات' : 'ترتيب الصالة'}</h1>
-          {voting && (
-            <p className="tv-board-sub">
-              قيّم {num(core.voted.length)} من {num(voters.length)}
-            </p>
-          )}
+    <div className={`tv-photo tv-hphoto${stamp ? ' is-stamped' : ''}`}>
+      {photo && !dead ? (
+        <Photo u={photo} className="tv-ph is-on" eager onDead={() => setDead(true)} />
+      ) : (
+        <div className="tv-studio">
+          <Silhouette body={sale.car.body} color={sale.car.colorHex} />
         </div>
-        {lastSale && !voting && <LastSale core={core} sale={lastSale} />}
-      </div>
-      <Table
-        rows={rows.map(({ p, cars, profit }) => ({
-          p,
-          cars,
-          value: profit,
-          cash: p.cash,
-          voted: voting && core.voted.includes(p.id),
-        }))}
-        garage={core.settings.garage}
-        sales={sales}
-        valueLabel="الربح"
-      />
+      )}
+      {uncover && <div className="tv-uncover" aria-hidden="true" />}
+      {stamp && <div className="tv-mute" aria-hidden="true" />}
+      {stamp && (
+        <div className="tv-stamp" style={{ zoom: 2.4 * k } as CSSProperties}>
+          <Stamp kind={stamp} sub={`سيارة رقم ${sale.no}`} />
+        </div>
+      )}
+      <Sticker no={sale.no} className="tv-sticker" />
+      <Reactions />
     </div>
   );
 }
 
-function Table({
-  rows,
-  garage,
-  sales,
-  valueLabel,
-  points,
-}: {
-  rows: {
-    p: PlayerPub;
-    cars: number;
-    value: number;
-    cash: number;
-    voted?: boolean;
-    awards?: string[];
-  }[];
-  garage: number;
-  sales: Sale[];
-  valueLabel: string;
-  points?: boolean;
-}) {
+/** How it went, in one line. */
+function howOf(sale: Sale): string {
+  if (sale.approved) return 'صاحبها قال على البركة';
+  if (sale.kind === 'dutch') return 'قال أبيها قبل الكل';
+  if (sale.sealedBids?.length) return sale.sealedBids.length === 1 ? 'الظرف الوحيد' : `أعلى ظرف من ${sale.sealedBids.length}`;
+  return `بعد ${bidsN(sale.bids)}`;
+}
+
+/** The sold moment, full screen, in the reveal's stages (saleStage.ts): the big screen never shows a number before the
+ *  phones do. -1 the envelopes open or the cover lifts; 0 the stamp, the buyer, the hammer; 1 «سعرها الصدق بالسوق»;
+ *  2 the value counts up with the difference and the word; 3 settled, with the surprise if one lands. */
+function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number }) {
+  const k = useContext(KCtx);
+  const stage: SaleStage = useSaleStage(core, sale, offset);
+  const buyer = core.players.find((p) => p.id === sale.buyer);
+  const name = buyer?.name ?? 'واحد طلع';
+  const shown = saleShown(sale, stage);
+  const up = (shown.profit ?? 0) >= 0;
+  const word = shown.settled ? VERDICT_LABEL[sale.verdict] : up ? 'ربح' : 'خسارة';
+  const surprise = stage >= 3 ? sale.surprise : null;
+  const sealed = !!sale.sealedBids?.length;
+  const carName = (
+    <>
+      {sale.car.makeAr} {sale.car.modelAr} <span className="ltr">{sale.car.year}</span>
+    </>
+  );
   return (
-    <ol className={`tv-table ${rows.length > 6 ? 'dense' : ''}`}>
-      <li className="tv-th">
-        <span>#</span>
-        <span>المزايد</span>
-        <span>الكراج</span>
-        <span>الرصيد</span>
-        <span>{valueLabel}</span>
-      </li>
-      {rows.map(({ p, cars, value, cash, voted, awards }, i) => {
-        const mine = sales.filter((s) => s.outcome === 'sold' && s.buyer === p.id);
-        return (
-          <li key={p.id} className={i === 0 ? 'first' : ''} style={{ ['--i' as string]: i }}>
-            <span className="tv-rank">{num(i + 1)}</span>
-            <span className="tv-who">
-              <Paddle n={p.paddle} />
-              <b>{p.name}</b>
-              {voted && <em className="tv-voted">قيّم</em>}
-              {awards?.slice(0, 2).map((a) => (
-                <em key={a} className="tv-award">
-                  {a}
-                </em>
-              ))}
-            </span>
-            <span className="tv-cars">
-              {mine.length
-                ? mine
-                    .slice(0, 3)
-                    .map((s) => `${s.car.makeAr} ${s.car.modelAr}`)
-                    .join('، ')
-                : 'فاضي'}
-              <small>
-                {num(cars)} من {num(garage)}
-              </small>
-            </span>
-            <span className="tv-cash ltr">{money(cash)}</span>
-            <span className={`tv-val ${points ? '' : value >= 0 ? 'gain' : 'loss'}`}>
-              {points ? (
-                <>
-                  {num(value)} <small>نقطة</small>
-                </>
-              ) : (
-                <span className="ltr">{signed(value)}</span>
+    <div className="tv-hammer" key={sale.lotId}>
+      <section className="tv-car">
+        <HammerPhoto sale={sale} stamp={stage >= 0 ? 'sold' : null} uncover={stage < 0 && sale.kind === 'covered'} />
+        <p className="tv-hammer-car">{stage < 0 && sale.kind === 'covered' ? 'نشيل الغطا…' : carName}</p>
+      </section>
+      <section className="tv-hammer-side" aria-live="polite">
+        {stage < 0 ? (
+          sealed ? (
+            <OpenEnvelopes core={core} sale={sale} />
+          ) : (
+            <p className="tv-call">نشيل الغطا…</p>
+          )
+        ) : (
+          <>
+            <div className="tv-buyer">
+              {buyer && <Paddle n={buyer.paddle} />}
+              <div className="tv-buyer-t">
+                <p className="tv-buyer-name">راحت لـ {name}</p>
+                <p className="tv-buyer-how">{howOf(sale)}</p>
+              </div>
+            </div>
+            <div className="tv-final">
+              <div className="tv-tag tv-tag-final" style={{ zoom: 2.2 * k } as CSSProperties}>
+                <PriceTag state="final" label="رست على" amount={sale.hammer} compact />
+              </div>
+            </div>
+            <div className="tv-verdict">
+              <p className={`tv-verdict-k${stage >= 1 ? ' is-on' : ''}`}>سعرها الصدق بالسوق</p>
+              <div className="tv-value">
+                {shown.value === null ? (
+                  <span className="tv-value-blank" aria-hidden="true" />
+                ) : (
+                  <>
+                    <CountRoll target={shown.value} />
+                    <span className="tv-value-u">ريال</span>
+                  </>
+                )}
+              </div>
+              {surprise && (
+                <p className="tv-surprise">
+                  <span className="tv-diff ltr">{signed(surprise.delta)}</span>
+                  <span>
+                    {surprise.good ? 'مفاجأة حلوة: ' : 'مفاجأة شينة: '}
+                    {surprise.text}
+                  </span>
+                </p>
               )}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+              <div className="tv-word-row">
+                {shown.profit !== null && (
+                  <>
+                    <span className="tv-word">{word}</span>
+                    <span className={`tv-diff ltr${up ? ' is-up' : ' is-down'}`}>{signed(shown.profit)}</span>
+                    <span className="tv-word-who">{up ? `لـ ${name}` : `على ${name}`}</span>
+                  </>
+                )}
+              </div>
+            </div>
+            {stage >= 2 && (
+              <p className="tv-paid">
+                دفع <span className="ltr">{money(sale.paid)}</span> مع السعي والضريبة
+              </p>
+            )}
+          </>
+        )}
+      </section>
+    </div>
   );
 }
 
+/** The sealed lead-in: the envelopes opened in a ruled list, highest first. */
+function OpenEnvelopes({ core, sale }: { core: Core; sale: Sale }) {
+  const all = sale.sealedBids ?? [];
+  const list = all.slice(0, 4);
+  const rest = all.length - list.length;
+  return (
+    <div className="tv-open">
+      <p className="tv-call">فتح الظروف</p>
+      <ol className="tv-open-l">
+        {list.map((b, i) => (
+          <li key={b.by} className={i === 0 ? 'is-top' : undefined} style={{ animationDelay: `${i * 0.5}s` }}>
+            <span className="tv-open-who">{nameOf(core, b.by) || 'واحد طلع'}</span>
+            <span className="tv-open-n ltr">{money(b.amount)}</span>
+          </li>
+        ))}
+      </ol>
+      {rest > 0 && <p className="tv-open-more">{rest === 1 ? 'وظرف ثاني أقل' : `و${rest} ظروف ثانية أقل`}</p>}
+    </div>
+  );
+}
+
+function Unsold({ core, sale }: { core: Core; sale: Sale }) {
+  const who = nameOf(core, sale.highBy);
+  const why =
+    sale.outcome === 'reserve'
+      ? 'ما وصلت الحد'
+      : sale.outcome === 'declined'
+        ? 'صاحبها قال يفتح الله'
+        : sale.outcome === 'nobody'
+          ? 'ما أحد يقدر عليها'
+          : 'ما أحد سام عليها';
+  const high = sale.highBid ?? 0;
+  return (
+    <div className="tv-hammer is-unsold" key={sale.lotId}>
+      <section className="tv-car">
+        <HammerPhoto sale={sale} stamp="unsold" uncover={false} />
+        <p className="tv-hammer-car">
+          {sale.car.makeAr} {sale.car.modelAr} <span className="ltr">{sale.car.year}</span>
+        </p>
+      </section>
+      <section className="tv-hammer-side">
+        <p className="tv-why">{why}</p>
+        <p className="tv-buyer-how">ترجع لصاحبها</p>
+        <Rows
+          className="tv-unsold-rows"
+          items={[
+            ...(high > 0 ? [{ k: who ? `أعلى سوم، عند ${who}` : 'أعلى سوم', v: money(high), print: true }] : []),
+            { k: 'قيمتها حول', v: money(sale.base), print: true },
+          ]}
+        />
+      </section>
+    </div>
+  );
+}
+
+// ============================================================================ the end of the night
+
+function standings(core: Core, sales: Sale[]) {
+  return core.players
+    .filter((p) => !p.spectator)
+    .map((p) => {
+      const mine = sales.filter((s) => s.outcome === 'sold' && s.buyer === p.id);
+      return { p, cars: mine.length, profit: mine.reduce((a, s) => a + s.profit, 0) };
+    })
+    .sort((a, b) => b.profit - a.profit || b.p.cash - a.p.cash);
+}
+
+/** The showcase: every garage as one ruled column (paddle, name, each car with what was paid, its value and the
+ *  difference, then the garage's totals), with the same data and rules as the phone's GarageCard. Up to six
+ *  bidders stand side by side; more go in two rows, each car on one line. */
+function ShowcaseBoard({ core, hist }: { core: Core; hist: Hist | null }) {
+  const sales = (hist?.sales ?? []).filter((x) => x.outcome === 'sold' && x.buyer);
+  const active = core.players.filter((p) => !p.spectator).sort((a, b) => a.paddle - b.paddle);
+  const slots = core.settings.garage;
+  const two = active.length > 6;
+  const most = Math.max(0, ...active.map((p) => sales.filter((x) => x.buyer === p.id).length));
+  // how many cars a column can list before it says «وn ثانية»
+  const cap = two ? 3 : most > 4 ? 7 : 4;
+  const compact = two || most > 4;
+  return (
+    <div className="tv-end tv-show">
+      <header className="tv-end-head">
+        <h1 className="tv-end-title">عرض الكراجات</h1>
+        <p className="tv-end-sub">
+          {sales.length ? `انباعت ${carsN(sales.length)}. ` : 'ما انباعت ولا سيارة. '}
+          {PROFIT_NOTE}
+        </p>
+      </header>
+      <div className={`tv-garages${two ? ' is-two' : ''}${compact ? ' is-compact' : ''}`} style={{ ['--n' as string]: two ? Math.ceil(active.length / 2) : Math.max(active.length, 3) } as CSSProperties}>
+        {active.map((p) => {
+          const mine = sales.filter((x) => x.buyer === p.id);
+          const paid = mine.reduce((a, x) => a + x.paid, 0);
+          const value = mine.reduce((a, x) => a + x.value, 0);
+          const free = Math.max(0, slots - mine.length);
+          const shown = mine.slice(0, cap);
+          return (
+            <section key={p.id} className="tv-gar" aria-label={`كراج ${p.name}`}>
+              <header className="tv-gar-head">
+                <Paddle n={p.paddle} />
+                <span className="tv-gar-name">{p.name}</span>
+                <span className="tv-gar-count ltr">
+                  {mine.length}/{slots}
+                </span>
+              </header>
+              <ul className="tv-gar-cars">
+                {shown.map((x) => (
+                  <li key={x.lotId} className="tv-gar-car">
+                    <span className="tv-gar-model">
+                      {x.car.modelAr} <span className="ltr">{x.car.year}</span>
+                    </span>
+                    <Delta v={x.profit} className="tv-gar-delta" />
+                    {!compact && (
+                      <span className="tv-gar-nums">
+                        دفع <span className="ltr">{money(x.paid)}</span> · قيمتها <span className="ltr">{money(x.value)}</span>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {mine.length > shown.length && <p className="tv-gar-more">و{carsN(mine.length - shown.length)} ثانية</p>}
+              {!mine.length && <p className="tv-gar-more">ما شرى ولا سيارة</p>}
+              {mine.length > 0 && free > 0 && !two && <p className="tv-gar-more">{free === 1 ? 'موقف فاضي' : free === 2 ? 'موقفين فاضية' : `${free} مواقف فاضية`}</p>}
+              {mine.length > 0 && (
+                <dl className="tv-gar-total">
+                  <div>
+                    <dt>دفع</dt>
+                    <dd className="ltr">{money(paid)}</dd>
+                  </div>
+                  <div>
+                    <dt>قيمتها</dt>
+                    <dd className="ltr">{money(value)}</dd>
+                  </div>
+                  <div>
+                    <dt>{value - paid >= 0 ? 'الربح' : 'الخسارة'}</dt>
+                    <dd>
+                      <Delta v={value - paid} />
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** The secret rating: every garage as a ruled row; while rating, who has rated (never a score). */
+function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
+  const rows = standings(core, hist?.sales ?? []);
+  const voting = core.phase === 'voting';
+  const done = core.voted.length;
+  return (
+    <div className="tv-end">
+      <header className="tv-end-head">
+        <h1 className="tv-end-title">{voting ? 'التقييم السري' : 'الكراجات'}</h1>
+        <p className="tv-end-sub">
+          {voting ? (
+            <>
+              كل واحد يقيّم كراجات الباقين من جواله · قيّم <span className="ltr">{done}</span> من <span className="ltr">{rows.length}</span>
+            </>
+          ) : (
+            'خلص المزاد، هذي كراجات الليلة'
+          )}
+        </p>
+      </header>
+      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : ''}`} style={{ ['--cols' as string]: voting ? 'var(--u5) minmax(0,1fr) var(--u14) var(--u20) var(--u14)' : 'var(--u5) minmax(0,1fr) var(--u14) var(--u20)' } as CSSProperties}>
+          <div role="row" className="tv-tr tv-th">
+            <span role="columnheader" className="tv-c-rank">#</span>
+            <span role="columnheader" className="tv-c-who">المزايد</span>
+            <span role="columnheader" className="tv-c-n">الكراج</span>
+            <span role="columnheader" className="tv-c-n">الربح</span>
+            {voting && <span role="columnheader" className="tv-c-state">التقييم</span>}
+          </div>
+          {rows.map(({ p, cars, profit }, i) => {
+            const v = core.voted.includes(p.id);
+            return (
+              <div role="row" className="tv-tr" key={p.id}>
+                <span role="cell" className="tv-c-rank ltr">{i + 1}</span>
+                <span role="cell" className="tv-c-who">
+                  <Paddle n={p.paddle} />
+                  <span className="tv-c-name">{p.name}</span>
+                </span>
+                <span role="cell" className="tv-c-n ltr">
+                  {cars}/{core.settings.garage}
+                </span>
+                <span role="cell" className="tv-c-n"><Delta v={profit} /></span>
+                {voting && (
+                  <span role="cell" className={`tv-c-state${v ? ' is-done' : ''}`}>
+                    {v ? (
+                      <>
+                        <Icon name="check" size={20} className="tv-check" /> قيّم
+                      </>
+                    ) : (
+                      'لسه'
+                    )}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+      </div>
+      <p className="tv-note">{voting ? VOTING_NOTE : PROFIT_NOTE}</p>
+    </div>
+  );
+}
+
+/** The results: the champion on the one alloy surface with the wheel as the trophy, every player as a ruled row;
+ *  then the night's awards one at a time, full screen, and back to the table. */
 function ResultsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
+  const k = useContext(KCtx);
   const res = hist?.results;
   const sales = hist?.sales ?? [];
-  if (!res) return <StandingsBoard core={core} hist={hist} />;
+  const awards = useMemo(() => (res ? computeAwards(core, sales, res) : []), [core, sales, res]);
+  // the room's own loop: the table for 16 s, then each award for 6 s
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setT((x) => x + 1), 1000);
+    return () => clearInterval(iv);
+  }, []);
+  if (!res) {
+    return (
+      <div className="tv-next">
+        <TireLoader size={120} label="نجمع النقاط…" />
+      </div>
+    );
+  }
   const rows = res.rows
     .map((r) => ({ r, p: core.players.find((p) => p.id === r.id) }))
     .filter((x): x is { r: (typeof res.rows)[number]; p: PlayerPub } => !!x.p)
     .sort((a, b) => a.r.rank - b.r.rank);
+  const cycle = 16 + awards.length * 6;
+  const at = t % cycle;
+  const ai = at >= 16 ? Math.floor((at - 16) / 6) : -1;
+  const award = ai >= 0 ? awards[ai] : null;
+  if (award) {
+    const who = core.players.find((p) => p.id === award.who);
+    return (
+      <div className="tv-award" key={award.key} aria-live="polite">
+        <span className="tv-award-count">
+          الجايزة <span className="ltr">{ai + 1}</span> من <span className="ltr">{awards.length}</span>
+        </span>
+        <section className={`tv-award-band${award.grand ? ' is-grand' : ''}`}>
+          {award.grand ? <Wheel size={Math.round(250 * k)} className="tv-award-wheel" /> : who && <Paddle n={who.paddle} />}
+          <div className="tv-award-t">
+            <h1 className="tv-award-title">{award.title}</h1>
+            <p className="tv-award-name">{award.name}</p>
+          </div>
+          {award.figure && (
+            <p className={`tv-award-fig${award.tone ? ` is-${award.tone}` : ''}`}>
+              <span className="tv-award-fig-n ltr">{award.figure}</span>
+              <span className="tv-award-fig-k">{award.figureLabel}</span>
+            </p>
+          )}
+        </section>
+        <p className="tv-award-line">{award.line}</p>
+      </div>
+    );
+  }
   const champ = rows[0];
   return (
-    <div className="tv-board tv-results">
-      <div className="tv-board-h">
-        <div>
-          <div className="tv-kicker">النتيجة النهائية</div>
-          {champ && (
-            <h1>
-              بطل الليلة: <span className="tv-champ"><Icon name="crown" size={64} />{champ.p.name}</span>
-            </h1>
-          )}
-        </div>
-      </div>
-      <Table
-        rows={rows.map(({ r, p }) => ({
-          p,
-          cars: r.cars,
-          value: r.total,
-          cash: r.cash,
-          awards: r.awards,
-        }))}
-        garage={core.settings.garage}
-        sales={sales}
-        valueLabel="النقاط"
-        points
-      />
-      {res.awards.length > 0 && rows.length <= 8 && (
-        <ul className="tv-awards">
-          {res.awards.slice(0, 4).map((a) => (
-            <li key={a.key}>
-              <b>{a.title}</b>
-              <span>{nameOf(core, a.who) || a.who}</span>
-              <small>{a.detail}</small>
-            </li>
-          ))}
-        </ul>
+    <div className="tv-end tv-results">
+      {champ && (
+        <header className="tv-champ">
+          <Wheel size={Math.round(170 * k)} className="tv-champ-wheel" />
+          <div className="tv-champ-t">
+            <span className="tv-champ-k">بطل الليلة</span>
+            <span className="tv-champ-name">{champ.p.name}</span>
+          </div>
+          <span className="tv-champ-pts">
+            <span className="ltr">{champ.r.total}</span>
+            <small>نقطة</small>
+          </span>
+        </header>
       )}
+      <div role="table" className={`tv-table${rows.length > 6 ? ' is-dense' : ''}`} style={{ ['--cols' as string]: 'var(--u5) minmax(0,1fr) var(--u12) var(--u20) var(--u12) var(--u12)' } as CSSProperties}>
+          <div role="row" className="tv-tr tv-th">
+            <span role="columnheader" className="tv-c-rank">#</span>
+            <span role="columnheader" className="tv-c-who">المزايد</span>
+            <span role="columnheader" className="tv-c-n">السيارات</span>
+            <span role="columnheader" className="tv-c-n">الربح</span>
+            <span role="columnheader" className="tv-c-n">التقييم</span>
+            <span role="columnheader" className="tv-c-n">النقاط</span>
+          </div>
+          {rows.map(({ r, p }) => (
+            <div role="row" key={p.id} className={`tv-tr${r.rank === 1 ? ' is-first' : ''}`}>
+              <span role="cell" className="tv-c-rank ltr">{r.rank}</span>
+              <span role="cell" className="tv-c-who">
+                <Paddle n={p.paddle} />
+                <span className="tv-c-name">{p.name}</span>
+              </span>
+              <span role="cell" className="tv-c-n ltr">{r.cars}</span>
+              <span role="cell" className="tv-c-n"><Delta v={r.profit} /></span>
+              <span role="cell" className="tv-c-n ltr">{r.ratingAvg == null ? '–' : r.ratingAvg.toFixed(1)}</span>
+              <span role="cell" className="tv-c-n tv-c-total ltr">{r.total}</span>
+            </div>
+          ))}
+      </div>
+      <p className="tv-note">{pointsNote(core.settings.ratingWeight)}</p>
     </div>
   );
 }

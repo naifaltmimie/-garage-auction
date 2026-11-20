@@ -2,13 +2,14 @@
 // retained, encrypted core / lot / hist snapshots under the room key derived from the code — but it never
 // publishes anything: no hello, no pings, no intents. So the host never sees it: it isn't a player, has no
 // budget and never shows up in lots, players or votes.
+import { REACT_BY_KEY, reactBus, type ReactEvent } from '../engine/reactions';
 import type { Core, Hist, LotPub } from '../engine/types';
 import { Bus, type BusStatus } from './bus';
 import { roomKeys, unseal, type RoomKeys } from './crypto';
 import type { Snapshot } from './room';
 
 // same topic layout and URL overrides as room.ts (kept local so the shared file stays untouched)
-const topics = (base: string) => ({ core: `${base}/c`, lot: `${base}/l`, hist: `${base}/h`, host: `${base}/x` });
+const topics = (base: string) => ({ core: `${base}/c`, lot: `${base}/l`, hist: `${base}/h`, host: `${base}/x`, ev: `${base}/e` });
 
 function bridgeUrl(): string | null {
   try {
@@ -68,7 +69,7 @@ export class ViewerRoom {
       },
     });
     this.bus.start();
-    this.bus.sub([this.t.core, this.t.lot, this.t.hist, this.t.host]);
+    this.bus.sub([this.t.core, this.t.lot, this.t.hist, this.t.host, this.t.ev]);
   }
 
   stop() {
@@ -77,8 +78,23 @@ export class ViewerRoom {
     this.bus = null;
   }
 
+  private evSeen = new Set<string>();
+
+  /** A reaction from the host, shown over the car like on the phones. Deduped (several brokers can deliver it);
+   *  stale ones are dropped. */
+  private async onEvent(payload: string) {
+    const ev = await unseal<ReactEvent>(this.keys.key, payload);
+    if (!ev || typeof ev.i !== 'string' || typeof ev.k !== 'string' || !REACT_BY_KEY.has(ev.k)) return;
+    if (this.evSeen.has(ev.i)) return;
+    this.evSeen.add(ev.i);
+    if (this.evSeen.size > 120) this.evSeen = new Set([...this.evSeen].slice(-60));
+    if (Date.now() + this.offset - ev.a > 4000) return;
+    reactBus.emit(ev);
+  }
+
   private async onMsg(topic: string, payload: string) {
     const t = this.t;
+    if (topic === t.ev) return void this.onEvent(payload);
     if (topic === t.core) {
       const c = await unseal<Core>(this.keys.key, payload);
       if (!c) return;
