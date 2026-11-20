@@ -27,14 +27,14 @@ const envelopes = (n: number) =>
 
 function phaseText(core: Core, lot: LotPub | null): string {
   // the ring beside it counts the seconds, so the call never repeats them
-  if (core.phase === 'preview' && lot?.kind === 'dutch') return 'معاينة، السعر ينزل بعدها';
+  if (core.phase === 'preview' && lot?.kind === 'dutch') return 'معاينة قبل النزول';
   switch (core.phase) {
     case 'intro':
       return 'الصالة تتجهز';
     case 'preview':
-      return lot?.kind === 'sealed' ? 'معاينة، الظروف تنفتح بعدها' : 'معاينة، المزاد يفتح بعدها';
+      return lot?.kind === 'sealed' ? 'معاينة قبل الظروف' : 'معاينة قبل السوم';
     case 'bidding':
-      if (!core.bid) return core.drops > 0 ? 'نزّلنا السعر، مين يسوم؟' : 'المزاد مفتوح، مين يسوم؟';
+      if (!core.bid) return core.drops > 0 ? 'نزّلناه، مين يسوم؟' : 'مين يفتح السوم؟';
       return 'مين يزيد؟';
     case 'sealed':
       return 'اكتب سومك بالظرف';
@@ -116,7 +116,7 @@ const ClockRing = memo(function ClockRing({ core, offset, live }: { core: Core; 
   const c = 2 * Math.PI * r;
   return (
     <div className={`cs-ring${hot ? ' hot' : ''}`} role="timer" aria-label={core.paused ? 'الساعة واقفة' : `باقي ${secs} ثانية`}>
-      <svg viewBox="0 0 48 48" aria-hidden="true">
+      <svg className="cs-ring-svg" viewBox="0 0 48 48" aria-hidden="true">
         <circle cx="24" cy="24" r={r} className="cs-ring-track" />
         <circle cx="24" cy="24" r={r} className="cs-ring-bar" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} />
       </svg>
@@ -499,7 +499,7 @@ function Envelope({ room, lot, maxBid, step, mine }: { room: RoomView; lot: LotP
           </div>
         </div>
         <div className="cs-sealed-wait">
-          <TireLoader className="tl-inline" size={22} label={`ننتظر ظروف الباقين، ${envelopes(core.sealedCount)}`} />
+          <TireLoader className="tl-inline" size={22} label={`ننتظر الباقين، ${envelopes(core.sealedCount)}`} />
         </div>
         <button
           type="button"
@@ -521,7 +521,7 @@ function Envelope({ room, lot, maxBid, step, mine }: { room: RoomView; lot: LotP
   return (
     <div className="cs-env">
       <p className="cs-env-rule">
-        أعلى ظرف ياخذها بالمبلغ اللي كتبه · <span className="nb">{envelopes(core.sealedCount)}</span>
+        أعلى ظرف ياخذها بمبلغه · <span className="nb">{envelopes(core.sealedCount)}</span>
       </p>
       <div className="cs-raise three" role="group" aria-label="مبالغ مقترحة">
         {picks.map(({ f, a }) => (
@@ -810,6 +810,19 @@ export function Console({
         sub={core.away ? 'الدلال طلع من الصفحة، يكمّل أول ما يرجع' : 'الدلال وقّفه، يكمّل بعد شوي'}
       />
     );
+  } else if (core.phase === 'sealed' ? core.opening > maxBid && mine == null : min > maxBid && !iAmTop) {
+    kind = 'calm';
+    body = (
+      <Calm
+        icon="wallet"
+        title="رصيدك ما يكفي هالسيارة"
+        sub={
+          <>
+            تقدر لين <span className="ltr">{money(maxBid)}</span> · تفرّج وتفاعل لين تجي سيارة على قدك
+          </>
+        }
+      />
+    );
   } else if (core.phase === 'sealed' && lot) {
     kind = 'sealed';
     body = <Envelope room={room} lot={lot} maxBid={maxBid} step={step} mine={mine} />;
@@ -826,19 +839,6 @@ export function Console({
         </div>
         <span className="cs-hold-s">لا أحد يزيد عليك لين تخلص الساعة</span>
       </div>
-    );
-  } else if (min > maxBid) {
-    kind = 'calm';
-    body = (
-      <Calm
-        icon="wallet"
-        title="رصيدك ما يكفي هالسيارة"
-        sub={
-          <>
-            تقدر لين <span className="ltr">{money(maxBid)}</span> · تفرّج وتفاعل لين تجي سيارة على قدك
-          </>
-        }
-      />
     );
   } else {
     const off = !bidding || sending;
@@ -903,7 +903,8 @@ export function Console({
 
   const tagState = top ? 'live' : 'open';
   const showTag = !after && core.phase !== 'sealed' && lot;
-  const tagLabel = top ? undefined : lot?.kind === 'sealed' ? 'أقل ظرف' : lot?.kind === 'dutch' ? 'يبدأ من' : 'يفتح على';
+  const short12 = (n: string) => (n.length > 12 ? `${n.slice(0, 11)}…` : n);
+  const tagLabel = top && short && topP ? (iAmTop ? 'السوم عندك' : `السوم عند ${short12(topP.name)}`) : top ? undefined : lot?.kind === 'sealed' ? 'أقل ظرف' : lot?.kind === 'dutch' ? 'يبدأ من' : 'يفتح على';
   const canBid = kind === 'bid' || kind === 'hold';
 
   return (
@@ -930,11 +931,6 @@ export function Console({
           who={top && topP ? { no: topP.paddle, name: iAmTop ? 'أنت' : topP.name } : null}
           compact={short}
         />
-      )}
-      {short && top && topP && showTag && (
-        <p className="cs-who">
-          <Paddle n={topP.paddle} me={iAmTop} /> {iAmTop ? 'السوم عندك' : topP.name}
-        </p>
       )}
       {body}
       {custom && kind === 'bid' && lot && (

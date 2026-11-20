@@ -166,7 +166,7 @@ export function DutchConsole({
   const myMark = !spectator && !garageFull && maxBid < plan.start && maxBid >= plan.floor ? pos(maxBid) : null;
   const holdSecs = holdStr ? Number(holdStr) : 0;
 
-  const call = core.paused ? 'المزاد واقف' : onFloor ? `أقل سعر، باقي ${holdSecs} ث` : 'أول من يقول أبيها ياخذها';
+  const call = core.paused ? 'المزاد واقف' : onFloor ? `أقل سعر، باقي ${holdSecs} ث` : 'اللي يسبق ياخذها';
 
   return (
     <section className="cs cs--dutch dutch-panel" data-heat={heat} data-cs="dutch" aria-label="المزاد الهولندي">
