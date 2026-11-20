@@ -117,3 +117,14 @@
   border-color: transparent;
   color: var(--plate-ink);
 }
+
+/* the keyboard ring is chalk on every interactive element, whatever an older sheet drew (base.css holds the rest of the browser surfaces) */
+:is(a, button, input, select, textarea, summary, [tabindex], [role='switch'], [role='tab']):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* a text field hugs its ring: the chalk outline sits on the field's own edge */
+:is(input, textarea, select):focus-visible {
+  outline-offset: 0;
+}
