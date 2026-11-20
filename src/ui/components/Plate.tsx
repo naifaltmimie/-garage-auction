@@ -109,7 +109,7 @@ function ArabicDigits({ num, centres, row, tall }: { num: string; centres: numbe
         const g = gl('A' + AR_DIGITS[+d]);
         if (!g) return null;
         // ٥ is small by nature on the plate; the rest stand tall
-        const k = d === '5' ? s * 0.75 : s;
+        const k = d === '5' ? s * 0.88 : s;
         const [x0, y0, x1, y1] = g.b;
         // the plate's digits are narrower than the font's: keep a clear gap between neighbours
         const sx = Math.min(1, (maxW * 0.86) / ((x1 - x0) * k));
@@ -167,7 +167,7 @@ function ArabicLetters({ ar, centres, row, h, maxW }: { ar: string[]; centres: n
         if (!g || centres[i] === undefined) return null;
         const [x0, y0, x1, y1] = g.b;
         const sx = Math.min(1, maxW / ((x1 - x0) * s));
-        return <Glyph key={i} g={g} s={s} sx={sx} x={centres[i] - ((x0 + x1) / 2) * s * sx} y={cy - ((y0 + y1) / 2) * s} thick={h * 0.02} />;
+        return <Glyph key={i} g={g} s={s} sx={sx} x={centres[i] - ((x0 + x1) / 2) * s * sx} y={cy - ((y0 + y1) / 2) * s} thick={h * 0.03} />;
       })}
     </>
   );
