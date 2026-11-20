@@ -61,9 +61,7 @@ body:has(.actbar:not(.is-inline)) {
   padding-top: 20px;
 }
 
-.e-page .screen-title {
-  text-align: center;
-}
+/* the title starts where every other screen's title starts (the kit's default), so the app speaks with one voice */
 
 .e-you {
   flex: none;
