@@ -64,13 +64,13 @@ const REASONS: Record<string, string> = {
   late: 'وصل سومك متأخر، السوم رسا',
   low: 'سبقك أحد على هالسعر، زوّد',
   cash: 'رصيدك ما يغطي السوم مع السعي',
-  full: 'كراجك فل',
+  full: 'كراجك مليان',
   self: 'السوم عندك أصلاً',
   phase: 'المزاد مو مفتوح الحين',
   spectator: 'أنت متفرج بهالجولة',
-  unknown: 'ما وصل طلبك للمضيف، جرّب مرة ثانية',
+  unknown: 'ما وصل طلبك للدلال، جرّب مرة ثانية',
   auth: 'هالجهاز ما يطابق اللاعب',
-  room_full: 'الصالة فل، دخلت متفرج',
+  room_full: 'الصالة مليانة، دخلت متفرج',
 };
 
 export function meFor(code: string): Me | null {
@@ -206,7 +206,7 @@ export function useRoom(code: string, me: Me): RoomView {
           const seal = pendingSeal.current.get(p.mid);
           if (seal) pendingSeal.current.delete(p.mid);
           if (pendingVote.current.has(p.mid)) pendingVote.current.delete(p.mid);
-          toast(REASONS[p.reason] ?? 'ما انقبل الطلب', 'bad');
+          toast(REASONS[p.reason] ?? 'ما انقبل طلبك', 'bad');
           sound.outbid();
         }
         if (p.t === 'ack' && p.kind === 'seal') {
@@ -254,7 +254,7 @@ export function useRoom(code: string, me: Me): RoomView {
       if (h) {
         const r = h.local(a);
         if (!r.ok && r.reason) {
-          toast(REASONS[r.reason] ?? 'ما انقبل', 'bad');
+          toast(REASONS[r.reason] ?? 'ما انقبل طلبك', 'bad');
           return;
         }
         if (r.ok && a.t === 'seal') {

@@ -29,10 +29,10 @@ function mechOf(c: CarPub) {
 }
 
 const SCAN_LABEL = {
-  clean: 'لا توجد أعطال مسجلة',
-  stored: 'أعطال مخزنة غير نشطة',
+  clean: 'ما فيه أعطال مسجلة',
+  stored: 'أعطال قديمة مخزنة، مو نشطة',
   active: 'أعطال نشطة، لمبة المكينة شغالة',
-  cleared: 'الأكواد ممسوحة قريب والحساسات مو جاهزة',
+  cleared: 'الأعطال ممسوحة قريب والحساسات مو جاهزة',
   none: 'ما انفحص بالكمبيوتر',
 } as const;
 
@@ -120,7 +120,7 @@ function KeyFacts({ car, lot, revealed }: { car: CarPub; lot: LotPub; revealed?:
       tone: car.specKind === 'us_salvage' ? 'bad' : undefined,
     },
     {
-      k: 'تقييم الفحص',
+      k: 'درجة الفحص',
       v: g == null ? (lot.mode === 'asis' ? 'على الحالة' : '—') : <>{g.toFixed(1)}<small> / 5 {gradeWord(g)}</small></>,
       tone: g == null ? undefined : gradeTone(g),
     },
@@ -157,7 +157,7 @@ const LotGallery = memo(function LotGallery({ lot, car }: { lot: LotPub; car: Ca
       {lot.kind === 'covered' && <span className="g-kind">تحت الغطا</span>}
       {lot.kind === 'sealed' && <span className="g-kind">ظرف مختوم</span>}
       {lot.kind === 'dutch' && <span className="g-kind gold">مزاد هولندي</span>}
-      {lot.relist > 0 && <span className="g-kind gold">إعادة عرض</span>}
+      {lot.relist > 0 && <span className="g-kind gold">عرض ثاني</span>}
     </>
   );
   return car ? (
@@ -299,7 +299,7 @@ const LotTabs = memo(function LotTabs({ lot, car, revealed }: { lot: LotPub; car
               const g = revealed ? null : lot.grade;
               return (
                 <div className={`vbox tone-${gradeTone(g)}`}>
-                  <small>تقييم الحالة</small>
+                  <small>درجة الفحص</small>
                   {g == null ? <b>{lot.mode === 'asis' ? 'ما انفحصت' : '—'}</b> : <b className="big ltr">{g.toFixed(1)}</b>}
                   {g != null && <small>{gradeWord(g)}</small>}
                 </div>

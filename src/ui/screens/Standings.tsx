@@ -99,7 +99,7 @@ export function Standings({ room, onClose }: { room: RoomView; onClose: () => vo
         {room.host && !['lobby', 'showcase', 'voting', 'results'].includes(core.phase) && (
           ask === 'end' ? (
             <div className="rm-inline" role="group" aria-label="تنهي المزاد؟">
-              <p>يوقف البيع عند الكل وننتقل للكراجات والنتايج. ما فيه رجعة.</p>
+              <p>يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة.</p>
               <div className="row" style={{ gap: 8 }}>
                 <button className="btn btn-primary rm-danger-solid" onClick={() => { room.host!.endNow(); onClose(); }}>
                   أنهِ المزاد

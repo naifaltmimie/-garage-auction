@@ -12,7 +12,7 @@ export function CareerChip() {
         <span>سجلي</span>
         {nights > 0 && (
           <small>
-            <span className="ltr">{nights}</span> {nights === 1 ? 'ليلة' : nights === 2 ? 'ليلتين' : 'ليالي'}
+            {nights === 1 ? 'ليلة وحدة' : nights === 2 ? 'ليلتين' : <><span className="ltr">{nights}</span> {nights <= 10 ? 'ليالي' : 'ليلة'}</>}
           </small>
         )}
       </button>

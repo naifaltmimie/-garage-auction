@@ -271,8 +271,8 @@ function Room({ code, me }: { code: string; me: Me }) {
       : !room.net.connected
         ? 'نتصل بالمزاد…'
         : slow
-          ? 'متصلين، بس المضيف ما فتح الصالة للحين'
-          : 'لقينا الخط، ننتظر المضيف يرد…';
+          ? 'متصلين، بس الدلال ما فتح الصالة للحين'
+          : 'وصلنا، ننتظر الدلال يرد…';
     return (
       <main className="shell narrow">
         <div className="center-screen ws-center">
@@ -280,7 +280,7 @@ function Room({ code, me }: { code: string; me: Me }) {
             <div className="t-display ws-title">{hosting ? 'نفتح الصالة' : 'ندوّر على الصالة'}</div>
             <CodePlate code={code} />
             <TireLoader label={line} size={76} className="ws-loader" />
-            {!hosting && slow && <p className="ws-help">تأكد من الكود، أو خلّ المضيف يفتح الصفحة عنده.</p>}
+            {!hosting && slow && <p className="ws-help">تأكد من الكود، أو خلّ الدلال يفتح الصفحة عنده.</p>}
             <button className="btn btn-quiet" onClick={goHome}>رجوع</button>
           </div>
         </div>

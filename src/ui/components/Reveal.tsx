@@ -193,7 +193,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
 
         {stage >= 3 && sale.surprise && (
           <div className={`surprise ${sale.surprise.good ? 'good' : 'bad'}`}>
-            <small>{sale.surprise.good ? 'مفاجأة حلوة' : 'مفاجأة بعد البيع'}</small>
+            <small>{sale.surprise.good ? 'مفاجأة حلوة' : 'مفاجأة شينة'}</small>
             <p>{sale.surprise.text}</p>
             <b className="ltr">{signed(sale.surprise.delta)}</b>
           </div>

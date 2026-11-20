@@ -124,13 +124,13 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   const reason = spectator
     ? 'أنت متفرج بهالجولة'
     : garageFull
-      ? 'كراجك فل'
+      ? 'كراجك مليان'
       : core.paused
         ? 'المزاد واقف'
         : !canPay
           ? maxBid >= plan.floor
             ? `تقدر عليها إذا نزلت تحت ${money(maxBid)}`
-            : 'رصيدك ما يغطيها حتى على الأرضية'
+            : 'رصيدك ما يغطيها حتى بأقل سعر'
           : '';
 
   // a second tap before the re-render (or within 2.5 s of the first) is the same tap
@@ -156,12 +156,12 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
   return (
     <section className="bidpanel dutch-panel" data-heat={heat} aria-label="المزاد الهولندي">
       {host && (
-        <div className="host-bar" role="toolbar" aria-label="أدوات المضيف">
+        <div className="host-bar" role="toolbar" aria-label="أدوات الدلال">
           <span className="hb-label">أنت الدلال</span>
           {core.paused ? (
             <button className="hb on" onClick={host.resume}>كمّل المزاد</button>
           ) : (
-            <button className="hb" onClick={host.pause}>وقف مؤقت</button>
+            <button className="hb" onClick={host.pause}>وقّف مؤقت</button>
           )}
           <button className="hb" onClick={host.skip}>شيل السيارة</button>
         </div>
@@ -175,7 +175,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
           مزاد هولندي
         </span>
         <span className="dc-call" key={core.callout?.id ?? 0} aria-live="polite">
-          {core.paused ? (core.away ? 'المضيف طلع من الصفحة، المزاد واقف' : 'المزاد واقف') : onFloor ? `وصلت الأرضية، ترجع للمعرض بعد ${holdSecs} ث` : core.callout?.text ?? 'السعر ينزل، أول واحد يقول أبيها ياخذها'}
+          {core.paused ? (core.away ? 'الدلال طلع من الصفحة، المزاد واقف' : 'المزاد واقف') : onFloor ? `وصلت أقل سعر، ترجع للمعرض بعد ${holdSecs} ث` : core.callout?.text ?? 'السعر ينزل، أول واحد يقول أبيها ياخذها'}
         </span>
       </div>
 
@@ -203,9 +203,9 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
             بدأ <b className="t-money">{money(plan.start)}</b>
           </span>
           {est && <span className="dc-est">التقدير</span>}
-          {myMark != null && <span className="dc-mine-l">حدّك {money(maxBid)}</span>}
+          {myMark != null && <span className="dc-mine-l">آخرك {money(maxBid)}</span>}
           <span>
-            الأرضية <b className="t-money">{money(plan.floor)}</b>
+            أقل سعر <b className="t-money">{money(plan.floor)}</b>
           </span>
         </div>
       </div>
@@ -217,7 +217,7 @@ export function DutchConsole({ room, me, lot, plan }: { room: RoomView; me: Play
         aria-label={reason || `أبيها بـ ${money(price)} ريال`}
       >
         {pressAt > 0 && <span key={pressAt} className="dc-ring" aria-hidden="true" />}
-        <b>{sending ? 'وصلت أبيها…' : 'أبيها'}</b>
+        <b>{sending ? 'أبيها…' : 'أبيها'}</b>
         <small>{reason || (sending ? 'ننتظر الدلال' : `بـ ${money(price)} ريال`)}</small>
       </button>
     </section>

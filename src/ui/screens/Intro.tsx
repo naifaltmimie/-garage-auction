@@ -43,7 +43,7 @@ export function Intro({ room }: { room: RoomView }) {
               <dd className="ltr">{bidders}</dd>
             </div>
             <div>
-              <dt>رصيد كل واحد</dt>
+              <dt>ميزانية كل لاعب</dt>
               <dd className="ltr">{money(s.budget)}</dd>
             </div>
             <div>
@@ -71,6 +71,9 @@ export function Intro({ room }: { room: RoomView }) {
  * dial); the rail under it is one CSS animation started once with the time left at mount, and it
  * holds while the host pauses.
  */
+/** the seconds left, as said: ثانية، ثانيتين، 3 ثواني، 11 ثانية */
+const secs = (n: number) => (n === 1 ? 'ثانية' : n === 2 ? 'ثانيتين' : n <= 10 ? `${n} ثواني` : `${n} ثانية`);
+
 const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offset: number }) {
   const now = useNow(offset, 8);
   const { ms } = timeLeft(core, now);
@@ -78,7 +81,7 @@ const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offs
   // the start lamps: one lights each second over the last five, like the grid before a race
   const lit = Math.max(0, Math.min(5, 6 - sec));
   return (
-    <div className={`idn-count idn-step ${sec <= 1 ? 'final' : ''}`} style={{ ['--d' as string]: 2.2 }} role="timer" aria-label={`أول سيارة بعد ${sec} ثواني`}>
+    <div className={`idn-count idn-step ${sec <= 1 ? 'final' : ''}`} style={{ ['--d' as string]: 2.2 }} role="timer" aria-label={`أول سيارة بعد ${secs(sec)}`}>
       <span className="idn-lights" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((i) => (
           <i key={i} className={i < lit ? 'on' : undefined} />
@@ -87,7 +90,7 @@ const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offs
       <span key={sec} className="idn-count-n fx-count ltr">
         {sec}
       </span>
-      <small>أول سيارة بعد {sec === 1 ? 'ثانية' : `${sec} ثواني`}</small>
+      <small>أول سيارة بعد {secs(sec)}</small>
     </div>
   );
 });

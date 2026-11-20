@@ -13,7 +13,7 @@ export function Showcase({ room }: { room: RoomView }) {
         <div style={{ textAlign: 'center' }} className="rise">
           <h1 className="t-display" style={{ fontSize: 'clamp(36px, 10vw, 56px)', margin: '4px 0' }}>عرض الكراجات</h1>
           <p className="mute" style={{ margin: 0 }}>
-            {sold ? `انباعت ${carsN(sold)}.` : 'ما انباعت ولا سيارة.'} شوفوا كل كراج زين، بعدها التقييم السري: كل واحد يقيّم كراجات الباقين ومحد يدري وش عطى.
+            {sold ? `انباعت ${carsN(sold)}.` : 'ما انباعت ولا سيارة.'} شوفوا كل كراج زين، بعدها التقييم السري.
           </p>
         </div>
         <div className="garages">

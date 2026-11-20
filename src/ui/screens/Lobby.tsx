@@ -47,7 +47,7 @@ export function Lobby({ room }: { room: RoomView }) {
   }, [kickAsk]);
   const active = core.players.filter((p) => !p.spectator);
   const host = core.players.find((p) => p.host);
-  const msg = `🔨 ${s.roomName || 'مزاد الكراج'} فاتح الحين\nادخل الصالة وسُم معنا:\n${link}\nكود الصالة: ${room.code}`;
+  const msg = `${s.roomName || 'مزاد الكراج'} فاتح الحين\nادخل الصالة وسُم معنا:\n${link}\nكود الصالة: ${room.code}`;
 
   const share = async () => {
     try {
@@ -108,7 +108,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 <Icon name="share" /> أرسل الرابط للشباب
               </button>
               <button className="btn btn-ghost" onClick={copy} aria-label="انسخ الرابط">
-                <Icon name="copy" /> {copied ? 'تم' : 'نسخ'}
+                <Icon name="copy" /> {copied ? 'انتسخ' : 'انسخ'}
               </button>
             </div>
             <small className="mute">اللي جنبك يصوّر الكود، واللي بعيد ترسل له الرابط</small>
@@ -143,7 +143,7 @@ export function Lobby({ room }: { room: RoomView }) {
                         {p.spectator && <span className="chip">متفرج</span>}
                       </div>
                     </div>
-                    <span className={`netdot ${p.online ? '' : 'off'}`} title={p.online ? 'متصل' : 'غير متصل'} />
+                    <span className={`netdot ${p.online ? '' : 'off'}`} title={p.online ? 'متصل' : 'مقطوع'} />
                     {room.host && !p.host && (
                       <button
                         className={`btn ${kickAsk === p.id ? 'btn-primary rm-danger-solid' : 'btn-quiet'}`}
@@ -206,7 +206,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 </div>
                 <div>
                   <dt>السعي</dt>
-                  <dd>{s.fee > 0 ? <><span className="ltr">{s.fee}%</span> وضريبتها</> : 'بدون'}</dd>
+                  <dd>{s.fee > 0 ? <><span className="ltr">{s.fee}%</span> وضريبته</> : 'بدون'}</dd>
                 </div>
                 <div>
                   <dt>طرق البيع</dt>

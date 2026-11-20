@@ -18,6 +18,10 @@ export function maxBidFor(cash: number, lot: LotPub | null): number {
   return Math.max(0, Math.floor((cash - r.transfer) / k / 100) * 100);
 }
 
+/** how many envelopes are in, as said: ظرف واحد، ظرفين، 3 ظروف، 11 ظرف */
+const envelopes = (n: number) =>
+  n === 0 ? 'ما وصل ولا ظرف' : n === 1 ? 'وصل ظرف واحد' : n === 2 ? 'وصل ظرفين' : n <= 10 ? `وصل ${n} ظروف` : `وصل ${n} ظرف`;
+
 function phaseText(core: Core, msLeft: number, lot: LotPub | null): string {
   const s = Math.ceil(msLeft / 1000);
   if (core.phase === 'preview' && lot?.kind === 'dutch') return `معاينة، السعر يبدأ ينزل بعد ${s} ث`;
@@ -30,7 +34,7 @@ function phaseText(core: Core, msLeft: number, lot: LotPub | null): string {
       if (!core.bid) return core.drops > 0 ? 'نزّلنا السعر، مين يسوم؟' : 'المزاد مفتوح، مين يسوم؟';
       return 'مين يزيد؟';
     case 'sealed':
-      return `اكتب سومك بالظرف، وصل ${core.sealedCount} ${core.sealedCount === 1 ? 'ظرف' : 'ظروف'}`;
+      return `اكتب سومك بالظرف، ${envelopes(core.sealedCount)}`;
     case 'approval':
       return 'صاحب السيارة يفكّر';
     case 'sold':
@@ -74,7 +78,7 @@ function PreviewLine({ core, lot, offset }: { core: Core; lot: LotPub | null; of
 }
 
 function PhaseLine({ core, lot, offset }: { core: Core; lot: LotPub | null; offset: number }) {
-  if (core.paused) return <b>{core.away ? 'المضيف طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف'}</b>;
+  if (core.paused) return <b>{core.away ? 'الدلال طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف'}</b>;
   if (core.phase === 'preview') return <PreviewLine core={core} lot={lot} offset={offset} />;
   return <b>{phaseText(core, 0, lot)}</b>;
 }
@@ -110,7 +114,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
   const garageFull = !!me && me.garage.length >= core.settings.garage;
   const mine = lot ? sealedMine[lot.id] : undefined;
 
-  const reason = spectator ? 'أنت متفرج بهالجولة' : garageFull ? 'كراجك فل' : iAmTop ? 'السوم عندك' : min > maxBid ? 'رصيدك ما يغطي السوم' : '';
+  const reason = spectator ? 'أنت متفرج بهالجولة' : garageFull ? 'كراجك مليان' : iAmTop ? 'السوم عندك' : min > maxBid ? 'رصيدك ما يغطي السوم' : '';
   // why the big button is grey right now, in words (the same button, never a different one)
   const why = reason ? (iAmTop ? 'السوم عندك، انتظر' : reason) : core.phase === 'bidding' && core.paused ? 'المزاد واقف' : '';
 
@@ -219,13 +223,13 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
   return (
     <section className={`bidpanel ${compact ? 'compact' : ''} ${hot ? 'hot' : ''} ${showOutbid ? 'outbid' : ''}`} aria-label="لوحة المزايدة">
       {host && (
-        <div className="host-bar" role="toolbar" aria-label="أدوات المضيف">
+        <div className="host-bar" role="toolbar" aria-label="أدوات الدلال">
           <span className="hb-label">أنت الدلال</span>
           {core.paused ? (
             <button className="hb on" onClick={host.resume}>كمّل المزاد</button>
           ) : (
             ['preview', 'bidding', 'sealed', 'sold', 'unsold'].includes(core.phase) && (
-              <button className="hb" onClick={host.pause}>وقف مؤقت</button>
+              <button className="hb" onClick={host.pause}>وقّف مؤقت</button>
             )
           )}
           {core.phase === 'preview' && !core.paused && (
@@ -294,7 +298,7 @@ export function Console({ room, me, onLog }: { room: RoomView; me: PlayerPub | u
           <TireLoader className="tl-inline" size={30} label={core.paused ? 'المزاد واقف' : 'السيارة الجاية في الطريق'} />
         </div>
       ) : watching ? (
-        <div className="bp-note">{spectator ? 'أنت متفرج بهالجولة، تابع السوم' : 'كراجك فل، تفرّج على الباقين'}</div>
+        <div className="bp-note">{spectator ? 'أنت متفرج بهالجولة، تابع السوم' : 'كراجك مليان، تفرّج على الباقين'}</div>
       ) : core.phase === 'sealed' ? (
         <div className="envelope">
           {mine != null && (

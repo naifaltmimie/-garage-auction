@@ -96,7 +96,7 @@ export const BADGES: Badge[] = [
   { key: 'champ', title: 'بطل الصالة', how: 'اطلع الأول في مزاد', test: (c) => c.nights.some((n) => n.rank === 1 && n.players > 1) },
   { key: 'whale', title: 'الحوت', how: 'ادفع أغلى سعر في ليلة', test: (c) => won(c, 'الحوت') },
   { key: 'clean', title: 'ولا غلطة', how: 'سيارتين أو أكثر بليلة، كلها بربح', test: (c) => c.nights.some((n) => n.cars >= 2 && n.awards.includes('__clean')) },
-  { key: 'pro', title: 'شريطي محترف', how: '10 سيارات على مدى لياليك', test: (c) => totals(c).cars >= 10 },
+  { key: 'pro', title: 'شريطي محترف', how: 'اجمع 10 سيارات بكل لياليك', test: (c) => totals(c).cars >= 10 },
   { key: 'million', title: 'كراج المليون', how: 'كراج قيمته مليون أو أكثر بليلة', test: (c) => c.nights.some((n) => n.value >= 1_000_000) },
   { key: 'regular', title: 'من أهل الصالة', how: 'العب 5 ليالي', test: (c) => c.nights.length >= 5 },
   { key: 'legend', title: 'أسطورة المزاد', how: 'اطلع الأول 3 مرات', test: (c) => totals(c).wins >= 3 },

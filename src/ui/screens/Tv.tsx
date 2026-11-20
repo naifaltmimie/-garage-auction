@@ -30,13 +30,13 @@ const PHASE: Record<Phase, { t: string; tone: 'calm' | 'live' | 'seal' | 'alloy'
   preview: { t: 'معاينة', tone: 'calm' },
   bidding: { t: 'المزاد مفتوح', tone: 'live' },
   sealed: { t: 'الظرف المختوم', tone: 'seal' },
-  approval: { t: 'بانتظار البايع', tone: 'seal' },
+  approval: { t: 'صاحبها يفكّر', tone: 'seal' },
   dutch: { t: 'المزاد الهولندي', tone: 'live' },
   sold: { t: 'بيعت', tone: 'calm' },
-  unsold: { t: 'ما انباعت', tone: 'calm' },
+  unsold: { t: 'ما بيعت', tone: 'calm' },
   showcase: { t: 'الكراجات', tone: 'calm' },
-  voting: { t: 'التصويت', tone: 'calm' },
-  results: { t: 'النتايج', tone: 'alloy' },
+  voting: { t: 'التقييم', tone: 'calm' },
+  results: { t: 'النتيجة', tone: 'alloy' },
 };
 
 const VERDICT: Record<Sale['verdict'], string> = {
@@ -49,8 +49,8 @@ const VERDICT: Record<Sale['verdict'], string> = {
 const OUTCOME: Record<Sale['outcome'], string> = {
   sold: 'بيعت',
   no_bid: 'محد سام عليها',
-  reserve: 'ما وصلت حد البايع',
-  declined: 'البايع رفض',
+  reserve: 'ما وصلت الحد',
+  declined: 'صاحبها رفض',
   nobody: 'محد قدر يشتريها',
 };
 
@@ -181,11 +181,11 @@ export function Tv({ code }: { code: string }) {
       <div className="tv-stage" style={{ transform: `translate(-50%, -50%) scale(${k})` }}>
         <TopBar core={core} code={code} />
         <div className="tv-body">{body}</div>
-        {core?.paused && <div className="tv-hold">{core.away ? 'المزاد واقف، جوال المضيف طلع من الصفحة' : 'المزاد موقف مؤقتاً'}</div>}
+        {core?.paused && <div className="tv-hold">{core.away ? 'المزاد واقف، جوال الدلال طلع من الصفحة' : 'المزاد واقف'}</div>}
         {off && (
           <div className="tv-off">
             <i />
-            {status.hostGone ? 'المضيف طلع من الصالة' : 'نحاول نرجع الاتصال…'}
+            {status.hostGone ? 'الدلال طلع من الصالة' : 'نحاول نرجع الاتصال…'}
           </div>
         )}
       </div>
@@ -252,7 +252,7 @@ function Waiting({ code, status }: { code: string; status: ViewerStatus }) {
       <div className="tv-wait-code ltr">{code}</div>
       <p className="tv-waitline">
         <Wheel size={72} spin="slow" />
-        {status.connected ? 'ننتظر المضيف يفتح الصالة' : 'نتصل بالصالة'}
+        {status.connected ? 'ننتظر الدلال يفتح الصالة' : 'نتصل بالصالة'}
       </p>
       <small>شاشة العرض تتابع المزاد بس، ما تدخل كلاعب</small>
       <HeroWheel />
@@ -316,7 +316,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
               <li key={p.id} className={p.online ? '' : 'away'}>
                 <Paddle n={p.paddle} />
                 <span>{p.name}</span>
-                {p.host && <em>المضيف</em>}
+                {p.host && <em>الدلال</em>}
               </li>
             ))}
           </ul>
@@ -325,7 +325,7 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
             <Wheel size={72} spin="slow" />
             بانتظار الدلال يبدأ
           </p>
-          <p className="tv-full-hint">دبل كلك على الشاشة أو اضغط F عشان تملا الشاشة</p>
+          <p className="tv-full-hint">اضغط مرتين على الشاشة أو اضغط F عشان تملاها</p>
         </div>
       </section>
       <HeroWheel />
@@ -340,7 +340,7 @@ function IntroBoard({ core }: { core: Core }) {
       <div className="tv-kicker">الليلة في الصالة</div>
       <h1>{core.settings.roomName || 'مزاد الكراج'}</h1>
       <p className="tv-sep">
-        <span>{num(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))} سيارات</span>
+        <span>{carsN(core.lotsTotal || lotsFor(core.settings, Math.max(2, players.length)))}</span>
         <span>{num(players.length)} مزايدين</span>
         <span>
           كل واحد معه <span className="ltr">{money(core.settings.budget)}</span> ريال
@@ -368,7 +368,7 @@ function LotBoard({ core, lot, hist, offset }: { core: Core; lot: LotPub | null;
   if (!lot) {
     return (
       <div className="tv-lot-wait">
-        <TireLoader size={92} className="tv-wait-tire" label="السيارة الجاية على الطريق" />
+        <TireLoader size={92} className="tv-wait-tire" label="السيارة الجاية في الطريق" />
       </div>
     );
   }
@@ -433,7 +433,7 @@ function Stage({ lot, sale, phase, lotNo, lotsTotal }: { lot: LotPub; sale: Sale
           <small>من {num(lotsTotal)}</small>
         </div>
       )}
-      {covered && !sale && <div className="tv-covered-tag">سيارة مغطاة، تنكشف بعد البيع</div>}
+      {covered && !sale && <div className="tv-covered-tag">تحت الغطا، تنكشف بعد البيع</div>}
       {car && list.length > 1 && (
         <div className="tv-dots" aria-hidden="true">
           {list.map((u, k) => (
@@ -456,7 +456,7 @@ function CarHead({ lot, sale }: { lot: LotPub; sale: Sale | null }) {
     const c = lot.cover;
     return (
       <div className="tv-carhead">
-        <h2>{lot.title || 'سيارة مغطاة'}</h2>
+        <h2>{lot.title || 'سيارة تحت الغطا'}</h2>
         <div className="tv-specs">
           {c && (
             <span>
@@ -511,7 +511,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
         </div>
       ) : (
         <div className="tv-price-main">
-          <div className="tv-label">{bid ? 'السوم الحالي' : preview ? 'تفتح على' : 'سعر الافتتاح'}</div>
+          <div className="tv-label">{bid ? 'السوم الحالي' : 'يفتح على'}</div>
           <div key={bid ? bid.count : 'open'} className={`tv-amount ${bid ? 'tick' : ''}`} data-len={money(bid ? bid.amount : core.opening || lot.opening).length}>
             <span className="ltr">{money(bid ? bid.amount : core.opening || lot.opening)}</span>
             <small>ريال</small>
@@ -537,7 +537,7 @@ function PricePanel({ core, lot, offset }: { core: Core; lot: LotPub; offset: nu
           <div className="tv-clock-n">
             <Icon name="timer" size={46} />
             <b>{num(Math.max(0, secs))}</b>
-            <small>{preview ? 'ثانية للمعاينة' : core.phase === 'approval' ? 'ثانية للبايع' : 'ثانية'}</small>
+            <small>{preview ? 'ثانية للمعاينة' : core.phase === 'approval' ? 'ثانية لصاحبها' : 'ثانية'}</small>
           </div>
           <div className="tv-bar">
             <i style={{ transform: `scaleX(${t.pct})` }} />
@@ -575,7 +575,7 @@ function Verdict({ core, sale }: { core: Core; sale: Sale }) {
   const buyer = core.players.find((p) => p.id === sale.buyer);
   return (
     <div className={`tv-verdict ${sold ? 'sold' : 'unsold'}`}>
-      {sold ? <div className="tv-stamp">بيعت</div> : <div className="tv-unsold-h">ما انباعت</div>}
+      {sold ? <div className="tv-stamp">بيعت</div> : <div className="tv-unsold-h">ما بيعت</div>}
       {sold ? (
         <>
           <div className="tv-label">على</div>
@@ -674,10 +674,10 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
       <div className="tv-board-h">
         <div>
           <div className={`tv-kicker ${voting ? '' : 'calm'}`}>{voting ? 'كل واحد يقيّم كراجات الباقين من جواله' : 'خلص المزاد، هذي الكراجات'}</div>
-          <h1>{voting ? 'التصويت على الكراجات' : 'ترتيب الصالة'}</h1>
+          <h1>{voting ? 'تقييم الكراجات' : 'ترتيب الصالة'}</h1>
           {voting && (
             <p className="tv-board-sub">
-              صوّت {num(core.voted.length)} من {num(voters.length)}
+              قيّم {num(core.voted.length)} من {num(voters.length)}
             </p>
           )}
         </div>
@@ -736,7 +736,7 @@ function Table({
             <span className="tv-who">
               <Paddle n={p.paddle} />
               <b>{p.name}</b>
-              {voted && <em className="tv-voted">صوّت</em>}
+              {voted && <em className="tv-voted">قيّم</em>}
               {awards?.slice(0, 2).map((a) => (
                 <em key={a} className="tv-award">
                   {a}

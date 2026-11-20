@@ -38,7 +38,7 @@ export function Home() {
           <img className="hero-logo" src={LOGO.stack} width={300} height={263} alt="مزاد الكراج" draggable={false} />
         </h1>
         <p className="hero-line">مزاد سيارات على أصوله</p>
-        <p className="hero-sub">سيارات حقيقية من حراج بصورها وتقرير فحصها ولوحاتها. سُم مع الشباب، وابنِ أقوى كراج قبل ما يرسي السوم.</p>
+        <p className="hero-sub">سُم على سيارات حقيقية مع الشباب، واطلع بأقوى كراج.</p>
 
         <div className="hero-cta">
           <button
@@ -83,7 +83,7 @@ export function Home() {
           )}
           {recent && (
             <button className="btn btn-quiet" onClick={() => go(`/r/${recent.code}`)}>
-              رجوع لصالة {recent.code}
+              ارجع لصالة {recent.code}
             </button>
           )}
           <CareerChip />
@@ -114,7 +114,7 @@ export function Home() {
             </li>
             <li>
               <span>
-                <b>التسوية.</b> تدفع سعر الرسو مع السعي وضريبته ورسوم نقل الملكية.
+                <b>الحساب.</b> تدفع سعر الرسو مع السعي وضريبته ورسوم نقل الملكية.
               </span>
             </li>
             <li>

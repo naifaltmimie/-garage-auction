@@ -69,7 +69,7 @@ export function Create() {
       >
         <div>
           <h1 className="section-title">افتح الصالة</h1>
-          <p className="section-sub">أنت الدلال والمضيف، وتسوم مع الشباب بعد.</p>
+          <p className="section-sub">أنت الدلال، وتسوم مع الشباب بعد.</p>
         </div>
 
         <section className="card form-card">
@@ -198,11 +198,11 @@ export function Create() {
         </section>
 
         <div className="stack" style={{ gap: 8 }}>
-          <Toggle on={s.estimate} set={(v) => set('estimate', v)} title="تقدير الدلال يظهر" note="نطاق سعر تقريبي على كل سيارة. طفّه للخبراء" />
+          <Toggle on={s.estimate} set={(v) => set('estimate', v)} title="تقدير الدلال يظهر" note="سعر تقريبي على كل سيارة، طفّه لو تبيها أصعب" />
           <Toggle on={s.covered} set={(v) => set('covered', v)} title="سيارات تحت الغطا" note="تسوم وأنت ما تدري وش تحت الغطا" />
           <Toggle on={s.sealed} set={(v) => set('sealed', v)} title="الظرف المختوم" note="سوم سري مرة وحدة، وأعلى ظرف ياخذها" />
           <Toggle on={s.dutch !== false} set={(v) => set('dutch', v)} title="المزاد الهولندي (ينزل السعر)" note="السعر يبدأ عالي وينزل، وأول واحد يقول أبيها ياخذها" />
-          <Toggle on={s.fee > 0} set={(v) => set('fee', v ? 2.5 : 0)} title="السعي والضريبة" note="سعي 2.5% + ضريبة 15% عليه + 150 نقل ملكية، مثل الحراج" />
+          <Toggle on={s.fee > 0} set={(v) => set('fee', v ? 2.5 : 0)} title="السعي والضريبة" note="سعي 2.5% وضريبته 15% و150 ريال نقل ملكية، مثل الحراج" />
         </div>
 
         <div className="card form-card">

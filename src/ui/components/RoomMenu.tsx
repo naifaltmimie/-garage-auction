@@ -36,17 +36,17 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
   if (step === 'leave') {
     const text = host
       ? ph === 'lobby'
-        ? 'الصالة تبقى مفتوحة واللاعبين ينتظرونك. ترجع لها من الرئيسية.'
+        ? 'الصالة تبقى مفتوحة والشباب ينتظرونك. ترجع لها من الرئيسية.'
         : auction
           ? 'المزاد يوقف عند الكل لين ترجع، وتكمّل من نفس اللحظة. ترجع له من الرئيسية.'
           : ph === 'results'
-            ? 'النتايج تبقى عند الكل، وترجع لها من الرئيسية.'
+            ? 'النتيجة تبقى عند الكل، وترجع لها من الرئيسية.'
             : 'الكل ينتظرك تكمّل، وترجع للصالة من الرئيسية.'
       : ph === 'lobby'
         ? 'تقدر ترجع تدخل بنفس الكود متى ما بغيت.'
         : 'فلوسك وكراجك محفوظة، وترجع لها من الرئيسية متى ما بغيت.';
     body = (
-      <Confirm title={host ? 'تطلع وأنت المضيف؟' : 'تطلع من الصالة؟'} text={text}>
+      <Confirm title={host ? 'تطلع وأنت الدلال؟' : 'تطلع من الصالة؟'} text={text}>
         <button className="btn btn-primary btn-block rm-go" onClick={leave}>
           {host && auction ? 'وقّف المزاد واطلع' : 'اطلع'}
         </button>
@@ -75,7 +75,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
     );
   } else if (step === 'end') {
     body = (
-      <Confirm title="تنهي المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتايج. ما فيه رجعة.">
+      <Confirm title="تنهي المزاد للكل؟" text="يوقف البيع عند الكل وننتقل للكراجات والنتيجة. ما فيه رجعة.">
         <button
           className="btn btn-primary btn-block rm-danger-solid"
           onClick={() => {
@@ -96,8 +96,8 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
           <span className="code rm-code ltr">{room.code}</span>
         </div>
         {host && auction && (
-          <section className="rm-group" aria-label="تحكم المضيف">
-            <div className="t-label">تحكم المضيف</div>
+          <section className="rm-group" aria-label="تحكم الدلال">
+            <div className="t-label">تحكم الدلال</div>
             {canPause &&
               (core.paused ? (
                 <button className="rm-row on" onClick={() => { host.resume(); onClose(); }}>
@@ -118,7 +118,7 @@ export function RoomMenu({ room, start, onClose, onPlayers }: { room: RoomView; 
             )}
             <button className="rm-row danger" onClick={() => setStep('end')}>
               <span className="rm-ic"><Icon name="close" size={18} /></span>
-              <span className="rm-tx"><b>أنهِ المزاد للكل</b><small>ننتقل للكراجات والنتايج</small></span>
+              <span className="rm-tx"><b>أنهِ المزاد للكل</b><small>ننتقل للكراجات والنتيجة</small></span>
             </button>
           </section>
         )}
@@ -194,9 +194,9 @@ export function RoomStatus({ room }: { room: RoomView }) {
     text = 'الاتصال انقطع، نرجع نتصل…';
   } else if (player && (room.net.hostGone || stale)) {
     tone = 'net';
-    text = 'المضيف انقطع، ننتظره يرجع. خلك بالصفحة.';
+    text = 'الدلال انقطع، ننتظره يرجع. خلك بالصفحة.';
   } else if (core.paused && auction) {
-    text = core.away ? 'المضيف طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف مؤقت';
+    text = core.away ? 'الدلال طلع من الصفحة، المزاد واقف لين يرجع' : 'المزاد واقف مؤقت';
     if (room.host)
       action = (
         <button className="rs-act" onClick={room.host.resume}>

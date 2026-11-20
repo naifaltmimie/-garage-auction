@@ -43,7 +43,7 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
     const cheap = [...sold].sort((a, b) => a.paid - b.paid)[0];
     add({ key: 'cheap', title: 'أبو لقطة', who: cheap.buyer!, name: '', line: `أرخص شروة بالليلة: ${carName(cheap)} ${cheap.car.year}`, figure: money(cheap.paid), figureLabel: 'دفع' }, 6, 1);
     const big = [...sold].sort((a, b) => b.paid - a.paid)[0];
-    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة رست بالليلة:${carName(big)} ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
+    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة رست بالليلة: ${carName(big)} ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
   }
   if (buyers.size >= 2) {
     const most = uniqueTop(rows.filter((r) => r.cars >= 2), (r) => r.cars);
@@ -67,7 +67,7 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
   }
   const champ = host.get('champion');
   const out = pool.sort((a, b) => a.pri - b.pri).slice(0, 8).sort((a, b) => a.ord - b.ord);
-  if (champ && nameOf(champ.who)) out.push({ key: 'champion', title: champ.title, who: champ.who, name: nameOf(champ.who), line: 'أعلى نقاط بين الشطارة بالشراء وتقييم الشباب', figure: champ.detail.replace(/[^\d,]/g, ''), figureLabel: 'نقطة', grand: true, pri: 0, ord: 99 });
+  if (champ && nameOf(champ.who)) out.push({ key: 'champion', title: champ.title, who: champ.who, name: nameOf(champ.who), line: 'أعلى نقاط من الشطارة وتقييم الشباب', figure: champ.detail.replace(/[^\d,]/g, ''), figureLabel: 'نقطة', grand: true, pri: 0, ord: 99 });
   return out.map(({ ord: _o, ...a }) => a);
 }
 
@@ -201,7 +201,7 @@ export function NightAwards({ room, ready }: { room: RoomView; ready: boolean })
                 </span>
                 <h3 className="aw-title">{cur.title}</h3>
                 <i className="aw-rule" aria-hidden />
-                <span className="aw-goes">تروح إلى</span>
+                <span className="aw-goes">من نصيب</span>
                 <b className="aw-name">
                   {cur.name}
                   {cur.who === room.myId && <em>أنت</em>}
