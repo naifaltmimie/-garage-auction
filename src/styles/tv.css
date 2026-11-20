@@ -5,23 +5,6 @@
    drawn in px; they are scaled by `zoom` with --k (the screen's height over 1080), set by Tv.tsx.
    No buttons, no hover, no focus rings: it is a display. Motion is slower and larger than on a phone. */
 
-/* ---------------------------------------------------------------- entry points on the phone screens (outside .tv) */
-.tv-roomlink {
-  margin: 8px auto 24px;
-  text-align: center;
-  font-size: 14px;
-}
-.tv-roomlink a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 14px;
-  color: var(--mute);
-  text-decoration: none;
-}
-.tv-roomlink a svg { flex: none; }
-
 /* ---------------------------------------------------------------- the screen */
 html.tv-mode,
 html.tv-mode body {
@@ -455,7 +438,17 @@ html.tv-mode body {
   font: 500 calc(var(--u) * 3)/1 var(--f-ui);
   color: var(--mute);
 }
+.tv-plate-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.8);
+}
 .tv-plate-at { flex: none; display: block; line-height: 0; }
+.tv-plate-at .sp-tag { display: none; }
+.tv-plate-val { display: grid; justify-items: end; gap: calc(var(--u) * .4); }
+.tv-plate-val-k { font: 600 calc(var(--u) * 2.6)/1.5 var(--f-ui); color: var(--alloy); white-space: nowrap; }
+.tv-plate-val-n { font: 700 calc(var(--u) * 3.4)/1 var(--f-print); color: var(--ink); }
 .tv-spec {
   margin-top: calc(var(--u) * .4);
   overflow: hidden;
@@ -693,7 +686,8 @@ html.tv-mode body {
 .tv-dutch {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--u) * 2.4);
+  gap: calc(var(--u) * 3);
+  margin-block: auto;
 }
 .tv-rail-track {
   position: relative;
@@ -1060,7 +1054,7 @@ html.tv-mode body {
   white-space: nowrap;
   color: var(--mute);
 }
-.tv-th > .tv-c-n { text-align: left; }
+.tv-th > .tv-c-n { text-align: right; }
 .tv-c-rank {
   font: 800 calc(var(--u) * 3.6)/1 var(--f-print);
   color: var(--mute);
@@ -1082,7 +1076,7 @@ html.tv-mode body {
 .tv-tr > .tv-c-n.ltr {
   font: 700 calc(var(--u) * 4)/1 var(--f-print);
   white-space: nowrap;
-  text-align: left;
+  text-align: right;
   color: var(--ink-2);
 }
 .tv-tr > .tv-c-total.ltr { font-size: calc(var(--u) * 4.8); font-weight: 800; color: var(--ink); }
@@ -1103,6 +1097,108 @@ html.tv-mode body {
 .tv-table.is-dense .tv-c-name { font-size: calc(var(--u) * 3.6); }
 .tv-table.is-dense .tv-tr > .tv-c-n.ltr { font-size: calc(var(--u) * 3.4); }
 .tv-table.is-dense .paddle { width: calc(var(--u) * 4.4); height: calc(var(--u) * 4.4); }
+
+/* the kit's gain and loss (Delta, from Garage.tsx) at the board's size */
+.tv .e-delta { gap: calc(var(--u) * .7); line-height: 1; }
+.tv .e-delta.is-up { color: var(--ok); }
+.tv .e-delta-mark { width: calc(var(--u) * 1); height: calc(var(--u) * 1); }
+.tv-tr > .tv-c-n .e-delta {
+  font-size: calc(var(--u) * 4);
+  justify-content: flex-start;
+  direction: rtl;
+  width: 100%;
+}
+.tv-table.is-dense .tv-tr > .tv-c-n .e-delta { font-size: calc(var(--u) * 3.4); }
+
+/* the showcase: one ruled column per garage */
+.tv-show .tv-end-sub { max-width: calc(var(--u) * 160); }
+.tv-garages {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  column-gap: calc(var(--u) * 3);
+  row-gap: calc(var(--u) * 2.4);
+  border-top: 1px solid var(--line-2);
+  padding-top: calc(var(--u) * 1.6);
+}
+.tv-gar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding-inline-start: calc(var(--u) * 3);
+  border-inline-start: 1px solid var(--line);
+  animation: tv-rise-in 800ms var(--ease) both;
+}
+.tv-gar:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.tv-gar-head {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  min-width: 0;
+  padding-bottom: calc(var(--u) * 1.2);
+  border-bottom: 1px solid var(--line-2);
+}
+.tv-gar-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding-bottom: .3em;
+  margin-bottom: -.3em;
+  font: 400 calc(var(--u) * 4.2)/1.2 var(--f-voice);
+  font-synthesis: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tv-gar-count { font: 700 calc(var(--u) * 3)/1 var(--f-print); color: var(--mute); }
+.tv-gar-cars { display: grid; }
+.tv-gar-car {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: calc(var(--u) * 1.4);
+  padding-block: calc(var(--u) * 1.1);
+  border-bottom: 1px solid var(--line);
+}
+.tv-gar-model {
+  min-width: 0;
+  overflow: hidden;
+  padding-bottom: .5em;
+  margin-bottom: -.5em;
+  font: 700 calc(var(--u) * 3)/1.3 var(--f-ui);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tv-gar-model .ltr { font: 700 calc(var(--u) * 3.2)/1 var(--f-print); color: var(--ink-2); }
+.tv-gar-delta { font-size: calc(var(--u) * 3.4); }
+.tv-gar-nums {
+  grid-column: 1 / -1;
+  margin-top: calc(var(--u) * .5);
+  font: 500 calc(var(--u) * 2.6)/1.5 var(--f-ui);
+  color: var(--mute);
+}
+.tv-gar-nums .ltr { font: 700 calc(var(--u) * 3)/1 var(--f-print); color: var(--ink-2); }
+.tv-gar-more {
+  padding-block: calc(var(--u) * 1);
+  font: 500 calc(var(--u) * 2.6)/1.5 var(--f-ui);
+  color: var(--mute);
+}
+.tv-gar-total {
+  display: grid;
+  gap: calc(var(--u) * .5);
+  margin-top: auto;
+  padding-top: calc(var(--u) * 1.2);
+  border-top: 1px solid var(--line-2);
+}
+.tv-gar-total > div { display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--u) * 2); }
+.tv-gar-total dt { font: 500 calc(var(--u) * 2.6)/1.5 var(--f-ui); color: var(--mute); }
+.tv-gar-total dd { margin: 0; font: 700 calc(var(--u) * 3.2)/1 var(--f-print); }
+.tv-gar-total dd .e-delta { font-size: calc(var(--u) * 3.6); }
+.tv-garages.is-compact .tv-gar-car { padding-block: calc(var(--u) * .7); }
+.tv-garages.is-two .tv-gar-total { gap: 0; padding-top: calc(var(--u) * .6); }
+.tv-garages.is-two .tv-gar-total > div:not(:last-child) { display: none; }
 
 /* results: the champion on the night's one alloy surface, the wheel as the trophy */
 .tv-champ {
@@ -1143,53 +1239,97 @@ html.tv-mode body {
 .tv-results .tv-table.is-dense .tv-tr > .tv-c-n.ltr { font-size: calc(var(--u) * 3.2); }
 .tv-results .tv-table.is-dense .paddle { width: calc(var(--u) * 4); height: calc(var(--u) * 4); font-size: calc(var(--u) * 2.4); }
 
-/* one award fills the screen */
+/* one award fills the stage: the champion band's language, the winner, the award, the figure, side to side */
 .tv-award {
   display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: calc(var(--u) * 1.6);
+  align-content: center;
+  gap: calc(var(--u) * 2.6);
   height: 100%;
-  text-align: center;
 }
-.tv-award > * { animation: tv-rise-in 900ms var(--ease) both; }
-.tv-award > :nth-child(3) { animation-delay: 500ms; }
-.tv-award > :nth-child(4) { animation-delay: 900ms; }
-.tv-award > :nth-child(n + 5) { animation-delay: 1300ms; }
 .tv-award-count {
-  font: 500 calc(var(--u) * 2.8)/1.3 var(--f-ui);
-  color: var(--mute);
-}
-.tv-award-count .ltr { font-family: var(--f-print); font-weight: 700; }
-.tv-award-title {
-  font: 400 calc(var(--u) * 12)/1.1 var(--f-voice);
-  font-synthesis: none;
-}
-.tv-award-goes {
   font: 500 calc(var(--u) * 3)/1.3 var(--f-ui);
   color: var(--mute);
+  animation: tv-fade 700ms var(--ease) both;
 }
-.tv-award-name {
-  max-width: 100%;
+.tv-award-count .ltr { font: 700 calc(var(--u) * 3.4)/1 var(--f-print); color: var(--ink); }
+.tv-award-band {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: calc(var(--u) * 5);
+  min-height: calc(var(--u) * 36);
+  padding: calc(var(--u) * 3) calc(var(--u) * 5);
+  border-radius: calc(var(--u) * .8);
+  background: var(--alloy-face);
+  color: var(--alloy-ink);
+  animation: tv-rise-in 900ms var(--ease) both;
+}
+.tv-award-band .paddle {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+  border-width: calc(var(--u) * .6);
+  border-color: var(--alloy-ink);
+  font-size: calc(var(--u) * 9);
+}
+.tv-award-wheel { margin-block: calc(var(--u) * -4); }
+.tv-award-t { display: grid; min-width: 0; }
+.tv-award-title {
   overflow: hidden;
-  font: 400 calc(var(--u) * 8)/1.15 var(--f-voice);
+  padding-block: .15em .2em;
+  margin-block: -.15em -.2em;
+  font: 400 calc(var(--u) * 13)/1.15 var(--f-voice);
   font-synthesis: none;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--alloy-hi);
+}
+.tv-award-name {
+  overflow: hidden;
+  padding-bottom: .3em;
+  margin-bottom: -.3em;
+  font: 400 calc(var(--u) * 6.4)/1.2 var(--f-voice);
+  font-synthesis: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgba(12, 13, 15, .78);
+  animation: tv-rise-in 800ms var(--ease) 500ms both;
 }
 .tv-award-fig {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--u) * 1.4);
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--u) * .8);
+  animation: tv-rise-in 800ms var(--ease) 900ms both;
 }
-.tv-award-fig-n { font: 800 calc(var(--u) * 7)/1 var(--f-print); }
-.tv-award-fig-k { font: 500 calc(var(--u) * 3)/1.3 var(--f-ui); color: var(--mute); }
+.tv-award-fig-n { font: 800 calc(var(--u) * 11)/.9 var(--f-print); }
+.tv-award-fig-k { font: 600 calc(var(--u) * 3)/1.3 var(--f-ui); color: rgba(12, 13, 15, .7); }
 .tv-award-line {
-  max-width: calc(var(--u) * 140);
-  font: 500 calc(var(--u) * 3.2)/1.45 var(--f-ui);
+  max-width: calc(var(--u) * 150);
+  font: 500 calc(var(--u) * 3.6)/1.5 var(--f-ui);
   color: var(--ink-2);
+  animation: tv-fade 800ms var(--ease) 1300ms both;
 }
+
+/* ---------------------------------------------------------------- room for the ink under clipped lines
+   Readex Pro's Arabic ink runs to 0.49em below the baseline (its metrics say 0.25em), and Lalezar's tails run low
+   too: every line that clips (an ellipsis) keeps that room inside its box, and gives it back to the layout. */
+.tv .tv-band-room,
+.tv .tv-roster-name,
+.tv .tv-intro-room,
+.tv .tv-model,
+.tv .tv-spec,
+.tv .tv-pairs .pr-v,
+.tv .tv-feed-who,
+.tv .tv-pcell-name,
+.tv .tv-rx-n,
+.tv .tv-hammer-car,
+.tv .tv-buyer-name,
+.tv .tv-open-who,
+.tv .tv-c-name,
+.tv .tv-champ-name,
+.tv .tv-call {
+  padding-block: .15em .3em;
+  margin-block: -.15em -.3em;
+}
+.tv .tv-spec { margin-top: calc(var(--u) * .4 - .15em); }
 
 /* ---------------------------------------------------------------- reduced motion: no movement, state still clear */
 @media (prefers-reduced-motion: reduce) {

@@ -11,13 +11,14 @@ import { reactBus, REACT_BY_KEY } from '../../engine/reactions';
 import { gradeWord } from '../../engine/realism';
 import { lotsFor, VERDICT_LABEL } from '../../engine/rules';
 import type { CarPub, Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
-import { carsN, isCode, money, normalizeCode, signed } from '../../lib/util';
+import { bidsN, carsN, isCode, money, normalizeCode, signed } from '../../lib/util';
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
 import { saleShown, useSaleStage, type SaleStage } from '../saleStage';
 import { timeLeft, useNow } from '../useRoom';
 import { computeAwards } from '../components/Awards';
+import { Delta } from '../components/Garage';
 import { Icon, QR } from '../components/Bits';
 import { useClockValue } from '../components/DutchConsole';
 import { HowToLines } from '../components/kit/HowToLines';
@@ -47,7 +48,7 @@ const PHASE: Record<Phase, string> = {
   sealed: 'الظرف المختوم',
   approval: 'صاحبها يفكّر',
   dutch: 'المزاد الهولندي',
-  // the outcome is the stamp's to say: during the lead-in the band must not tell it first
+  // the outcome is the stamp's to say: the band says «بيعت» only once it falls (SoldPhrase)
   sold: 'الحسم',
   unsold: 'ما بيعت',
   showcase: 'الكراجات',
@@ -55,8 +56,16 @@ const PHASE: Record<Phase, string> = {
   results: 'النتيجة',
 };
 
-/** The phone's sentence on how the gain is counted (audit S3-9), said the same on the big screen. */
+/** The phones' sentences on how the gain is counted (audit S3-9): before the rating, and while it runs. */
 const PROFIT_NOTE = 'الربح هنا من القيم اللي انكشفت بعد كل بيعة. التقييم السري يجي بالأخير.';
+const VOTING_NOTE = 'الربح هنا من القيم اللي انكشفت بعد كل بيعة. التقييم السري يخلص بعد شوي.';
+
+/** How the points are counted, as the phone's results say it, from the rating's weight. */
+function pointsNote(w: number): string {
+  return w === 0.5
+    ? 'النقاط نص من تقييم الشباب ونص من الشطارة بالشراء'
+    : `النقاط ${Math.round(w * 100)}% من تقييم الشباب و${Math.round((1 - w) * 100)}% من الشطارة بالشراء`;
+}
 
 /** The room link a phone opens (same as the lobby's). */
 export function joinLink(code: string) {
@@ -87,21 +96,6 @@ function toggleFull() {
   } catch {
     /* not allowed here */
   }
-}
-
-export function TvGlyph() {
-  return <Icon name="tv" size={20} />;
-}
-
-/** Small link under the room screens: open this room on a laptop / TV for everyone in the majlis. */
-export function TvLink({ code }: { code: string }) {
-  return (
-    <p className="tv-roomlink">
-      <a href={`#/tv/${code}`} target="_blank" rel="noopener">
-        <TvGlyph /> اعرض المزاد على شاشة كبيرة
-      </a>
-    </p>
-  );
 }
 
 type Fixture = { snap: Snapshot; offset: number; status: ViewerStatus };
@@ -197,7 +191,8 @@ export function Tv({ code }: { code: string }) {
   if (!core) body = <Waiting status={status} />;
   else if (core.phase === 'lobby') body = <LobbyBoard core={core} code={code} />;
   else if (core.phase === 'intro') body = <IntroBoard core={core} offset={offset} />;
-  else if (core.phase === 'showcase' || core.phase === 'voting') body = <StandingsBoard core={core} hist={snap.hist} />;
+  else if (core.phase === 'showcase') body = <ShowcaseBoard core={core} hist={snap.hist} />;
+  else if (core.phase === 'voting') body = <StandingsBoard core={core} hist={snap.hist} />;
   else if (core.phase === 'results') body = <ResultsBoard core={core} hist={snap.hist} />;
   else body = <LotBoard core={core} lot={snap.lot} hist={snap.hist} offset={offset} />;
 
@@ -222,7 +217,7 @@ export function Tv({ code }: { code: string }) {
         onDoubleClick={toggleFull}
         style={{ ['--k' as string]: k } as CSSProperties}
       >
-        <TopBand core={core} code={code} />
+        <TopBand core={core} code={code} sale={core && snap.lot ? (snap.hist?.sales.find((x) => x.lotId === snap.lot!.id) ?? null) : null} offset={offset} />
         {strip && (
           <p className="tv-strip" role="status">
             {strip}
@@ -238,14 +233,20 @@ export function Tv({ code }: { code: string }) {
 
 // ============================================================================ the top band
 
-function TopBand({ core, code }: { core: Core | null; code: string }) {
+/** On a sale the band says «الحسم» until the stamp falls, then «بيعت» (never before the phones show it). */
+function SoldPhrase({ core, sale, offset }: { core: Core; sale: Sale; offset: number }) {
+  const stage = useSaleStage(core, sale, offset);
+  return <>{stage >= 0 && sale.outcome === 'sold' ? 'بيعت' : sale.outcome === 'sold' ? 'الحسم' : 'ما بيعت'}</>;
+}
+
+function TopBand({ core, code, sale, offset }: { core: Core | null; code: string; sale: Sale | null; offset: number }) {
   return (
     <header className="tv-band">
       <Wordmark size={34} layout="row" className="tv-band-logo" />
       <span className="tv-band-room">{core?.settings.roomName || 'مزاد الكراج'}</span>
       {core && (
         <span key={core.phase} className="tv-band-state">
-          {PHASE[core.phase]}
+          {core.phase === 'sold' && sale ? <SoldPhrase core={core} sale={sale} offset={offset} /> : PHASE[core.phase]}
         </span>
       )}
       <span className="tv-band-join">
@@ -275,7 +276,7 @@ function terms(core: Core, bidders: number): { k: string; v: ReactNode; print?: 
   const speed = s.speed === 'fast' ? 'سريع' : s.speed === 'calm' ? 'هادي' : 'عادي';
   return [
     { k: 'السوق', v: marketOf(s.mix).label },
-    { k: 'ميزانية كل واحد', v: money(s.budget), print: true },
+    { k: 'ميزانية كل لاعب', v: money(s.budget), print: true },
     { k: 'السيارات', v: String(core.lotsTotal || lotsFor(s, Math.max(2, bidders))), print: true },
     { k: 'الكراج يشيل', v: carsN(s.garage) },
     { k: 'السرعة', v: speed },
@@ -294,12 +295,12 @@ function LobbyBoard({ core, code }: { core: Core; code: string }) {
           <div className="tv-slip-code">
             <span className="tv-slip-k">كود الصالة</span>
             <span className="tv-slip-n ltr">{code}</span>
-            <span className="tv-slip-k">صوّر الرمز أو اكتب الكود</span>
+            <span className="tv-slip-k">صوّر الباركود أو اكتب الكود</span>
           </div>
           <i className="tv-slip-cut" aria-hidden="true" />
           <QR text={link} size={480} />
         </div>
-        <p className="tv-lobby-call">صوّر الكود وادخل الصالة</p>
+        <p className="tv-lobby-call">صوّر الباركود وادخل الصالة</p>
         <HowToLines className="tv-howto" />
       </section>
       <section className="tv-lobby-side">
@@ -513,8 +514,17 @@ function CarHead({ lot }: { lot: LotPub }) {
           {car.modelAr}
           {car.trimAr || car.trim ? <span className="tv-trim"> {car.trimAr || car.trim}</span> : null}
         </h2>
-        <span className="tv-plate-at" style={{ zoom: 0.8 * k } as CSSProperties}>
-          <CarPlate plate={car.plate} size="lg" showValue={!!car.plate.special} />
+        <span className="tv-plate-row">
+          {/* a special plate's name and worth, at the board's size (the plate's own caption is a phone's size) */}
+          {car.plate.special && (
+            <span className="tv-plate-val">
+              <span className="tv-plate-val-k">{car.plate.special.label}</span>
+              <span className="tv-plate-val-n ltr">{money(car.plate.special.value)}</span>
+            </span>
+          )}
+          <span className="tv-plate-at" style={{ zoom: 0.8 * k } as CSSProperties}>
+            <CarPlate plate={car.plate} size="lg" />
+          </span>
         </span>
       </div>
       <p className="tv-spec">
@@ -548,7 +558,7 @@ function Board({ core, lot, offset }: { core: Core; lot: LotPub; offset: number 
 
   let tag: ReactNode;
   if (sealed) tag = <Envelopes n={core.sealedCount} />;
-  else if (dutch) tag = <DutchTag core={core} plan={lot.dutch!} offset={offset} />;
+  else if (dutch) tag = <DutchTag core={core} plan={lot.dutch!} offset={offset} estimate={core.settings.estimate ? lot.estimate : null} />;
   else
     tag = (
       <div className="tv-tag" style={{ zoom: 2.6 * k } as CSSProperties}>
@@ -567,8 +577,8 @@ function Board({ core, lot, offset }: { core: Core; lot: LotPub; offset: number 
         {callOf(core, lot)}
       </p>
       {tag}
-      <div className="tv-board-low">
-        {!dutch && <Clock core={core} offset={offset} />}
+      {!dutch && <div className="tv-board-low">
+        <Clock core={core} offset={offset} />
         <div className="tv-board-facts">
           {lot.estimate && core.settings.estimate && !sealed && (
             <div className="tv-est">
@@ -592,7 +602,7 @@ function Board({ core, lot, offset }: { core: Core; lot: LotPub; offset: number 
           {sealed && <p className="tv-board-note">الظروف ما تنفتح إلا بعد ما يخلص الوقت</p>}
           {approval && <p className="tv-board-note">ما وصل الحد. يا يقول على البركة، يا يفتح الله</p>}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
@@ -643,7 +653,7 @@ function Envelopes({ n }: { n: number }) {
 }
 
 /** Dutch: the falling price on the tag, the rail from the start price down to the floor under it. */
-function DutchTag({ core, plan, offset }: { core: Core; plan: NonNullable<LotPub['dutch']>; offset: number }) {
+function DutchTag({ core, plan, offset, estimate }: { core: Core; plan: NonNullable<LotPub['dutch']>; offset: number; estimate: [number, number] | null }) {
   const k = useContext(KCtx);
   const price = useClockValue(offset, 12, (now) => dutchPriceAt(plan, dutchElapsed(core.timer, timeLeft(core, now).ms)), [core.timer, core.paused, plan]);
   const prog = dutchProgress(plan, price);
@@ -666,6 +676,14 @@ function DutchTag({ core, plan, offset }: { core: Core; plan: NonNullable<LotPub
           </span>
         </span>
       </div>
+      {estimate && (
+        <div className="tv-est">
+          <span className="tv-est-k">التقدير</span>
+          <span className="tv-est-v ltr">
+            {money(estimate[0])} – {money(estimate[1])}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -788,7 +806,7 @@ function howOf(sale: Sale): string {
   if (sale.approved) return 'صاحبها قال على البركة';
   if (sale.kind === 'dutch') return 'قال أبيها قبل الكل';
   if (sale.sealedBids?.length) return sale.sealedBids.length === 1 ? 'الظرف الوحيد' : `أعلى ظرف من ${sale.sealedBids.length}`;
-  return `بعد ${sale.bids} سوم`;
+  return `بعد ${bidsN(sale.bids)}`;
 }
 
 /** The sold moment, full screen, in the reveal's stages (saleStage.ts): the big screen never shows a number before the
@@ -946,7 +964,88 @@ function standings(core: Core, sales: Sale[]) {
     .sort((a, b) => b.profit - a.profit || b.p.cash - a.p.cash);
 }
 
-/** The showcase and the secret rating: every garage as a ruled row; while rating, who has rated (never a score). */
+/** The showcase: every garage as one ruled column (paddle, name, each car with what was paid, its value and the
+ *  difference, then the garage's totals), with the same data and rules as the phone's GarageCard. Up to six
+ *  bidders stand side by side; more go in two rows, each car on one line. */
+function ShowcaseBoard({ core, hist }: { core: Core; hist: Hist | null }) {
+  const sales = (hist?.sales ?? []).filter((x) => x.outcome === 'sold' && x.buyer);
+  const active = core.players.filter((p) => !p.spectator).sort((a, b) => a.paddle - b.paddle);
+  const slots = core.settings.garage;
+  const two = active.length > 6;
+  const most = Math.max(0, ...active.map((p) => sales.filter((x) => x.buyer === p.id).length));
+  // how many cars a column can list before it says «وn ثانية»
+  const cap = two ? 3 : most > 4 ? 7 : 4;
+  const compact = two || most > 4;
+  return (
+    <div className="tv-end tv-show">
+      <header className="tv-end-head">
+        <h1 className="tv-end-title">عرض الكراجات</h1>
+        <p className="tv-end-sub">
+          {sales.length ? `انباعت ${carsN(sales.length)}. ` : 'ما انباعت ولا سيارة. '}
+          {PROFIT_NOTE}
+        </p>
+      </header>
+      <div className={`tv-garages${two ? ' is-two' : ''}${compact ? ' is-compact' : ''}`} style={{ ['--n' as string]: two ? Math.ceil(active.length / 2) : Math.max(active.length, 3) } as CSSProperties}>
+        {active.map((p) => {
+          const mine = sales.filter((x) => x.buyer === p.id);
+          const paid = mine.reduce((a, x) => a + x.paid, 0);
+          const value = mine.reduce((a, x) => a + x.value, 0);
+          const free = Math.max(0, slots - mine.length);
+          const shown = mine.slice(0, cap);
+          return (
+            <section key={p.id} className="tv-gar" aria-label={`كراج ${p.name}`}>
+              <header className="tv-gar-head">
+                <Paddle n={p.paddle} />
+                <span className="tv-gar-name">{p.name}</span>
+                <span className="tv-gar-count ltr">
+                  {mine.length}/{slots}
+                </span>
+              </header>
+              <ul className="tv-gar-cars">
+                {shown.map((x) => (
+                  <li key={x.lotId} className="tv-gar-car">
+                    <span className="tv-gar-model">
+                      {x.car.modelAr} <span className="ltr">{x.car.year}</span>
+                    </span>
+                    <Delta v={x.profit} className="tv-gar-delta" />
+                    {!compact && (
+                      <span className="tv-gar-nums">
+                        دفع <span className="ltr">{money(x.paid)}</span> · قيمتها <span className="ltr">{money(x.value)}</span>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {mine.length > shown.length && <p className="tv-gar-more">و{carsN(mine.length - shown.length)} ثانية</p>}
+              {!mine.length && <p className="tv-gar-more">ما شرى ولا سيارة</p>}
+              {mine.length > 0 && free > 0 && !two && <p className="tv-gar-more">{free === 1 ? 'موقف فاضي' : free === 2 ? 'موقفين فاضية' : `${free} مواقف فاضية`}</p>}
+              {mine.length > 0 && (
+                <dl className="tv-gar-total">
+                  <div>
+                    <dt>دفع</dt>
+                    <dd className="ltr">{money(paid)}</dd>
+                  </div>
+                  <div>
+                    <dt>قيمتها</dt>
+                    <dd className="ltr">{money(value)}</dd>
+                  </div>
+                  <div>
+                    <dt>{value - paid >= 0 ? 'الربح' : 'الخسارة'}</dt>
+                    <dd>
+                      <Delta v={value - paid} />
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** The secret rating: every garage as a ruled row; while rating, who has rated (never a score). */
 function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
   const rows = standings(core, hist?.sales ?? []);
   const voting = core.phase === 'voting';
@@ -985,7 +1084,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
                 <span role="cell" className="tv-c-n ltr">
                   {cars}/{core.settings.garage}
                 </span>
-                <span role="cell" className="tv-c-n ltr">{signed(profit)}</span>
+                <span role="cell" className="tv-c-n"><Delta v={profit} /></span>
                 {voting && (
                   <span role="cell" className={`tv-c-state${v ? ' is-done' : ''}`}>
                     {v ? (
@@ -1001,7 +1100,7 @@ function StandingsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
             );
           })}
       </div>
-      <p className="tv-note">{PROFIT_NOTE}</p>
+      <p className="tv-note">{voting ? VOTING_NOTE : PROFIT_NOTE}</p>
     </div>
   );
 }
@@ -1035,20 +1134,25 @@ function ResultsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
   const ai = at >= 16 ? Math.floor((at - 16) / 6) : -1;
   const award = ai >= 0 ? awards[ai] : null;
   if (award) {
+    const who = core.players.find((p) => p.id === award.who);
     return (
       <div className="tv-award" key={award.key} aria-live="polite">
         <span className="tv-award-count">
-          الجائزة <span className="ltr">{ai + 1}</span> من <span className="ltr">{awards.length}</span>
+          الجايزة <span className="ltr">{ai + 1}</span> من <span className="ltr">{awards.length}</span>
         </span>
-        <h1 className="tv-award-title">{award.title}</h1>
-        <span className="tv-award-goes">من نصيب</span>
-        <p className={`tv-award-name${award.grand ? ' is-grand' : ''}`}>{award.name}</p>
-        {award.figure && (
-          <p className="tv-award-fig">
-            <span className="tv-award-fig-n ltr">{award.figure}</span>
-            <span className="tv-award-fig-k">{award.figureLabel}</span>
-          </p>
-        )}
+        <section className={`tv-award-band${award.grand ? ' is-grand' : ''}`}>
+          {award.grand ? <Wheel size={Math.round(250 * k)} className="tv-award-wheel" /> : who && <Paddle n={who.paddle} />}
+          <div className="tv-award-t">
+            <h1 className="tv-award-title">{award.title}</h1>
+            <p className="tv-award-name">{award.name}</p>
+          </div>
+          {award.figure && (
+            <p className={`tv-award-fig${award.tone ? ` is-${award.tone}` : ''}`}>
+              <span className="tv-award-fig-n ltr">{award.figure}</span>
+              <span className="tv-award-fig-k">{award.figureLabel}</span>
+            </p>
+          )}
+        </section>
         <p className="tv-award-line">{award.line}</p>
       </div>
     );
@@ -1086,13 +1190,13 @@ function ResultsBoard({ core, hist }: { core: Core; hist: Hist | null }) {
                 <span className="tv-c-name">{p.name}</span>
               </span>
               <span role="cell" className="tv-c-n ltr">{r.cars}</span>
-              <span role="cell" className="tv-c-n ltr">{signed(r.profit)}</span>
+              <span role="cell" className="tv-c-n"><Delta v={r.profit} /></span>
               <span role="cell" className="tv-c-n ltr">{r.ratingAvg == null ? '–' : r.ratingAvg.toFixed(1)}</span>
               <span role="cell" className="tv-c-n tv-c-total ltr">{r.total}</span>
             </div>
           ))}
       </div>
-      <p className="tv-note">{PROFIT_NOTE}</p>
+      <p className="tv-note">{pointsNote(core.settings.ratingWeight)}</p>
     </div>
   );
 }
