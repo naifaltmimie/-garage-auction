@@ -39,13 +39,14 @@
   background-image: url('/brand/wheel/wheel-160.webp');
 }
 
-/* the room's light: soft from above, shade below, kept to the wheel's circle */
+/* the room's light: a touch from above and a shade below, kept to the wheel's circle; the render carries its own
+   shape, so this only says where the room is */
 .wheel > .wheel-light {
   inset: 3%;
   border-radius: 50%;
   background:
-    radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .42) 100%);
+    radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, .08), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, .3) 100%);
   mix-blend-mode: soft-light;
   pointer-events: none;
 }
