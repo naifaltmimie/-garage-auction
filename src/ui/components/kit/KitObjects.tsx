@@ -33,6 +33,12 @@ export function KitObjects() {
           <PriceTag state="live" amount={bid} who={{ no: 7, name: 'أبو فهد' }} />
           <PriceTag state="live" amount={1_250_000} who={{ no: 3, name: 'نايف' }} mine />
           <PriceTag state="final" amount={212_000} who={{ no: 12, name: 'عبدالرحمن الشمري' }} />
+          <PriceTag state="live" amount={1_180_000} who={{ no: 11, name: 'عبدالرحمن بن سعود الشمري' }} />
+        </div>
+        <div className="kobj-compact">
+          <PriceTag compact state="live" amount={bid} />
+          <PriceTag compact state="final" amount={1_250_000} />
+          <PriceTag compact state="open" amount={30000} />
         </div>
         <div className="kobj-ctl">
           <button type="button" className="btn btn-ghost" onClick={raise}>
@@ -43,17 +49,15 @@ export function KitObjects() {
 
       <div className="kobj-sec">
         <h3 className="kobj-t">الختم</h3>
-        <p className="kobj-d">ينختم على صورة السيارة مرة وحدة.</p>
+        <p className="kobj-d">ينختم على صورة السيارة مرة وحدة، ويبان على الصورة الفاتحة والرمادية والليلية.</p>
         <div className="kobj-photos" key={slam}>
-          <div className="kobj-photo">
-            <Stamp kind="sold" sub="سيارة رقم 3" />
-          </div>
-          <div className="kobj-photo">
-            <Stamp kind="mine" sub="سيارة رقم 5" />
-          </div>
-          <div className="kobj-photo">
-            <Stamp kind="unsold" />
-          </div>
+          {(['day', 'mid', 'night'] as const).map((bg) => (
+            <div className={`kobj-photo kobj-photo-${bg}`} key={bg}>
+              <Stamp kind="sold" sub="سيارة رقم 3" />
+              <Stamp kind="mine" sub="سيارة رقم 5" />
+              <Stamp kind="unsold" />
+            </div>
+          ))}
         </div>
         <div className="kobj-ctl">
           <button type="button" className="btn btn-ghost" onClick={() => setSlam((n) => n + 1)}>
