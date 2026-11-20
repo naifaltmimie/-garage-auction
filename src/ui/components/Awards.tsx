@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, FinalResults, Sale } from '../../engine/types';
 import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
-import { money, signed } from '../../lib/util';
+import { iso, money, signed } from '../../lib/util';
 import { Portal } from './Bits';
 import { Facts } from './kit/Facts';
 import type { RoomView } from '../useRoom';
@@ -22,7 +22,7 @@ export interface AwardItem {
   pri?: number;
 }
 
-const carName = (s: Sale) => `${s.car.makeAr} ${s.car.modelAr}`;
+const carName = (s: Sale) => `${s.car.makeAr} ${iso(s.car.modelAr)}`;
 
 /** Only awards the night's data supports; the champion closes the show. */
 export function computeAwards(core: Core, sales: Sale[], res: FinalResults): AwardItem[] {

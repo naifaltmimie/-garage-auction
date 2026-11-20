@@ -122,7 +122,7 @@ function BudgetField({ budget, set }: { budget: number; set: SetSettings }) {
   }, [budget]);
   const chosen = preset && (custom === '' || n === budget) ? budget : -1;
   return (
-    <Field label="ميزانية كل لاعب" hint="الفلوس اللي يدخل فيها كل واحد المزاد">
+    <Field label="ميزانية كل واحد" hint="الفلوس اللي يدخل فيها كل واحد المزاد">
       <div className="sf-grid2">
         <Seg
           value={chosen}
@@ -201,7 +201,7 @@ export function SettingsFields({ s, set, players }: { s: Settings; set: SetSetti
             onInc={() => set({ lots: Math.min(40, (s.lots || 10) + 2) })}
           />
         </Field>
-        <Field label="أقصى عدد لاعبين" hint="من 2 إلى 10">
+        <Field label="المزايدين بالكثير" hint="من 2 لين 10">
           <Stepper
             value={<span className="ltr">{s.maxPlayers}</span>}
             canDec={s.maxPlayers > Math.max(2, players ?? 2)}

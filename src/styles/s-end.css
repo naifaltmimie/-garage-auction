@@ -65,15 +65,13 @@ body:has(.actbar:not(.is-inline)) {
 
 /* the title starts where every other screen's title starts (the kit's default), so the app speaks with one voice */
 
+/* «أنت» beside the player's own name: a plain caption, the same as in the lobby's list */
 .e-you {
   flex: none;
-  padding: 1px 8px;
-  border-radius: 6px;
-  background: var(--alloy-face);
-  color: var(--alloy-ink);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 20px;
+  color: var(--mute);
 }
 
 .e-delta {
@@ -646,9 +644,9 @@ body:has(.actbar:not(.is-inline)) {
   color: #3b3e45;
 }
 
+/* on the champion's light band the caption is dark */
 .e-you.is-dark {
-  background: var(--alloy-ink);
-  color: var(--alloy-hi);
+  color: #3b3e45;
 }
 
 .e-champ-score {

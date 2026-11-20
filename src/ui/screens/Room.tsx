@@ -156,7 +156,8 @@ function RoomWait({ room, code, me }: { room: RoomView; code: string; me: Me }) 
   const clean = normalizeCode(draft);
   return (
     <main className="shell narrow shl-wait shl-lost">
-      <ScreenTitle caption="تأكد من الكود عند اللي فتح الصالة، أو انتظر لين يفتحها.">ما لقينا صالة بهالكود</ScreenTitle>
+      {/* said once: what happened, what to check, and that the phone keeps waiting by itself */}
+      <ScreenTitle caption="تأكد من الكود عند اللي فتح الصالة. وإذا الكود صح، خلك هنا: تدخلها أول ما تنفتح.">ما لقينا صالة بهالكود</ScreenTitle>
       {fix ? (
         <form
           id="shl-fix"
@@ -205,11 +206,8 @@ function RoomWait({ room, code, me }: { room: RoomView; code: string; me: Me }) 
           </label>
         </form>
       ) : (
-        <CodeSlip code={code} line="ما فيه صالة مفتوحة على هالكود" />
+        <CodeSlip code={code} line="الكود اللي دخلت به" />
       )}
-      <p className="shl-lost-line" role="status">
-        بننتظر معك، وإذا انفتحت الصالة تدخلها على طول.
-      </p>
       <div className="lby-bar">
         <div className="lby-bar-in">
           {fix ? (
@@ -222,19 +220,23 @@ function RoomWait({ room, code, me }: { room: RoomView; code: string; me: Me }) 
               عدّل الكود
             </button>
           )}
-          <button
-            type="button"
-            className="btn btn-quiet btn-block shl-close"
-            onClick={() => {
-              setFix(false);
-              setErr('');
-              setDraft(code);
-              setSaid(false);
-              setPatience(waited + 8);
-            }}
-          >
-            انتظر شوي
-          </button>
+          {fix ? (
+            <button
+              type="button"
+              className="btn btn-quiet btn-block shl-close"
+              onClick={() => {
+                setFix(false);
+                setErr('');
+                setDraft(code);
+              }}
+            >
+              خلّ الكود مثل ما هو
+            </button>
+          ) : (
+            <button type="button" className="btn btn-quiet btn-block shl-close" onClick={goHome}>
+              رجوع للرئيسية
+            </button>
+          )}
         </div>
       </div>
     </main>
@@ -353,8 +355,12 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
               <span className="shl-wallet" role="img" aria-label={`رصيدك ${money(me.cash)} ريال، الكراج ${me.garage.length} من ${core.settings.garage}`}>
                 <span className="shl-wallet-k">
                   رصيدك
-                  <span className="shl-wallet-g ltr">
-                    {me.garage.length}/{core.settings.garage}
+                  {/* the garage count carries its own mark, so it is not read as «رصيدك 0/3» */}
+                  <span className="shl-wallet-g">
+                    <Icon name="car" size={14} />
+                    <span className="ltr">
+                      {me.garage.length}/{core.settings.garage}
+                    </span>
                   </span>
                 </span>
                 <b className="shl-wallet-n ltr">{money(me.cash)}</b>
@@ -366,7 +372,7 @@ function TopBar({ room, onPlayers, onMenu }: { room: RoomView; onPlayers: () => 
         )}
       </div>
       <div className="shl-end">
-        <button type="button" className="shl-ib" aria-label={room.host ? 'اللاعبين والكراجات' : 'الكراجات والترتيب'} aria-haspopup="dialog" onClick={onPlayers}>
+        <button type="button" className="shl-ib" aria-label={room.host ? 'المزايدين والكراجات' : 'الكراجات والترتيب'} aria-haspopup="dialog" onClick={onPlayers}>
           <Icon name="users" size={22} />
         </button>
         <button
@@ -464,7 +470,7 @@ function LateSheet({ onClose }: { onClose: () => void }) {
       <ScreenTitle as="h2" caption="المزاد بدأ قبل لا تدخل. تتفرج الحين، وتدخل اللعب بالمزاد الجاي إذا الدلال بدأ مزاد ثاني بنفس الشباب.">
         دخلت متفرج
       </ScreenTitle>
-      <p className="shl-sheet-note">تقدر تعلّق وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة اللاعبين.</p>
+      <p className="shl-sheet-note">تقدر تعلّق وتشوف الكراجات، والدلال يقدر يدخّلك من قائمة المزايدين.</p>
     </ShellSheet>
   );
 }

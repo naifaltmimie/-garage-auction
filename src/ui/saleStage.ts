@@ -7,8 +7,8 @@
 //    1  «سعرها الصدق بالسوق» is announced, its number still blank
 //    2  the value counts up, the difference and the verdict; the buyer's receipt prints
 //    3  settled: the surprise (if any) lands and the value becomes final
-import { saleLeadInMs } from '../engine/rules';
-import type { Core, Sale } from '../engine/types';
+import { VERDICT_LABEL, saleLeadInMs } from '../engine/rules';
+import type { Core, Sale, Verdict } from '../engine/types';
 import { useClockValue } from './components/DutchConsole';
 
 export type SaleStage = -1 | 0 | 1 | 2 | 3;
@@ -60,4 +60,17 @@ export function saleShown(sale: Pick<Sale, 'value' | 'paid' | 'surprise'>, stage
   const settled = stage >= 3 || !sale.surprise;
   const value = settled ? sale.value : sale.value - (sale.surprise?.delta ?? 0);
   return { value, profit: value - sale.paid, settled };
+}
+
+/** The verdict as it is said beside the difference, on the phone and on the big screen: the word, and who it is
+ *  said of. Before the number is final the word is only «ربح» or «خسارة». A verdict that carries its own pronoun
+ *  («انقصّ عليه», «غالية عليه») takes no name after it, and to the buyer himself it is said to his face
+ *  («انقصّ عليك»); the others take «لك» / «لـ فهد». `mine` is false on a screen that belongs to nobody. */
+export function verdictSaid(verdict: Verdict, shown: SaleShown, mine: boolean, buyerName: string): { word: string; who: string } {
+  const up = (shown.profit ?? 0) >= 0;
+  const who = mine ? (up ? 'لك' : 'عليك') : up ? `لـ ${buyerName}` : `على ${buyerName}`;
+  if (!shown.settled) return { word: up ? 'ربح' : 'خسارة', who };
+  if (verdict === 'robbed') return { word: mine ? 'انقصّ عليك' : 'انقصّ عليه', who: '' };
+  if (verdict === 'over') return { word: mine ? 'غالية عليك' : 'غالية عليه', who: '' };
+  return { word: VERDICT_LABEL[verdict], who };
 }

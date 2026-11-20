@@ -78,6 +78,11 @@ export function carsN(n: number): string {
   return `${n} سيارة`;
 }
 
+/** A model name inside an Arabic line, as a string: isolated (U+2068 … U+2069) so a Latin or numeric name keeps
+ *  its own order («812 Superfast», not «Superfast 812») and does not pull the numbers after it into one
+ *  left-to-right run. In JSX use `<bdi>` around the model and its trim together. */
+export const iso = (s: string): string => (s && /[A-Za-z0-9]/.test(s) ? `⁨${s}⁩` : s);
+
 /** Arabic count of bids: سومة وحدة، سومتين، 5 سومات، 12 سومة. */
 export function bidsN(n: number): string {
   if (n <= 1) return 'سومة وحدة';

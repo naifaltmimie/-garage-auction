@@ -77,7 +77,10 @@ export function GarageCard({
               <CarThumb s={s} />
               <div className="e-car-body">
                 <b className="e-car-model">
-                  {s.car.modelAr} <span className="e-car-trim">{s.car.trim}</span>
+                  {/* the model and its trim as one name in its own direction («812 Superfast», «G63 AMG») */}
+                  <bdi>
+                    {s.car.modelAr} <span className="e-car-trim">{s.car.trim}</span>
+                  </bdi>
                 </b>
                 <span className="e-car-sub">
                   <bdi>{s.car.makeAr}</bdi> · <span className="ltr">{s.car.year}</span>

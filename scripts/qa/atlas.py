@@ -626,7 +626,7 @@ async def a_tv(tv, tag):
 
 async def players_garage(a, pg, who, tag):
     """Opens the players sheet and one player's garage from it."""
-    if not await tap(pg, 'الكراجات والترتيب', exact=True) and not await tap(pg, 'اللاعبين والكراجات', exact=True):
+    if not await tap(pg, 'الكراجات والترتيب', exact=True) and not await tap(pg, 'المزايدين والكراجات', exact=True):
         a.miss('players sheet', 'no players button in the top bar')
         return
     await wait(0.5)
@@ -756,7 +756,7 @@ async def main_run(p):
         await a.shot(host, 'settings-sheet-bottom')
         await need(a, host, 'تمام', exact=True)
     # players sheet, room menu, leave confirm (lobby)
-    if await need(a, host, 'اللاعبين والكراجات', exact=True):
+    if await need(a, host, 'المزايدين والكراجات', exact=True):
         await wait(0.6)
         await a.shot(host, 'players-sheet-lobby-host')
         await tap(host, 'سكّر', exact=True)

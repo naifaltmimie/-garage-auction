@@ -45,7 +45,7 @@ const STEPS: Step[] = [
     thing: (
       <span className="hm-paid" aria-hidden="true">
         <span className="hm-paid-in">
-          <Receipt no={3} rows={[{ label: 'السوم', amount: 48000 }, { label: 'السعي', amount: 1200 }]} total={49200} />
+          <Receipt no={3} rows={[{ label: 'سعر الرسو', amount: 48000 }, { label: 'السعي', amount: 1200 }]} total={49200} />
           <Stamp kind="sold" className="hm-paid-stamp" />
         </span>
       </span>

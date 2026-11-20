@@ -29,7 +29,7 @@ export function Intro({ room }: { room: RoomView }) {
           { k: 'السوق', v: market.label },
           { k: 'السيارات', v: core.lotsTotal, print: true },
           { k: 'المزايدين', v: bidders, print: true },
-          { k: 'ميزانية كل لاعب', v: money(s.budget), print: true },
+          { k: 'ميزانية كل واحد', v: money(s.budget), print: true },
           { k: 'الكراج يشيل', v: <>{s.garage === 1 ? 'سيارة وحدة' : s.garage === 2 ? 'سيارتين' : <><span className="shl-num ltr">{s.garage}</span> سيارات</>}</> },
         ]}
       />
@@ -56,13 +56,14 @@ const IntroCount = memo(function IntroCount({ core, offset }: { core: Core; offs
   const sec = Math.max(1, Math.ceil(ms / 1000));
   return (
     <div className={`shl-count${sec <= 3 ? ' is-last' : ''}`} role="timer" aria-label={`أول سيارة بعد ${secs(sec)}`}>
+      {/* the line leads into the numeral, which finishes the sentence: the count is said once */}
+      <span className="shl-count-t" aria-hidden="true">
+        أول سيارة بعد
+      </span>
       <span className="shl-count-box" aria-hidden="true">
         <span key={sec} className="shl-count-n ltr">
           {sec}
         </span>
-      </span>
-      <span className="shl-count-t" aria-hidden="true">
-        أول سيارة بعد {secs(sec)}
       </span>
     </div>
   );
