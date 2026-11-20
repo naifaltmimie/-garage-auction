@@ -29,7 +29,7 @@ function Drum({ d }: { d: string }) {
   );
 }
 
-function Board({ value }: { value: number }) {
+export function Board({ value }: { value: number }) {
   const chars = money(value).split('');
   return (
     <span className="cs-board-n print" dir="ltr" aria-label={`${money(value)} ريال`}>
