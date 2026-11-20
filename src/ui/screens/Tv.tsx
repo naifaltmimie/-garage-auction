@@ -717,17 +717,24 @@ interface Floater {
   name: string;
   x: number;
   dur: number;
+  rise: number;
 }
 
 /** The six reactions floating up over the car (never over the price), large, with who sent them. */
 function Reactions() {
   const [items, setItems] = useState<Floater[]>([]);
   const timers = useRef(new Set<number>());
+  const lane = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const off = reactBus.on((ev) => {
       const r = REACT_BY_KEY.get(ev.k);
       if (!r) return;
-      const f: Floater = { id: ev.i, label: r.label, name: ev.n, x: 8 + Math.random() * 74, dur: 3400 + Math.random() * 600 };
+      // the lot sticker holds the photo's top inline-start corner: reactions rise on the other two thirds, and only
+      // as high as the photo allows (an emoji with its name is about 15u tall), so neither cuts one
+      const h = lane.current?.clientHeight ?? 0;
+      const u = Math.min(innerHeight / 100, innerWidth / 177.78);
+      const rise = Math.max(0, h - u * 19);
+      const f: Floater = { id: ev.i, label: r.label, name: ev.n, x: 34 + Math.random() * 54, dur: 3400 + Math.random() * 600, rise };
       setItems((l) => [...l.slice(-9), f]);
       const t = window.setTimeout(() => {
         timers.current.delete(t);
@@ -742,9 +749,9 @@ function Reactions() {
     };
   }, []);
   return (
-    <div className="tv-rx" aria-hidden="true">
+    <div className="tv-rx" aria-hidden="true" ref={lane}>
       {items.map((f) => (
-        <span key={f.id} className="tv-rx-f" style={{ insetInlineStart: `${f.x}%`, animationDuration: `${f.dur}ms` } as CSSProperties}>
+        <span key={f.id} className="tv-rx-f" style={{ insetInlineStart: `min(${f.x}%, calc(100% - var(--u) * 30))`, animationDuration: `${f.dur}ms`, ['--rise' as string]: `${f.rise}px` } as CSSProperties}>
           <span className="tv-rx-e">{f.label}</span>
           <span className="tv-rx-n">{f.name}</span>
         </span>
