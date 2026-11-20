@@ -428,7 +428,7 @@ async def main_run(p):
     if await tap(host, 'عدّل'):
         await wait(0.6)
         await a.shot(host, 'settings-sheet-top')
-        await host.evaluate("() => { const d = document.querySelector('.drawer'); if (d) d.scrollTop = 99999 }")
+        await host.evaluate("() => { const d = document.querySelector('.lby-sheet-body'); if (d) d.scrollTop = 99999 }")
         await wait(0.3)
         await a.shot(host, 'settings-sheet-bottom')
         await tap(host, 'تمام')
@@ -737,7 +737,7 @@ async def main_run(p):
             late = lpg
         if phn == 'bidding':
             await wait(0.3)
-            full = 'فل' in ((await saud.locator('.bidpanel').first.inner_text()) if await saud.locator('.bidpanel').count() else '')
+            full = 'فل' in ((await saud.locator('section.cs').first.inner_text()) if await saud.locator('section.cs').count() else '')
             if not full:
                 if await bid_min(saud):
                     wins['saud'] += 1
