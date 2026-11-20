@@ -7,7 +7,7 @@ import { Portal, useSheet } from './Bits';
 import { ScreenTitle } from './kit/ScreenTitle';
 
 /** Bumped with each release that has something worth announcing; a phone sees each one once. */
-const RELEASE = '2026-11-20';
+const RELEASE = '2026-11-21';
 const SEEN_KEY = 'mzk:news';
 
 type Item = { title: string; body: string; reactions?: boolean };
@@ -19,7 +19,7 @@ const RELEASES: { date: string; items: Item[] }[] = [
     items: [
       { title: 'شاشة السوم من جديد', body: 'السوم الحالي ومين ماسكه على بطاقة السعر، والحساب كامل تحت الزر.' },
       { title: 'لوحات سعودية حقيقية', body: 'بمقاسها الصح، العادية والطويلة: خصوصي ونقل خاص وأجرة.' },
-      { title: 'خطوط جديدة للعبة كلها', body: 'خط للعناوين، وخط للأسعار والأرقام، وخط للكلام. القراءة صارت أريح.' },
+      { title: 'شاشة العرض من جديد', body: 'افتحها على التلفزيون أو اللابتوب، والكل يتابع السوم والكراجات والنتيجة.' },
       { title: 'سوالف السيارات ما تتكرر', body: 'كل سيارة لها سالفتها، وما تنعاد عليك نفس السالفة.' },
       { title: 'ست تعليقات جديدة', body: 'ارمها على السيارة وقت السوم، ويشوفها كل اللي بالصالة.', reactions: true },
     ],
