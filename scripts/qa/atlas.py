@@ -74,13 +74,15 @@ RECTS_JS = """() => [...document.querySelectorAll('body *')].map((e) => {
 # the painted style of every element and of its ::before / ::after, then of <html> and <body> (the last two entries)
 STYLE_PROPS = ['color', 'background-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
                'opacity', 'font-family', 'font-size', 'font-weight', 'line-height', 'box-shadow', 'transform', 'display', 'visibility']
-STYLE_JS = """(props) => {
+# (only the indices given, when `idx` is a list: the second, confirming pass reads just the elements that changed)
+STYLE_JS = """([props, idx]) => {
   const one = (s) => props.map((p) => s.getPropertyValue(p));
   const all = (e) => {
     const b = getComputedStyle(e, '::before'), a = getComputedStyle(e, '::after');
     return [one(getComputedStyle(e)), b.content === 'none' ? null : [b.content, ...one(b)], a.content === 'none' ? null : [a.content, ...one(a)]];
   };
-  return [...[...document.querySelectorAll('body *')].map(all), all(document.documentElement), all(document.body)];
+  const els = [...document.querySelectorAll('body *'), document.documentElement, document.body];
+  return idx ? idx.map((i) => (els[i] ? all(els[i]) : null)) : els.map(all);
 }"""
 
 COMPARE_JS = """(css) => {
@@ -118,22 +120,23 @@ async def layout_moves(pg):
     """Elements whose box moves, or whose painted style (STYLE_PROPS) changes, when COMPARE_CSS is added:
     [(path, before, after)], and whether the CSS touched the page."""
     a1 = await pg.evaluate(RECTS_JS)
-    s1 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
+    s1 = await pg.evaluate(STYLE_JS, [STYLE_PROPS, None])
     await pg.evaluate(COMPARE_JS, COMPARE_CSS)
     b = await pg.evaluate(RECTS_JS)
-    t1 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
+    t1 = await pg.evaluate(STYLE_JS, [STYLE_PROPS, None])
     await pg.evaluate("() => { const s = document.getElementById('qa-compare'); if (s) s.remove(); document.body.offsetHeight }")
+    changed = [i for i, (x, y) in enumerate(zip(s1, t1)) if x != y] if len(s1) == len(t1) else []
     a2 = await pg.evaluate(RECTS_JS)
-    s2 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
+    s2 = await pg.evaluate(STYLE_JS, [STYLE_PROPS, changed])
     await pg.evaluate(COMPARE_JS, COMPARE_CSS)
     b2 = await pg.evaluate(RECTS_JS)
-    t2 = await pg.evaluate(STYLE_JS, STYLE_PROPS)
+    t2 = await pg.evaluate(STYLE_JS, [STYLE_PROPS, changed])
     await pg.evaluate("() => { const s = document.getElementById('qa-compare'); if (s) s.remove(); document.body.offsetHeight }")
     touched = False
     moved = []
     if not (len(a1) == len(b) == len(a2) == len(b2)):
         return [], False  # the page changed while it was measured (a reveal landing): nothing to compare
-    styled = style_diffs(s1, t1, s2, t2) if len(s1) == len(t1) == len(s2) == len(t2) else []
+    styled = [(changed[k], what) for k, what in style_diffs([s1[i] for i in changed], [t1[i] for i in changed], s2, t2)]
     if styled:
         touched = True
         n = len(s1) - 2
