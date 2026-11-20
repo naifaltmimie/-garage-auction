@@ -1,7 +1,7 @@
-/* ================================================================ theme: «الكفرات»
-   The whole game is dressed like a tyre: matte rubber black with a fine grain, tread cut into the
-   bars, sidewall-grey type, the tag's red where you act (like a brake caliper behind the rim),
-   rim gold for the big moments, and green only for good news.
+/* ================================================================ theme: «حراج الليل»
+   A car auction yard at night: matte rubber and asphalt for every surface, chalk-white type,
+   white paper for what an auction prints, the tag's red enamel where you act, alloy for prestige,
+   and green only as a small mark of good news. See docs/DESIGN.md.
    The old token names are kept so every screen follows; they now hold rubber.
    Buttons are pushable blocks: a face on a dark deck that sinks when pressed, with a sheen that
    slides across on the press. The press is ported in plain CSS from Evil Buttons' ThreeDButton
@@ -10,6 +10,10 @@
 
 :root {
   color-scheme: dark;
+
+  /* three type roles: the voice (the logo's face), print (numbers on objects), text (--f-ui) */
+  --f-voice: 'Lalezar', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-print: 'Barlow Condensed', 'IBM Plex Sans Arabic', system-ui, sans-serif;
 
   /* rubber */
   --rubber-0: #0b0c0d;
