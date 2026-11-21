@@ -3,7 +3,7 @@
 // never counts as a player. It is a display, not a control: no buttons, no hover; the cursor hides when still.
 // Every size is in viewport units (tv.css, `--u` is one hundredth of a 16:9 height); the kit's paper objects,
 // drawn in px, are scaled with `zoom` by `--k` (the screen's height over 1080).
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { dutchElapsed, dutchPriceAt, dutchProgress } from '../../engine/dutch';
 import { damageLine } from '../../engine/lotgen';
 import { marketOf } from '../../engine/markets';
@@ -11,7 +11,7 @@ import { reactBus, REACT_BY_KEY } from '../../engine/reactions';
 import { gradeWord } from '../../engine/realism';
 import { lotsFor } from '../../engine/rules';
 import type { CarPub, Core, Hist, LotPub, Phase, PlayerPub, Sale } from '../../engine/types';
-import { bidsN, carsN, isCode, money, normalizeCode, signed } from '../../lib/util';
+import { bidsN, carsN, isCode, makeModel, money, normalizeCode, signed } from '../../lib/util';
 import type { Snapshot } from '../../net/room';
 import { ViewerRoom, type ViewerStatus } from '../../net/viewer';
 import '../../styles/tv.css';
@@ -29,7 +29,7 @@ import { Rows } from '../components/kit/Rows';
 import { Stamp } from '../components/kit/Stamp';
 import { Sticker } from '../components/kit/Sticker';
 import { Photo } from '../components/Gallery';
-import { bodyAr, specLine } from '../components/LotSheet';
+import { bodyAr, specParts } from '../components/LotSheet';
 import { Wordmark } from '../components/Logo';
 import { CarPlate, Paddle } from '../components/Plate';
 import { Silhouette } from '../components/Silhouette';
@@ -534,7 +534,16 @@ function CarHead({ lot }: { lot: LotPub }) {
         </span>
       </div>
       <p className="tv-spec">
-        <bdi>{car.makeAr}</bdi> · <span className="ltr">{car.year}</span> · {specLine(car)}
+        <bdi>{car.makeAr}</bdi> · <span className="ltr">{car.year}</span> ·{' '}
+        {/* each part stays whole when the line takes two: «335 حصان» never splits from its number */}
+        {specParts(car).map((x, i, all) => (
+          <Fragment key={i}>
+            <bdi dir="rtl" className="tv-spec-bit">
+              {x}
+            </bdi>
+            {i < all.length - 1 ? '، ' : ''}
+          </Fragment>
+        ))}
       </p>
       <Pairs className="tv-pairs" items={keyFacts(car, lot)} />
     </div>
@@ -916,7 +925,7 @@ function Hammer({ core, sale, offset }: { core: Core; sale: Sale; offset: number
   // the year stands apart from the name: «فيراري 812 2020» read as two numbers run together
   const carName = (
     <>
-      <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> · <span className="ltr">{sale.car.year}</span>
+      {makeModel(sale.car.makeAr, sale.car.modelAr)} · <span className="ltr">{sale.car.year}</span>
     </>
   );
   return (
@@ -1027,7 +1036,7 @@ function Unsold({ core, sale }: { core: Core; sale: Sale }) {
       <section className="tv-car">
         <HammerPhoto sale={sale} stamp="unsold" uncover={false} />
         <p className="tv-hammer-car">
-          <bdi>{sale.car.makeAr}</bdi> <bdi>{sale.car.modelAr}</bdi> · <span className="ltr">{sale.car.year}</span>
+          {makeModel(sale.car.makeAr, sale.car.modelAr)} · <span className="ltr">{sale.car.year}</span>
         </p>
       </section>
       <section className="tv-hammer-side">

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { sound } from '../../audio/sound';
 import type { Core, FinalResults, Sale } from '../../engine/types';
 import { badgeOf, badgesOfNight, recordNight } from '../../lib/career';
-import { iso, money, signed } from '../../lib/util';
+import { makeModel, money, signed } from '../../lib/util';
 import { Portal } from './Bits';
 import { Paddle } from './Plate';
 import { Facts } from './kit/Facts';
@@ -23,7 +23,7 @@ export interface AwardItem {
   pri?: number;
 }
 
-const carName = (s: Sale) => `${s.car.makeAr} ${iso(s.car.modelAr)}`;
+const carName = (s: Sale) => makeModel(s.car.makeAr, s.car.modelAr);
 
 /** Only awards the night's data supports; the champion closes the show. */
 export function computeAwards(core: Core, sales: Sale[], res: FinalResults): AwardItem[] {
@@ -43,9 +43,9 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
 
   if (sold.length >= 2) {
     const cheap = [...sold].sort((a, b) => a.paid - b.paid)[0];
-    add({ key: 'cheap', title: 'أبو لقطة', who: cheap.buyer!, name: '', line: `أرخص شروة بالليلة: ${carName(cheap)} ${cheap.car.year}`, figure: money(cheap.paid), figureLabel: 'دفع' }, 6, 1);
+    add({ key: 'cheap', title: 'أبو لقطة', who: cheap.buyer!, name: '', line: `أرخص شروة بالليلة: ${carName(cheap)} موديل ${cheap.car.year}`, figure: money(cheap.paid), figureLabel: 'دفع' }, 6, 1);
     const big = [...sold].sort((a, b) => b.paid - a.paid)[0];
-    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة رست بالليلة: ${carName(big)} ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
+    add({ key: 'whale1', title: 'الحوت', who: big.buyer!, name: '', line: `أغلى سيارة رست بالليلة: ${carName(big)} موديل ${big.car.year}`, figure: money(big.paid), figureLabel: 'دفع' }, 3, 7);
   }
   if (buyers.size >= 2) {
     const most = uniqueTop(rows.filter((r) => r.cars >= 2), (r) => r.cars);
@@ -55,11 +55,11 @@ export function computeAwards(core: Core, sales: Sale[], res: FinalResults): Awa
   }
   const worst = [...sold].sort((a, b) => a.profit - b.profit)[0];
   if (worst && worst.profit < 0)
-    add({ key: 'blunder', title: 'أغلى غلطة', who: worst.buyer!, name: '', line: `${carName(worst)} ${worst.car.year}: دفع ${money(worst.paid)} وقيمتها ${money(worst.value)}`, figure: money(-worst.profit), figureLabel: 'خسارة', tone: 'loss' }, 2, 6);
+    add({ key: 'blunder', title: 'أغلى غلطة', who: worst.buyer!, name: '', line: `${carName(worst)} موديل ${worst.car.year}: دفع ${money(worst.paid)} وقيمتها ${money(worst.value)}`, figure: money(-worst.profit), figureLabel: 'خسارة', tone: 'loss' }, 2, 6);
   const gems = sold.filter((s) => s.profit > 0 && s.paid > 0).sort((a, b) => b.value / b.paid - a.value / a.paid);
   if (gems[0]) {
     const g = gems[0];
-    add({ key: 'deal', title: 'صفقة الليلة', who: g.buyer!, name: '', line: `${carName(g)} ${g.car.year}: دفع ${money(g.paid)} وقيمتها ${money(g.value)}`, figure: signed(g.profit), figureLabel: 'ربح', tone: 'gain' }, 1, 11);
+    add({ key: 'deal', title: 'صفقة الليلة', who: g.buyer!, name: '', line: `${carName(g)} موديل ${g.car.year}: دفع ${money(g.paid)} وقيمتها ${money(g.value)}`, figure: signed(g.profit), figureLabel: 'ربح', tone: 'gain' }, 1, 11);
   }
   // the host's titles that this list doesn't already cover
   const keep: [string, number, number][] = [['bargains', 5, 10], ['people', 5, 8], ['gambler', 8, 5], ['stubborn', 9, 3], ['saver', 9, 4], ['whale', 10, 7.5]];

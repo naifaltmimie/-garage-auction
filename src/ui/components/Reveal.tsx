@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { roastSaid } from '../../engine/lines';
 import type { Comp, Core, PlayerPub, Sale } from '../../engine/types';
-import { bidsN, km, money, signed } from '../../lib/util';
+import { bidsN, km, makeModel, money, signed } from '../../lib/util';
 import { saleShown, useSaleStage, verdictSaid, type SaleStage } from '../saleStage';
 import { countRender } from './Console';
 import { photoSrc } from './Gallery';
@@ -271,9 +271,7 @@ export function SoldReveal({ core, sale, myId, offset }: { core: Core; sale: Sal
           {stage < 0 ? 'نشيل الغطا…' : (
             <>
               طلعت{' '}
-              <b>
-                {sale.car.makeAr} <bdi>{sale.car.modelAr}</bdi>
-              </b>{' '}
+              <b>{makeModel(sale.car.makeAr, sale.car.modelAr)}</b>{' '}
               <span className="ltr">{sale.car.year}</span>، {km(sale.car.km)}
             </>
           )}

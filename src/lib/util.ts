@@ -83,6 +83,14 @@ export function carsN(n: number): string {
  *  left-to-right run. In JSX use `<bdi>` around the model and its trim together. */
 export const iso = (s: string): string => (s && /[A-Za-z0-9]/.test(s) ? `⁨${s}⁩` : s);
 
+/** A make beside its model as one phrase in an Arabic line. When both are written in Latin («BMW X7», «GMC Sierra»)
+ *  they are ONE left-to-right phrase: two separate isolates would be laid out right to left and read «X7 BMW».
+ *  Otherwise each name keeps its own direction («GMC يوكن», «فيراري 812»). */
+export function makeModel(make: string, model: string): string {
+  const latin = (s: string) => !/[؀-ۿ]/.test(s);
+  return latin(make) && latin(model) ? iso(`${make} ${model}`) : `${iso(make)} ${iso(model)}`;
+}
+
 /** Arabic count of bids: سومة وحدة، سومتين، 5 سومات، 12 سومة. */
 export function bidsN(n: number): string {
   if (n <= 1) return 'سومة وحدة';

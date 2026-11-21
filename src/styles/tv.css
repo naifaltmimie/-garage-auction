@@ -476,6 +476,8 @@ html.tv-mode body {
   text-overflow: ellipsis;
   color: var(--ink-2);
 }
+/* a spec part («335 حصان», «أوتوماتيك 8 سرعات») is never split across the two lines */
+.tv-spec-bit { white-space: nowrap; }
 /* the six key facts: the kit's pairs, three across */
 .tv .tv-pairs {
   grid-template-columns: repeat(3, minmax(0, 1fr));
